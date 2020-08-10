@@ -3,9 +3,12 @@
 
 # # Tutorial of Fairness Metrics for Healthcare
 # 
-# This notebook will introduce two python libraries for measuring fairness in Machine Learning models: AIF360 and FairLearn. It will explain the logic and the relationships among measurements for the six different approaches to model fairness. And, it will present a process for evaluaing these models in a healthcare context.
+# This tutorial introduces methods and libraries for measuring fairness and bias in machine learning models as as they relate to problems in healthcare. After providing some background, it will generate a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/). It will then use variations of that model to demonstrate common measures of "fairness" using [AIF360](http://aif360.mybluemix.net/), a prominent library for this purpose, before comparing AIF360 to another prominent library, [FairLearn](https://fairlearn.github.io/).
+# 
 
 # ### Tutorial Contents
+# [Part 0:] Background
+# 
 # [Part 1:](#part1) Model Setup
 # 
 # [Part 2:](#part2) Metrics of Fairness in AIF360
@@ -15,12 +18,21 @@
 # [Part 4:](#part4) Testing Other Sensitive Attributes
 # 
 # [Part 5:](#part5) Comparison to FairLearn
+# 
+# ### Requirements
+# This tutorial assumes basic knowledge of machine learning implementation in Python. Before starting, please install [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/). Also, ensure that you have installed the Pandas, Numpy, Scikit, and XGBOOST libraries.
+
+# ## Part 0: Background 
+# SECTIONS TO BE INCLUDED:
+# * what is fairness
+# * metrics for fairness
+# * list of measures that will be included in this notebook
 
 # ## Part 1: Model Setup <a class="anchor" id="part1"></a>
 # 
-# This section loads the data and generates a simple baseline model.
+# This section introduces and loads the data subset that will be used in this tutorial. Then it generates a simple baseline model to be used throughout the tutorial.
 
-# In[1]:
+# In[4]:
 
 
 import numpy as np
@@ -52,7 +64,7 @@ from sklearn.metrics import balanced_accuracy_score, roc_auc_score
 # 
 # Example: path_to_mimic_data_folder = "~/data/MIMIC"
 
-# In[2]:
+# In[5]:
 
 
 # path_to_mimic_data_folder = "[path to your downloaded data folder]"
@@ -64,7 +76,7 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # 
 # Data are imported at the encounter level, with patient identification dropped. All features are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_"). 
 
-# In[3]:
+# In[6]:
 
 
 df = tutorial_helpers.load_example_data(path_to_mimic_data_folder) # note: ADMIT_ID has been masked
@@ -76,7 +88,7 @@ df.head()
 # 
 # Two target variables will be used for the following experiments: 'length_of_stay' and 'los_binary'. For this dataset,  length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean.
 
-# In[4]:
+# In[7]:
 
 
 mean_val=df['length_of_stay'].mean()
@@ -84,7 +96,7 @@ df['los_binary'] = df['length_of_stay'].apply(lambda x: 0 if x<=mean_val else 1)
 df[['length_of_stay', 'los_binary']].describe().round(4)
 
 
-# In[5]:
+# In[8]:
 
 
 # Subset and split data for the first model
@@ -108,13 +120,13 @@ print('\n', "Baseline ROC_AUC Score:", roc_auc_score(y_test, baseline_y_pred) )
 # 
 # We will see that while some measures can be used to analyze the model in isolation, others require comparison against other metrics.
 
-# In[6]:
+# In[9]:
 
 
 df.groupby('GENDER_M')['length_of_stay'].describe().round(4)
 
 
-# In[7]:
+# In[10]:
 
 
 # Generate a model that includes gender as a feature
@@ -134,7 +146,7 @@ print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_
 # AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here
 # 
 
-# In[8]:
+# In[11]:
 
 
 y_test_aif = pd.concat([X_test_gender['GENDER_M'], y_test], axis=1).set_index('GENDER_M')
@@ -144,10 +156,12 @@ y_pred_aif.columns = y_test_aif.columns
 
 # ### Prediction Rates
 # The base rate is the average value of the ground truth (optionally weighted). It provides useful context, although it is not technically a measure of fairness. 
+# > $base\_rate = \sum_{i=0}^N(y_i)/N$
 # 
 # The Selection Rate is the average value of the predicted (ŷ).
+# > $selection\_rate = \sum_{i=0}^N(ŷ_i)/N$
 
-# In[9]:
+# In[12]:
 
 
 model_scores =  pd.DataFrame(columns=('measure','value'))
@@ -158,11 +172,13 @@ print(model_scores)
 
 # ### Measures of Demographic Parity
 # 
-# The Disparate Impact Ratio is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group: P(ŷ =1 | unprivileged) / P(ŷ =1 | privileged). A ratio of 1 indicates that the model is fair (it favors neither group).
+# The Disparate Impact Ratio is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group. A ratio of 1 indicates that the model is fair (it favors neither group).
+# > $disparate\_impact\_ratio = P(ŷ =1 | unprivileged) / P(ŷ =1 | privileged)$
 # 
 # Statistical Parity Difference is the difference between the selection rate of the privileged group and that of the unprivileged group. A difference of 0 indicates that the model is fair (it favors neither group).
+# > $statistical\_parity\_difference = selection\_rate_{unprivileged} - selection\_rate_{privileged} $
 
-# In[10]:
+# In[13]:
 
 
 model_scores.loc[1] = ['disparate_impact_ratio', disparate_impact_ratio(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
@@ -172,12 +188,15 @@ model_scores.tail(2)
 
 # ### Measures of Equal Odds
 # Average Odds Difference is the average of the difference in FPR and TPR for the unprivileged and privileged groups.
+# > to do: add equation and better explanation 
 # 
 # Average Odds Error is the average of the absolute difference in FPR and TPR for the unprivileged and privileged groups.
+# > to do: add equation and better explanation 
 # 
 # Equal Opportunity Difference is the difference in recall scores (TPR) between the unprivileged and privileged groups.
+# > to do: add equation and better explanation 
 
-# In[11]:
+# In[14]:
 
 
 model_scores.loc[3] = ['average_odds_difference', average_odds_difference(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
@@ -187,17 +206,20 @@ model_scores.tail(3)
 
 
 # ### Measures Of Individual Fairness
-# [REWRITE]
-# Consistency scores measure the similarity between a given prediction and the predictions of "like" individuals. In AIF360, the consistency score is calculated as the compliment of the mean distance to the score of the mean nearest neighbhor: 1- |mean| of 5 nearest neighbors. Scikit's K-Neare(determined by BallTree algorithm)
+# Consistency scores measure the similarity between a given prediction and the predictions of "like" individuals. In AIF360, the consistency score is calculated as the compliment of the mean distance to the score of the mean nearest neighbhor, using Scikit's Nearest Neighbors algorithm (default 5 neighbors determined by BallTree algorithm).
+# > $ consistency\_score = 1 - |mean_{distance}({5\ nearest\ neighbors})| $
 # 
 # #### The Generalized Entropy Index and Related Measures
 # The Generalized Entropy (GE) Index is...
+# > to do: add equation and better explanation 
 # 
 # Generalized Entropy Error = Calculates the GE of the set of errors, i.e. 1 + (ŷ == pos_label) - (y == pos_label) 
+# > to do: format equation and add better explanation 
 # 
 # Between Group Generalized Entropy Error = Calculates the GE of the set of mean errors for the two groups (privileged error & unprivileged error), weighted by the number of predictions in each group
+# > to do: add equation and better explanation 
 
-# In[12]:
+# In[15]:
 
 
 model_scores.loc[6] = ['consistency_score', consistency_score(X_test_gender, y_pred_gender)]
@@ -209,32 +231,31 @@ model_scores.tail(3)
 
 # ## Part 3: Comparing Against a Second Model - Evaluating Unawareness <a class="anchor" id="part3"></a>
 # 
-# To demonstrate the change in model scores relative to the use of a sensitive attribute, we will now generate a new but similar model with the sensitive attribute removed.
+# To demonstrate the change in model scores relative to the use of a sensitive attribute, this section generates a new, though similar model with the sensitive attribute removed. As shown below...
+# > to do: add takeaway
+# 
+# Note: Since we have already discussed the individual measures, a helper function will be used to save space.
 
-# Since we have already discussed the individual measures, a helper function will be used to save space.
-
-# In[16]:
+# In[26]:
 
 
 new_scores = tutorial_helpers.get_aif360_measures_df(X_test_gender, y_test, baseline_y_pred, sensitive_attributes=['GENDER_M'])
-new_scores.head(3)
 
+comparison = model_scores.rename(columns={'value':'gender_score'}
+                                ).merge(new_scores.rename(columns={'value':'gender_score (feature removed)'}))
+comparison.round(4)
+
+
+# ## Part 4: Testing Other Sensitive Attributes
+# 
+# Our next experiment will test the presence of bias relative to a patient\'s language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baselie data.
+# 
+# > to do: fix broken HTML anchor
 
 # In[18]:
 
 
-comparison = model_scores.rename(columns={'value':'gender_score'}
-                                ).merge(new_scores.rename(columns={'value':'gender_score (feature removed)'}))
-comparison.round(4).head(2)
-
-
-# ## Part 4: Testing Other Sensitive Attributes <a class="anchor" id="part4"></a>
-# 
-# Our next experiment will test the presence of bias relative to a patient's language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baselie data.
-
-# In[29]:
-
-
+# Here we attach the sensitive attribute to our data
 lang_cols = [c for c in df.columns if c.startswith("LANGUAGE_")]
 eng_cols = ['LANGUAGE_ENGL']
 X_lang =  df.loc[:,lang_cols]
@@ -244,15 +265,12 @@ X_lang = X_lang.drop(lang_cols, axis=1).fillna(0)
 X_lang.join(df['length_of_stay']).groupby('LANG_ENGL')['length_of_stay'].describe().round(4)
 
 
-# [Training the Model...]
-
-# In[23]:
+# In[19]:
 
 
-#
+# Here we train the model
 X_lang_train = X_train.join(X_lang, how='inner')
 X_lang_test = X_test.join(X_lang, how='inner')
-#
 lang_model = XGBClassifier()
 lang_model.fit(X_lang_train, y_train)
 y_pred_lang = lang_model.predict(X_lang_test)
@@ -260,16 +278,17 @@ y_pred_lang = lang_model.predict(X_lang_test)
 print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_lang) )
 
 
-# What is happening here...
+# By comparing the results with and without the sensitivie attribute ...
+# > to do: add explanation
 
-# In[24]:
+# In[20]:
 
 
 lang_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, y_pred_lang, sensitive_attributes=['LANG_ENGL'])
 lang_scores.round(4).head(2)
 
 
-# In[25]:
+# In[21]:
 
 
 lang_ko_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, baseline_y_pred, sensitive_attributes=['LANG_ENGL']) 
@@ -278,7 +297,7 @@ lang_ko_scores.round(4).head(2)
 
 # ### Comparing All Four Models Against Each Other
 
-# In[26]:
+# In[22]:
 
 
 full_comparison = comparison.merge(lang_scores.rename(columns={'value':'lang_score'})
@@ -288,14 +307,14 @@ full_comparison.round(4)
 
 
 # ## Part 5: Comparison to FairLearn <a class="anchor" id="part5"></a>
+# 
+# > to do: "FairLearn is another library..."
+# 
+# > to do: add comparison table
+# 
+# > to do: add peformance functions like roc_auc_score_group_summary from AIF360 to process above
 
-# In[38]:
-
-
-y_prob_lang = lang_model.predict_proba(X_lang_test)[:, 1]
-
-
-# In[37]:
+# In[23]:
 
 
 print("Selection rate", 
@@ -305,19 +324,29 @@ print("Demographic parity difference",
 print("Demographic parity ratio", 
       demographic_parity_ratio(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
 
+print("------")
+y_prob_lang = lang_model.predict_proba(X_lang_test)[:, 1]
+print("Overall AUC", roc_auc_score(y_test, y_prob_lang) )
+print("AUC difference", roc_auc_score_group_summary(y_test, y_prob_lang, sensitive_features=X_lang_test['LANG_ENGL']))
+
+
+# ### Balanced Error Rate Difference
+# Similar to the Equal Opportunity Difference measured by AIF360, the Balanced Error Rate Difference offered by FairLearn calculates the difference in accuracy score between the 
+
+# In[24]:
+
+
+
 print("-----")
 print("Balanced error rate difference",
         balanced_accuracy_score_group_summary(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
 print("Equalized odds difference",
       equalized_odds_difference(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
       
-print("------")
-print("Overall AUC", roc_auc_score(y_test, y_prob_lang) )
-print("AUC difference", roc_auc_score_group_summary(y_test, y_prob_lang, sensitive_features=X_lang_test['LANG_ENGL']))
 
 
 # # Summary
-# [In this tutorial we saw...]
+# > to do: "In this tutorial..."
 
 # # References 
 # 
