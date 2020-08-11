@@ -3,9 +3,9 @@
 
 # # Tutorial of Fairness Metrics for Healthcare
 # 
+# ### Overview
 # This tutorial introduces methods and libraries for measuring fairness and bias in machine learning models as as they relate to problems in healthcare. After providing some background, it will generate a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/). It will then use variations of that model to demonstrate common measures of "fairness" using [AIF360](http://aif360.mybluemix.net/), a prominent library for this purpose, before comparing AIF360 to another prominent library, [FairLearn](https://fairlearn.github.io/).
-# 
-
+#   
 # ### Tutorial Contents
 # [Part 0:] Background
 # 
@@ -21,6 +21,8 @@
 # 
 # ### Requirements
 # This tutorial assumes basic knowledge of machine learning implementation in Python. Before starting, please install [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/). Also, ensure that you have installed the Pandas, Numpy, Scikit, and XGBOOST libraries.
+# 
+# The tutorial also uses data from the MIMIC III Critical Care database, a freely accessible source of Electronic Health Records from Beth Israel Deaconess Medical Center in Boston. To download the MIMIC III data, please use this link: [Access to MIMIC III](https://mimic.physionet.org/gettingstarted/access/). Please save the data with the default directory name ("MIMIC"). No further action is required beyond remembering the download location: you do not need to unzip any files.
 
 # ## Part 0: Background 
 # SECTIONS TO BE INCLUDED:
@@ -32,19 +34,17 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. Then it generates a simple baseline model to be used throughout the tutorial.
 
-# In[28]:
+# In[1]:
 
 
+# Standard Libraries
 from IPython.display import Image
 import numpy as np
 import os
 import pandas as pd
 import sys
 
-# Jupyter Add-Ons from local folder
-import tutorial_helpers
-
-# Prediction Libs
+# Prediction Libraries
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier, XGBRegressor
@@ -57,15 +57,16 @@ from fairlearn.metrics import (
     equalized_odds_difference, difference_from_summary)
 from sklearn.metrics import balanced_accuracy_score, roc_auc_score
 
+# Helpers from local folder
+import tutorial_helpers
 
-# ### MIMIC III
-# This tutorial uses data from the MIMIC III Critical Care database, a freely accessible source of Electronic Health Records from Beth Israel Deaconess Medical Center in Boston, years 2001 through 2012. To download the MIMIC III data, please use this link: [Access to MIMIC III](https://mimic.physionet.org/gettingstarted/access/). Please save the data in a folder with the default name ("MIMIC").
-# 
-# The raw MIMIC download contains only a folder of zipped_files. The tutorial code will automatically unzip and format the necessary data for this experiment, saving the formatted data in the current folder. Simply enter the correct path of the MIMIC folder in the following cell to enable this feature. Your path should end with the directory "MIMIC".
+
+# ### MIMIC III Data Subset
+# As mentioned aboce, the MIMIC-III data download contains a folder of zipped_files. The tutorial code will automatically unzip and format all necessary data for these experiments, saving the formatted data in the tutorial folder. Simply enter the correct path of the MIMIC folder in the following cell to enable this feature. Your path should end with the directory "MIMIC".
 # 
 # Example: path_to_mimic_data_folder = "~/data/MIMIC"
 
-# In[5]:
+# In[2]:
 
 
 # path_to_mimic_data_folder = "[path to your downloaded data folder]"
@@ -73,11 +74,9 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 
 
 # ### Data Subset
-# The following models use data from all years of the MIMIC-III dataset for patients aged 65 and older. Features include diagnosis and procedure codes categorized through the Clinical Classifications Software system ([HCUP](#hcup)). 
-# 
-# Data are imported at the encounter level, with patient identification dropped. All features are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_"). 
+# Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](#hcup)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
 
-# In[6]:
+# In[3]:
 
 
 df = tutorial_helpers.load_example_data(path_to_mimic_data_folder) # note: ADMIT_ID has been masked
@@ -85,56 +84,55 @@ df.head()
 
 
 # ### Baseline Length of Stay Model
-# All models in this tutorial predict the length of time spent in the ICU, a.k.a. the "Length of Stay" (LOS). The baseline model will use only the patient's age, their diagnosis, and the use of medical procedures during their stay to predict this value.
+# Example models in this tutorial predict the length of time spent in the ICU, a.k.a. the "Length of Stay" (LOS). The baseline model will use only the patient's age, their diagnosis, and the use of medical procedures during their stay to predict this value. 
 # 
-# Two target variables will be used for the following experiments: 'length_of_stay' and 'los_binary'. For this dataset, length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean.
+# Two target variables will be used in the following experiments: 'length_of_stay' and 'los_binary'. For this dataset, length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean. We will generate variable below, and then generate our baseline model.
 
-# In[7]:
+# In[4]:
 
 
 mean_val=df['length_of_stay'].mean()
-df['los_binary'] = df['length_of_stay'].apply(lambda x: 0 if x<=mean_val else 1)
+df['los_binary'] = df['length_of_stay'].apply(lambda x: 0 if x < mean_val else 1)
 df[['length_of_stay', 'los_binary']].describe().round(4)
 
 
-# In[8]:
+# In[5]:
 
 
-# Subset and split data for the first model
+# Subset and Split Data
 X = df.loc[:,['ADMIT_ID']+[c for c in df.columns if (c.startswith('AGE') or c.startswith('DIAGNOSIS_') or c.startswith('PROCEDURE_'))]]
 y = df.loc[:, ['los_binary']]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
-
-# generate alternative model
+# Train Model
 baseline_model = XGBClassifier()
 baseline_model.fit(X_train, y_train)
 baseline_y_pred = baseline_model.predict(X_test)
-
+baseline_y_prob = baseline_model.predict_proba(X_test)[:, 1]
 #
-print('\n', "Baseline ROC_AUC Score:", roc_auc_score(y_test, baseline_y_pred) )
+print('\n', "Baseline ROC_AUC Score:", roc_auc_score(y_test, baseline_y_prob) )
 
 
 # ## Part 2: Testing Gender as a Sensitive Attribute <a class="anchor" id="part2"></a>
-# Our first experiment will test the effect of including the sensitive attribute 'GENDER_M'. This attribute is encoded in our data as a boolean attribute, where 0=female and 1=male, since males are assumed to be the privileged group. For the purposes of this experiment all other senstitive attributes and potential proxies will be dropped, such that only gender, diangosis, and procedure codes will be used to make the prediction.
+# Our first experiment will test the effect of including the sensitive attribute 'GENDER_M'. This attribute is encoded in our data as a boolean attribute, where 0=female and 1=male, since males are assumed to be the privileged group. For the purposes of this experiment all other senstitive attributes and potential proxies will be dropped, such that only gender, age, diangosis, and procedure codes will be used to make the prediction.
 # 
 # First we will examine fairness measurements for a version of this model that includes gender as a feature, before comparing them to similar measurements for the baseline (without gender). We will see that while some measures can be used to analyze a model in isolation, others require comparison against other models.
 
-# In[9]:
+# In[6]:
 
 
 df.groupby('GENDER_M')['length_of_stay'].describe().round(4)
 
 
-# In[10]:
+# In[7]:
 
 
-# Generate a model that includes gender as a feature
+# Update Split Data to Include Gender as a Feature
 X_train_gender = X_train.join(df[['GENDER_M']], how='inner')
 X_test_gender = X_test.join(df[['GENDER_M']], how='inner')
-
-model = XGBClassifier()
-model.fit(X_train_gender, y_train)
-y_pred_gender = model.predict(X_test_gender)
+# Train New Model with Gender Feature
+gender_model = XGBClassifier()
+gender_model.fit(X_train_gender, y_train)
+y_pred_gender = gender_model.predict(X_test_gender)
 
 #
 print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_gender) )
@@ -145,7 +143,7 @@ print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_
 # AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here.
 # 
 
-# In[11]:
+# In[8]:
 
 
 y_test_aif = pd.concat([X_test_gender['GENDER_M'], y_test], axis=1).set_index('GENDER_M')
@@ -160,7 +158,7 @@ y_pred_aif.columns = y_test_aif.columns
 # The Selection Rate is the average value of the predicted (ŷ).
 # > $selection\_rate = \sum_{i=0}^N(ŷ_i)/N$
 
-# In[12]:
+# In[9]:
 
 
 model_scores =  pd.DataFrame(columns=('measure','value'))
@@ -177,7 +175,7 @@ print(model_scores)
 # Statistical Parity Difference is the difference between the selection rate of the privileged group and that of the unprivileged group. A difference of 0 indicates that the model is fair (it favors neither group).
 # > $statistical\_parity\_difference = selection\_rate(ŷ_{unprivileged}) - selection\_rate(ŷ_{privileged}) $
 
-# In[13]:
+# In[10]:
 
 
 model_scores.loc[1] = ['disparate_impact_ratio', disparate_impact_ratio(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
@@ -198,13 +196,25 @@ model_scores.tail(2)
 # > $equal\_opportunity\_difference =  Recall(ŷ_{unprivileged}) - Recall(ŷ_{privileged})$
 # 
 
-# In[14]:
+# In[11]:
 
 
 model_scores.loc[3] = ['average_odds_difference', average_odds_difference(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
 model_scores.loc[4] = ['average_odds_error', average_odds_error(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
 model_scores.loc[5] = ['equal_opportunity_difference', equal_opportunity_difference(y_test_aif, y_pred_aif, prot_attr='GENDER_M')]
 model_scores.tail(3)
+
+
+# ## Custom Measures of Disparate Performance
+# Both of the libraries we will explore have added features to calculate the between-group difference in performance. Below we demonstrate a 
+
+# In[12]:
+
+
+performance_function = roc_auc_score
+y_prob_gender = gender_model.predict_proba(X_test_gender)[:, 1]
+model_scores.loc[6] = ['Between-Group AUC Difference', difference(roc_auc_score, y_test_aif, y_prob_gender, prot_attr='GENDER_M', priv_group=1)]
+model_scores.tail(1)
 
 
 # ### Measures Of Individual Fairness
@@ -226,43 +236,53 @@ model_scores.tail(3)
 # Between Group Generalized Entropy Error = Calculates the GE of the set of mean errors for the two groups (privileged error & unprivileged error), weighted by the number of predictions in each group
 # > $ GE(Error_{group}) =  GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $
 
-# In[15]:
+# In[13]:
 
 
-model_scores.loc[6] = ['consistency_score', consistency_score(X_test_gender, y_pred_gender)]
-model_scores.loc[7] = ['generalized_entropy_error', generalized_entropy_error(y_test['los_binary'], y_pred_gender)]
-model_scores.loc[8] = ['between_group_generalized_entropy_error', 
+model_scores.loc[7] = ['consistency_score', consistency_score(X_test_gender, y_pred_gender)]
+model_scores.loc[8] = ['generalized_entropy_error', generalized_entropy_error(y_test['los_binary'], y_pred_gender)]
+model_scores.loc[9] = ['between_group_generalized_entropy_error', 
                             between_group_generalized_entropy_error(y_test_aif, y_pred_aif, prot_attr=['GENDER_M'])]
 model_scores.tail(3) 
 
 
-# ## Part 3: Comparing Against a Second Model - Evaluating Unawareness <a class="anchor" id="part3"></a>
+# ## Part 3: Comparing Against a Second Model - Evaluating Unawareness
+# <a class="anchor" id="part3"></a>
 # 
-# To demonstrate the change in model scores relative to the use of a sensitive attribute, this section generates a new, though similar model with the sensitive attribute removed. As shown below, for this sensitive attribute, there is no observed difference in scores with the exclusion of the sensitive attribute.
+# To demonstrate the change in model scores relative to the use of a sensitive attribute, we will compare the above scores to those of our baseline model. Although the GENDER_M feature is not included in our baseline, since we attached it to the y_test_aif dataframe above we can still evaluate it's bias relative to GENDER_M. As shown below, there is no significant difference in the scores of these two models. Therefore, the inclusion of GENDER_M as a feature does not contribute to gender bias for these models.
 # 
 # Note: Since we have already discussed the individual measures, a helper function will be used to save space.
 
-# In[26]:
+# In[22]:
 
 
-new_scores = tutorial_helpers.get_aif360_measures_df(X_test_gender, y_test, baseline_y_pred, sensitive_attributes=['GENDER_M'])
+from importlib import reload
+reload(tutorial_helpers)
+
+
+# In[23]:
+
+
+# Measure Values for Baseline Model, Relative to Patient Gender
+new_scores = tutorial_helpers.get_aif360_measures_df(X_test_gender, y_test, baseline_y_pred, baseline_y_prob, sensitive_attributes=['GENDER_M'])
+
+
+# In[24]:
+
 
 comparison = model_scores.rename(columns={'value':'gender_score'}
                                 ).merge(new_scores.rename(columns={'value':'gender_score (feature removed)'}))
 comparison.round(4)
 
 
-# 
-# > to do: add peformance functions like roc_auc_score_group_summary from AIF360 to process above
-
 # ## Part 4: Testing Other Sensitive Attributes
 # 
 # Our next experiment will test the presence of bias relative to a patient\'s language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 
-# In[18]:
+# In[25]:
 
 
-# Here we attach the sensitive attribute to our data
+# Update Split Data to Include Language as a Feature
 lang_cols = [c for c in df.columns if c.startswith("LANGUAGE_")]
 eng_cols = ['LANGUAGE_ENGL']
 X_lang =  df.loc[:,lang_cols]
@@ -272,35 +292,38 @@ X_lang = X_lang.drop(lang_cols, axis=1).fillna(0)
 X_lang.join(df['length_of_stay']).groupby('LANG_ENGL')['length_of_stay'].describe().round(4)
 
 
-# In[38]:
+# In[28]:
 
 
-# Here we train the model
+# Train New Model with Language Feature
 X_lang_train = X_train.join(X_lang, how='inner')
 X_lang_test = X_test.join(X_lang, how='inner')
 lang_model = XGBClassifier()
 lang_model.fit(X_lang_train, y_train)
 y_pred_lang = lang_model.predict(X_lang_test)
+y_prob_lang = lang_model.predict_proba(X_lang_test)
 print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_lang) )
 
 
 # Again, by comparing the results with and without the sensitivie attribute we can better demonstrate the effect that the attribute has on the fairness of the model. In this example we see
 
-# In[50]:
+# In[29]:
 
 
+# Measure Values for Language-Inclusive Model, Relative to Patient Language
 print("Measure values with feature included:")
-lang_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, y_pred_lang, sensitive_attributes=['LANG_ENGL'])
+lang_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, y_pred_lang, y_prob_lang, sensitive_attributes=['LANG_ENGL'])
 print(lang_scores.round(4).head(3))
+# Measure Values for Baseline Model, Relative to Patient Language
 print("\n", "Measure values with feature removed:")
-lang_ko_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, baseline_y_pred, sensitive_attributes=['LANG_ENGL']) 
+lang_ko_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, baseline_y_pred, baseline_y_prob, sensitive_attributes=['LANG_ENGL']) 
 print(lang_ko_scores.round(4).head(3))
 
 
 # ### Comparing All Four Models Against Each Other
-# As shown below
+# As shown below [something about the difference]...
 
-# In[22]:
+# In[ ]:
 
 
 full_comparison = comparison.merge(lang_scores.rename(columns={'value':'lang_score'})
@@ -332,7 +355,7 @@ print("Demographic parity ratio",
 print("------")
 y_prob_lang = lang_model.predict_proba(X_lang_test)[:, 1]
 print("Overall AUC", roc_auc_score(y_test, y_prob_lang) )
-print("AUC difference", roc_auc_score_group_summary(y_test, y_prob_lang, sensitive_features=X_lang_test['LANG_ENGL']))
+print("Between-Group AUC Difference", roc_auc_score_group_summary(y_test, y_prob_lang, sensitive_features=X_lang_test['LANG_ENGL']))
 
 
 # ### Balanced Error Rate Difference
@@ -346,7 +369,7 @@ print("-----")
 print("Balanced error rate difference",
         balanced_accuracy_score_group_summary(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
 print("Equalized odds difference",
-      equalized_odds_difference(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
+        equalized_odds_difference(y_test, y_pred_lang, sensitive_features=X_lang_test['LANG_ENGL']))
       
 
 
@@ -360,7 +383,7 @@ print("Equalized odds difference",
 # <a id="hcup"></a>
 # HCUP https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp
 
-# In[37]:
+# In[1]:
 
 
 Image(url="library_algorithm_comparison.png", width=500)
