@@ -24,6 +24,8 @@ def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, sensitive_attrib
     if isinstance(y_pred, np.ndarray):
         y_pred = pd.Series(y_pred)
     if isinstance(y_prob, np.ndarray):
+        if len(np.shape(y_prob)) == 2:
+            y_prob = y_prob[:, 1]
         y_prob = pd.Series(y_prob)
     #
     y_test = pd.concat([X_test.loc[:,sensitive_attributes], y_test], axis=1).set_index(sensitive_attributes)

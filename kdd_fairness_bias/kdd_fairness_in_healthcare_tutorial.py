@@ -74,7 +74,7 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 
 
 # ### Data Subset
-# Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](#hcup)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
+# Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
 
 # In[3]:
 
@@ -208,7 +208,7 @@ model_scores.tail(3)
 # ## Custom Measures of Disparate Performance
 # Both of the libraries we will explore have added features to calculate the between-group difference in performance. Below we demonstrate a 
 
-# In[12]:
+# In[48]:
 
 
 performance_function = roc_auc_score
@@ -253,21 +253,14 @@ model_scores.tail(3)
 # 
 # Note: Since we have already discussed the individual measures, a helper function will be used to save space.
 
-# In[22]:
-
-
-from importlib import reload
-reload(tutorial_helpers)
-
-
-# In[23]:
+# In[49]:
 
 
 # Measure Values for Baseline Model, Relative to Patient Gender
 new_scores = tutorial_helpers.get_aif360_measures_df(X_test_gender, y_test, baseline_y_pred, baseline_y_prob, sensitive_attributes=['GENDER_M'])
 
 
-# In[24]:
+# In[50]:
 
 
 comparison = model_scores.rename(columns={'value':'gender_score'}
@@ -307,7 +300,7 @@ print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_
 
 # Again, by comparing the results with and without the sensitivie attribute we can better demonstrate the effect that the attribute has on the fairness of the model. In this example we see
 
-# In[29]:
+# In[46]:
 
 
 # Measure Values for Language-Inclusive Model, Relative to Patient Language
@@ -321,9 +314,11 @@ print(lang_ko_scores.round(4).head(3))
 
 
 # ### Comparing All Four Models Against Each Other
-# As shown below [something about the difference]...
+# As shown below, exclusion of the LANG_ENGL feature has a more significant impact on the fairness of the model than does exclusion of GENDER_M (relative to their specific biases). Moreover, using the 80/20 rule we can see that inclusion of LANG_ENGL leads to what can be considered a "significant" bias, as shown by the Disparate Impact Ratio. In this case, predictions for those individuals who do not speak English are significantly more likely to be above the mean, even though this difference is not [currently] reflected in the ground truth.
+# 
+# > to do: validate this conclusion after fixing the issue with LOS <- currently the average LOS in the dataset is still higher than expected
 
-# In[ ]:
+# In[51]:
 
 
 full_comparison = comparison.merge(lang_scores.rename(columns={'value':'lang_score'})
@@ -360,6 +355,8 @@ print("Between-Group AUC Difference", roc_auc_score_group_summary(y_test, y_prob
 
 # ### Balanced Error Rate Difference
 # Similar to the Equal Opportunity Difference measured by AIF360, the Balanced Error Rate Difference offered by FairLearn calculates the difference in accuracy score between the unprivileged and privileged group.
+# 
+# > to do: expand upon this...
 
 # In[24]:
 
@@ -377,79 +374,11 @@ print("Equalized odds difference",
 # This tutorial introduced multiple measures of ML fairness in the context of a healthcare model using the AIF360 and FairLearn Python libraries. A subset of the MIMIC-III database was used to generate a series of simple Length of Stay (LOS) models. It was shown that while the inclusion of a sensitive feature can significantly affect a model's bias as it relates to that feature, this is not always the case. 
 
 # # References 
+# [AIF360 Reference](http://aif360.mybluemix.net/) 
+# 
+# [HCUP Reference](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp) https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp
+# 
+# [FairLearn Reference](https://fairlearn.github.io/).
 # 
 # MIMIC-III, a freely accessible critical care database. Johnson AEW, Pollard TJ, Shen L, Lehman L, Feng M, Ghassemi M, Moody B, Szolovits P, Celi LA, and Mark RG. Scientific Data (2016). DOI: 10.1038/sdata.2016.35. Available from: http://www.nature.com/articles/sdata201635
 # 
-# <a id="hcup"></a>
-# HCUP https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp
-
-# In[1]:
-
-
-Image(url="library_algorithm_comparison.png", width=500)
-
-
-# # TEST CELLS BELOW (TO BE REMOVED BEFORE TUTORIAL)
-
-# ## AIF360
-
-# ### Effect of Caucasian Ethnicity
-
-# In[82]:
-
-
-eth_cols = [c for c in df.columns if c.startswith("ETHNICITY_")]
-cauc_cols = [c for c in df.columns if c.startswith("ETHNICITY_WHITE")]
-cauc_cols
-
-
-# In[83]:
-
-
-X_eth =  df.loc[:,eth_cols]
-X_eth['caucasian'] = 0
-X_eth.loc[X_eth[cauc_cols].eq(1).any(axis=1), 'caucasian'] = 1
-X_eth = X_eth.drop(eth_cols, axis=1).fillna(0)
-X_eth['caucasian'].describe()
-
-
-# In[84]:
-
-
-X_eth.join(df['length_of_stay']).groupby('caucasian')['length_of_stay'].describe()
-
-
-# In[85]:
-
-
-X_eth_train = X_train.join(X_eth, how='inner')
-X_eth_test = X_test.join(X_eth, how='inner')
-print(X_train.shape, X_eth_train.shape, X_test.shape, X_eth_test.shape)
-
-
-# In[86]:
-
-
-eth_model = XGBClassifier()
-eth_model.fit(X_eth_train, y_train)
-eth_y_pred = eth_model.predict(X_eth_test) 
-
-
-# In[87]:
-
-
-(tutorial_helpers.get_aif360_measures_df(X_eth_test, y_test, y_pred, sensitive_attributes=['caucasian']) ).round(4)
-
-
-# In[88]:
-
-
-eth_scores = tutorial_helpers.get_aif360_measures_df(X_eth_test, y_test, eth_y_pred, sensitive_attributes=['caucasian'])
-eth_scores.round(4)
-
-
-# In[ ]:
-
-
-
-
