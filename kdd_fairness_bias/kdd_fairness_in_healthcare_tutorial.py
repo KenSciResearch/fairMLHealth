@@ -32,9 +32,10 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. Then it generates a simple baseline model to be used throughout the tutorial.
 
-# In[4]:
+# In[28]:
 
 
+from IPython.display import Image
 import numpy as np
 import os
 import pandas as pd
@@ -72,7 +73,7 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 
 
 # ### Data Subset
-# This example uses data from all years of the MIMIC data for patients aged 65 and older. Features include diagnosis and procedure codes categorized through the Clinical Classifications Software system ([HCUP](#hcup)). 
+# The following models use data from all years of the MIMIC-III dataset for patients aged 65 and older. Features include diagnosis and procedure codes categorized through the Clinical Classifications Software system ([HCUP](#hcup)). 
 # 
 # Data are imported at the encounter level, with patient identification dropped. All features are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_"). 
 
@@ -84,9 +85,9 @@ df.head()
 
 
 # ### Baseline Length of Stay Model
-# For this simple model, we'll predict the length of time spent in the ICU.
+# All models in this tutorial predict the length of time spent in the ICU, a.k.a. the "Length of Stay" (LOS). The baseline model will use only the patient's age, their diagnosis, and the use of medical procedures during their stay to predict this value.
 # 
-# Two target variables will be used for the following experiments: 'length_of_stay' and 'los_binary'. For this dataset,  length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean.
+# Two target variables will be used for the following experiments: 'length_of_stay' and 'los_binary'. For this dataset, length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean.
 
 # In[7]:
 
@@ -116,9 +117,7 @@ print('\n', "Baseline ROC_AUC Score:", roc_auc_score(y_test, baseline_y_pred) )
 # ## Part 2: Testing Gender as a Sensitive Attribute <a class="anchor" id="part2"></a>
 # Our first experiment will test the effect of including the sensitive attribute 'GENDER_M'. This attribute is encoded in our data as a boolean attribute, where 0=female and 1=male, since males are assumed to be the privileged group. For the purposes of this experiment all other senstitive attributes and potential proxies will be dropped, such that only gender, diangosis, and procedure codes will be used to make the prediction.
 # 
-# At first we will examine the measurements for each approach on their own. 
-# 
-# We will see that while some measures can be used to analyze the model in isolation, others require comparison against other metrics.
+# First we will examine fairness measurements for a version of this model that includes gender as a feature, before comparing them to similar measurements for the baseline (without gender). We will see that while some measures can be used to analyze a model in isolation, others require comparison against other models.
 
 # In[9]:
 
@@ -143,7 +142,7 @@ print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_
 
 # ### Measuring Fairness via AIF360
 # 
-# AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here
+# AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here.
 # 
 
 # In[11]:
@@ -176,7 +175,7 @@ print(model_scores)
 # > $disparate\_impact\_ratio = P(ŷ =1 | unprivileged) / P(ŷ =1 | privileged)$
 # 
 # Statistical Parity Difference is the difference between the selection rate of the privileged group and that of the unprivileged group. A difference of 0 indicates that the model is fair (it favors neither group).
-# > $statistical\_parity\_difference = selection\_rate_{unprivileged} - selection\_rate_{privileged} $
+# > $statistical\_parity\_difference = selection\_rate(ŷ_{unprivileged}) - selection\_rate(ŷ_{privileged}) $
 
 # In[13]:
 
@@ -187,14 +186,17 @@ model_scores.tail(2)
 
 
 # ### Measures of Equal Odds
-# Average Odds Difference is the average of the difference in FPR and TPR for the unprivileged and privileged groups.
-# > to do: add equation and better explanation 
+# Average Odds Difference measures the average of the difference in FPR and TPR for the unprivileged and privileged groups.
+# > $ average\_odds\_difference = \dfrac{(FPR_{unprivileged} - FPR_{privileged})
+#         + (TPR_{unprivileged} - TPR_{privileged})}{2}$
 # 
 # Average Odds Error is the average of the absolute difference in FPR and TPR for the unprivileged and privileged groups.
-# > to do: add equation and better explanation 
+# > $average\_odds\_error = \dfrac{|FPR_{unprivileged} - FPR_{privileged}|
+#         + |TPR_{unprivileged} - TPR_{privileged}|}{2}$
+#         
+# Equal Opportunity Difference is the difference in recall scores (TPR) between the unprivileged and privileged groups. A difference of 0 indicates that the model is fair.
+# > $equal\_opportunity\_difference =  Recall(ŷ_{unprivileged}) - Recall(ŷ_{privileged})$
 # 
-# Equal Opportunity Difference is the difference in recall scores (TPR) between the unprivileged and privileged groups.
-# > to do: add equation and better explanation 
 
 # In[14]:
 
@@ -207,17 +209,22 @@ model_scores.tail(3)
 
 # ### Measures Of Individual Fairness
 # Consistency scores measure the similarity between a given prediction and the predictions of "like" individuals. In AIF360, the consistency score is calculated as the compliment of the mean distance to the score of the mean nearest neighbhor, using Scikit's Nearest Neighbors algorithm (default 5 neighbors determined by BallTree algorithm).
-# > $ consistency\_score = 1 - |mean_{distance}({5\ nearest\ neighbors})| $
+# > $ consistency\_score = 1 - |mean_{distance}(mean({nearest\ neighbor}) )| $
 # 
 # #### The Generalized Entropy Index and Related Measures
 # The Generalized Entropy (GE) Index is...
-# > to do: add equation and better explanation 
+# > $ GE =  \mathcal{E}(\alpha) = \begin{cases}
+#             \frac{1}{n \alpha (\alpha-1)}\sum_{i=1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1,\\
+#             \frac{1}{n}\sum_{i=1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha=1,\\
+#             -\frac{1}{n}\sum_{i=1}^n\ln\frac{b_{i}}{\mu},& \alpha=0.
+#         \end{cases}
+#         $
 # 
 # Generalized Entropy Error = Calculates the GE of the set of errors, i.e. 1 + (ŷ == pos_label) - (y == pos_label) 
-# > to do: format equation and add better explanation 
+# > $ GE(Error) = b_i = \hat{y}_i - y_i + 1 $
 # 
 # Between Group Generalized Entropy Error = Calculates the GE of the set of mean errors for the two groups (privileged error & unprivileged error), weighted by the number of predictions in each group
-# > to do: add equation and better explanation 
+# > $ GE(Error_{group}) =  GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $
 
 # In[15]:
 
@@ -231,8 +238,7 @@ model_scores.tail(3)
 
 # ## Part 3: Comparing Against a Second Model - Evaluating Unawareness <a class="anchor" id="part3"></a>
 # 
-# To demonstrate the change in model scores relative to the use of a sensitive attribute, this section generates a new, though similar model with the sensitive attribute removed. As shown below...
-# > to do: add takeaway
+# To demonstrate the change in model scores relative to the use of a sensitive attribute, this section generates a new, though similar model with the sensitive attribute removed. As shown below, for this sensitive attribute, there is no observed difference in scores with the exclusion of the sensitive attribute.
 # 
 # Note: Since we have already discussed the individual measures, a helper function will be used to save space.
 
@@ -246,11 +252,12 @@ comparison = model_scores.rename(columns={'value':'gender_score'}
 comparison.round(4)
 
 
+# 
+# > to do: add peformance functions like roc_auc_score_group_summary from AIF360 to process above
+
 # ## Part 4: Testing Other Sensitive Attributes
 # 
-# Our next experiment will test the presence of bias relative to a patient\'s language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baselie data.
-# 
-# > to do: fix broken HTML anchor
+# Our next experiment will test the presence of bias relative to a patient\'s language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 
 # In[18]:
 
@@ -265,7 +272,7 @@ X_lang = X_lang.drop(lang_cols, axis=1).fillna(0)
 X_lang.join(df['length_of_stay']).groupby('LANG_ENGL')['length_of_stay'].describe().round(4)
 
 
-# In[19]:
+# In[38]:
 
 
 # Here we train the model
@@ -274,28 +281,24 @@ X_lang_test = X_test.join(X_lang, how='inner')
 lang_model = XGBClassifier()
 lang_model.fit(X_lang_train, y_train)
 y_pred_lang = lang_model.predict(X_lang_test)
-#
 print('\n', "ROC_AUC Score with Gender Included:", roc_auc_score(y_test, y_pred_lang) )
 
 
-# By comparing the results with and without the sensitivie attribute ...
-# > to do: add explanation
+# Again, by comparing the results with and without the sensitivie attribute we can better demonstrate the effect that the attribute has on the fairness of the model. In this example we see
 
-# In[20]:
+# In[50]:
 
 
+print("Measure values with feature included:")
 lang_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, y_pred_lang, sensitive_attributes=['LANG_ENGL'])
-lang_scores.round(4).head(2)
-
-
-# In[21]:
-
-
+print(lang_scores.round(4).head(3))
+print("\n", "Measure values with feature removed:")
 lang_ko_scores = tutorial_helpers.get_aif360_measures_df(X_lang_test, y_test, baseline_y_pred, sensitive_attributes=['LANG_ENGL']) 
-lang_ko_scores.round(4).head(2)
+print(lang_ko_scores.round(4).head(3))
 
 
 # ### Comparing All Four Models Against Each Other
+# As shown below
 
 # In[22]:
 
@@ -308,11 +311,13 @@ full_comparison.round(4)
 
 # ## Part 5: Comparison to FairLearn <a class="anchor" id="part5"></a>
 # 
-# > to do: "FairLearn is another library..."
-# 
-# > to do: add comparison table
-# 
-# > to do: add peformance functions like roc_auc_score_group_summary from AIF360 to process above
+# Next, some of the same metrics will be demonstrated using Microsoft's FairLearn library. Although both APIs are similar and the measures built into FairLearn are not as comprehensive as those of AIF360, some users may find FairLearn's documentation style to be more accessible. A table comparing the measures available in each library is shown below. 
+
+# In[35]:
+
+
+Image(url="img/library_measure_comparison.png", width=500)
+
 
 # In[23]:
 
@@ -331,7 +336,7 @@ print("AUC difference", roc_auc_score_group_summary(y_test, y_prob_lang, sensiti
 
 
 # ### Balanced Error Rate Difference
-# Similar to the Equal Opportunity Difference measured by AIF360, the Balanced Error Rate Difference offered by FairLearn calculates the difference in accuracy score between the 
+# Similar to the Equal Opportunity Difference measured by AIF360, the Balanced Error Rate Difference offered by FairLearn calculates the difference in accuracy score between the unprivileged and privileged group.
 
 # In[24]:
 
@@ -345,8 +350,8 @@ print("Equalized odds difference",
       
 
 
-# # Summary
-# > to do: "In this tutorial..."
+# ## Summary
+# This tutorial introduced multiple measures of ML fairness in the context of a healthcare model using the AIF360 and FairLearn Python libraries. A subset of the MIMIC-III database was used to generate a series of simple Length of Stay (LOS) models. It was shown that while the inclusion of a sensitive feature can significantly affect a model's bias as it relates to that feature, this is not always the case. 
 
 # # References 
 # 
@@ -355,19 +360,13 @@ print("Equalized odds difference",
 # <a id="hcup"></a>
 # HCUP https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp
 
-# In[ ]:
+# In[37]:
 
 
+Image(url="library_algorithm_comparison.png", width=500)
 
 
-
-# In[ ]:
-
-
-
-
-
-# # TEST CELLS (TO BE REMOVED BEFORE TUTORIAL)
+# # TEST CELLS BELOW (TO BE REMOVED BEFORE TUTORIAL)
 
 # ## AIF360
 
