@@ -70,7 +70,7 @@ def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, sensitive_attrib
     scores.append( ['between_group_generalized_entropy_error',
                         between_group_generalized_entropy_error(y_test, y_pred,
                                     prot_attr=sensitive_attributes)] )
-    scores.append( ['consistency_score', consistency_score(X_test, y_pred)] )
+    scores.append( ['consistency_score', consistency_score(X_test, y_pred.iloc[:,0])] )
     if y_prob is not None:
         scores.append( ['Between-Group AUC Difference',
                         difference(roc_auc_score, y_test, y_prob,
