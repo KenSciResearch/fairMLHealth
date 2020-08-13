@@ -4,37 +4,37 @@
 # # Tutorial of Fairness Metrics for Healthcare
 # 
 # ### Overview
-# This tutorial introduces methods and libraries for measuring fairness and bias in machine learning models as as they relate to problems in healthcare. After providing some background, it will generate a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/). It will then use variations of that model to demonstrate common measures of "fairness" using [AIF360](http://aif360.mybluemix.net/), a prominent library for this purpose, before comparing AIF360 to another prominent library, [FairLearn](https://fairlearn.github.io/).
+# This tutorial introduces methods and libraries for measuring fairness and bias in machine learning models as as they relate to problems in healthcare. Through the tutorial you will first learn some basic background about fairness and bias in machine learning. You will then generate a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/), which you will use as an example to understand the most prominent fairness measures. You will also gain familiarity with [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/), two of the most comprehensive and flexible Python libraries for measuring and addressing bias in machine learning models.
 #   
 # ### Tutorial Contents
-# [Part 0:] Background
+# [Part 0](#part0) - Background
 # 
-# [Part 1:](#part1) Model Setup
+# [Part 1](#part1) - Model Setup
 # 
-# [Part 2:](#part2) Metrics of Fairness in AIF360
+# [Part 2](#part2) - Metrics of Fairness in AIF360
 # 
-# [Part 3:](#part3) Comparing Against a Second Model - Evaluating Unawarenes
+# [Part 3](#part3) - Comparing Against a Second Model: Evaluating Unawarenes
 # 
-# [Part 4:](#part4) Testing Other Sensitive Attributes
+# [Part 4](#part4) - Testing Other Sensitive Attributes
 # 
-# [Part 5:](#part5) Comparison to FairLearn
+# [Part 5](#part5) - Comparison to FairLearn
 # 
-# ### Requirements
+# ### Tutorial Requirements
 # This tutorial assumes basic knowledge of machine learning implementation in Python. Before starting, please install [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/). Also, ensure that you have installed the Pandas, Numpy, Scikit, and XGBOOST libraries.
 # 
 # The tutorial also uses data from the MIMIC III Critical Care database, a freely accessible source of Electronic Health Records from Beth Israel Deaconess Medical Center in Boston. To download the MIMIC III data, please use this link: [Access to MIMIC III](https://mimic.physionet.org/gettingstarted/access/). Please save the data with the default directory name ("MIMIC"). No further action is required beyond remembering the download location: you do not need to unzip any files.
 
-# ## Part 0: Background 
+# ## Part 0: Background <a class="anchor" id="part0"></a>
 # SECTIONS TO BE INCLUDED:
 # * what is fairness
-# * metrics for fairness
+# * metrics for fairness (Explain Unawareness)
 # * list of measures that will be included in this notebook
 
 # ## Part 1: Model Setup <a class="anchor" id="part1"></a>
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. Then it generates a simple baseline model to be used throughout the tutorial.
 
-# In[2]:
+# In[7]:
 
 
 # Standard Libraries
@@ -68,7 +68,7 @@ import tutorial_helpers
 # 
 # Example: path_to_mimic_data_folder = "~/data/MIMIC"
 
-# In[3]:
+# In[8]:
 
 
 # path_to_mimic_data_folder = "[path to your downloaded data folder]"
@@ -78,11 +78,31 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # ### Data Subset
 # Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
 
-# In[4]:
+# In[9]:
 
 
 df = tutorial_helpers.load_example_data(path_to_mimic_data_folder) 
 df.head()
+
+
+# In[35]:
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+g = sns.distplot(df['length_of_stay'])
+g.set_title('LOS Distribution - Population Level')
+plt.show()
+display(df[['length_of_stay']].describe().transpose().round(4))
+
+for a in df.AGE.unique():
+    f = sns.distplot(df.loc[df.AGE.eq(a), 'length_of_stay'], label=a, hist=False)
+f.set_title('LOS Distribution by Age')
+f.legend(title="AGE")
+plt.show()
+display(df.groupby('AGE')['length_of_stay'].describe().round(4))
 
 
 # ### Baseline Length of Stay Model
@@ -90,28 +110,29 @@ df.head()
 # 
 # Two target variables will be used in the following experiments: 'length_of_stay' and 'los_binary'. For this dataset, length_of_stay is, of course, the true value of the length of the patient's stay in days. The los_binary variable is a binary variable indicating whether the admission resulted in a length of stay either < or >= the mean. We will generate variable below, and then generate our baseline model.
 
-# In[5]:
+# In[28]:
 
 
 # Generate a binary target flagging whether an observation's length_of_stay value is above or below the mean. 
 mean_val=df['length_of_stay'].mean()
 df['los_binary'] = df['length_of_stay'].apply(lambda x: 0 if x < mean_val else 1)
-df[['length_of_stay', 'los_binary']].describe().round(4)
+df[['length_of_stay', 'los_binary']].describe().transpose().round(4)
 
 
-# In[49]:
+# In[39]:
 
 
 # Subset and Split Data
 X = df.loc[:,['ADMIT_ID']+[c for c in df.columns if (c.startswith('AGE') or c.startswith('DIAGNOSIS_') or c.startswith('PROCEDURE_'))]]
 y = df.loc[:, ['los_binary']]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.33, random_state=42)
+
 # Train Model
 baseline_model = XGBClassifier()
 baseline_model.fit(X_train, y_train.iloc[:,0])
 baseline_y_pred = baseline_model.predict(X_test)
 baseline_y_prob = baseline_model.predict_proba(X_test)[:, 1]
-#
+
 print('\n', "Baseline ROC_AUC Score:", sk_metrics.roc_auc_score(y_test.iloc[:,0], baseline_y_prob) )
 
 
@@ -120,32 +141,34 @@ print('\n', "Baseline ROC_AUC Score:", sk_metrics.roc_auc_score(y_test.iloc[:,0]
 # 
 # First we will examine fairness measurements for a version of this model that includes gender as a feature, before comparing them to similar measurements for the baseline (without gender). We will see that while some measures can be used to analyze a model in isolation, others require comparison against other models.
 
-# In[7]:
+# In[43]:
 
 
 df.groupby('GENDER_M')['length_of_stay'].describe().round(4)
 
 
-# In[50]:
+# In[55]:
 
 
 # Update Split Data to Include Gender as a Feature
 X_train_gender = X_train.join(df[['GENDER_M']], how='inner')
 X_test_gender = X_test.join(df[['GENDER_M']], how='inner')
+
 # Train New Model with Gender Feature
 gender_model = XGBClassifier()
 gender_model.fit(X_train_gender, y_train.iloc[:,0])
 y_pred_gender = gender_model.predict(X_test_gender)
-#
-print('\n', "ROC_AUC Score with Gender Included:", sk_metrics.roc_auc_score(y_test.iloc[:,0], y_pred_gender) )
+y_prob_gender = gender_model.predict_proba(X_test_gender)
+
+print('\n', "ROC_AUC Score with Gender Included:", sk_metrics.roc_auc_score(y_test.iloc[:,0], y_prob_gender[:,1]) )
 
 
 # ### Measuring Fairness via AIF360
 # 
-# AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here.
+# AIF360 requires the sensitive attribute to be in the same dataframe (or 2-D array) as the target variable (both the ground truth and the prediction), so we add that here. Dataframes that have been formatted for the AIF360 Scikit API will be given the suffix "_aif".
 # 
 
-# In[9]:
+# In[49]:
 
 
 y_test_aif = pd.concat([X_test_gender['GENDER_M'], y_test], axis=1).set_index('GENDER_M')
@@ -160,7 +183,7 @@ y_pred_aif.columns = y_test_aif.columns
 # The Selection Rate is the average predicted value. For a binary prediction problem it equates to the probability of prediction for the positive class ("the probability of selection").
 # > $selection\_rate = \sum_{i=0}^N(ŷ_i)/N$
 
-# In[10]:
+# In[56]:
 
 
 print("base_rate:", 
@@ -177,9 +200,11 @@ print('selection_rate:',
 # > $disparate\_impact\_ratio = \dfrac{P(ŷ =1 | unprivileged)}{P(ŷ =1 | privileged)} = \dfrac{selection\_rate(ŷ_{unprivileged})}{selection\_rate(ŷ_{privileged})}$
 # 
 # Statistical Parity Difference is the difference in the probability of prediction between the two groups. A difference of 0 indicates that the model is fair relative to the sensitive attribute (it favors neither group).
-# > $statistical\_parity\_difference = P(ŷ =1 | unprivileged) - P(ŷ =1 | privileged) = selection\_rate(ŷ_{unprivileged}) - selection\_rate(ŷ_{privileged}) $
+# > $statistical\_parity\_difference = P(ŷ =1 | unprivileged) - P(ŷ =1 | privileged) $
+# 
+# See also [Barocas (2016)](#barocas2016_ref)
 
-# In[55]:
+# In[57]:
 
 
 print('disparate_impact_ratio', '\t', 
@@ -202,10 +227,11 @@ print('statistical_parity_difference', '\t',
 # Equal Opportunity Difference is the difference in recall scores (TPR) between the unprivileged and privileged groups. A difference of 0 indicates that the model is fair relative to the sensitive attribute.
 # > $equal\_opportunity\_difference =  Recall(ŷ_{unprivileged}) - Recall(ŷ_{privileged})$
 # 
+# See also [Zafar et. al. (2017)](#zafar2017_ref)
 # 
 # > to do: add range for interpretation (eg. "if positive, indicates that the privileged group is favored"
 
-# In[12]:
+# In[58]:
 
 
 print('average_odds_difference', '\t', 
@@ -218,13 +244,17 @@ print('equal_opportunity_difference', '\t',
      )
 
 
-# ### Custom Measures of Disparate Performance
+# ### Predictive Rate Parity and Disparate Performance
 # <a id='aif_difference_func'></a>
-# Both of the libraries we will explore have added features to calculate the between-group difference in performance. In AIF360, this is facilitated by a flexible "difference" method that accepts an arbitrary scoring function as an argument. Here we use the function to demonstrate the Between-Group AUC Difference and Between-Group Balanced Accuracy Difference.
+# Both of the libraries we will explore have added features to calculate custom, between-group differences in performance. An example use case 
+# 
+# In AIF360, this is facilitated by a flexible "difference" method that accepts an arbitrary scoring function as an argument. Here we use the function to demonstrate the Between-Group AUC Difference and Between-Group Balanced Accuracy Difference.
 # 
 # AIF360 also contains a "ratio" function of similar purpose. Here it's demonstrated with two arbitrary functions.
+# 
+# See also [Zafar et. al. (2017)](#zafar2017_ref)
 
-# In[60]:
+# In[59]:
 
 
 # Examples Using the Difference Function
@@ -235,7 +265,10 @@ print('Between-Group AUC Difference', '\t',
 print('Between-Group Balanced Accuracy Difference', '\t',
           difference(sk_metrics.balanced_accuracy_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1)
      )
+
 # Examples Using the Ratio Function
+print('Predictive Parity Difference',
+     )
 print('Selection Rate Ratio (Disparate Impact Ratio)', 
         ratio(selection_rate, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
      )
@@ -263,9 +296,10 @@ print('Recall Ratio',
 # Between Group Generalized Entropy Error = Calculates the GE of the set of mean errors for the two groups (privileged error & unprivileged error), weighted by the number of predictions in each group
 # > $ GE(Error_{group}) =  GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $
 # 
+# See also [Dwork (2012)](#dwork2012_ref)
 # > to do: refine this text and add interpretation
 
-# In[14]:
+# In[60]:
 
 
 print('consistency_score', '\t',
@@ -286,7 +320,7 @@ print('between_group_generalized_entropy_error', '\t',
 # 
 # This tutorial includes a helper function which returns all of the previously-seen measures in a convenient pandas dataframe. Since we have already discussed the measures individuallly, we will use this function  to save space for the rest of the tutorial. 
 
-# In[45]:
+# In[61]:
 
 
 # Use Tutorial Helper Function to Generate Dataframe of Measure Values for Gender-Included Model, Relative to Patient Gender
@@ -305,7 +339,7 @@ comparison.round(4)
 # 
 # Our next experiment will test the presence of bias relative to a patient\'s language, assuming that there is a bias toward individuals who speak English. As above, we will add a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 
-# In[17]:
+# In[62]:
 
 
 # Update Split Data to Include Language as a Feature
@@ -320,7 +354,7 @@ X_lang = X_lang.drop(lang_cols, axis=1).fillna(0)
 X_lang.join(df['length_of_stay']).groupby('LANG_ENGL')['length_of_stay'].describe().round(4)
 
 
-# In[41]:
+# In[63]:
 
 
 # Train New Model with Language Feature
@@ -334,7 +368,7 @@ y_prob_lang = lang_model.predict_proba(X_lang_test)
 
 # Again, by comparing the results with and without the sensitivie attribute we can better demonstrate the effect that the attribute has on the fairness of the model. In this example we see
 
-# In[35]:
+# In[64]:
 
 
 # Generate Dataframe of  Measure Values for Language-Inclusive Model, Relative to Patient Language
@@ -349,13 +383,16 @@ print(lang_ko_scores.round(4).head(3))
 
 
 # ### Comparing All Four Models Against Each Other
-# As shown below, exclusion of the LANG_ENGL feature has a more significant impact on the fairness of the model than does exclusion of GENDER_M (relative to their specific biases). Moreover, using the 80/20 rule we can see that inclusion of LANG_ENGL leads to what can be considered a "significant" bias, as shown by the Disparate Impact Ratio. In this case, predictions for those individuals who do not speak English are significantly more likely to be above the mean, even though this difference is not [currently] reflected in the ground truth.
+# The table below presents the measure values of all four models for comparison. As the table shows,  [[Conclusion based on comparison of models]]
 # 
 # > to do: validate this conclusion after fixing the issue with LOS <- currently the average LOS in the dataset is still higher than expected
+# 
+# > to do: find a new feature that shows a greater difference in fairness scores
 
-# In[20]:
+# In[65]:
 
 
+# Merge Results to Display a Full Comparison
 full_comparison = comparison.merge(lang_scores.rename(columns={'value':'lang_score'})
                             ).merge(lang_ko_scores.rename(columns={'value':'lang_score (feature removed)'})
                             )
@@ -366,16 +403,16 @@ full_comparison.round(4)
 # 
 # The FairLearn and AIF360 APIs for Scikit and XGBOOST models are very similar in user experience, and contain a similar set of measures as shown in the table below. Although the set of measures provided by AIF360 is more comprehensive, FairLearn does provide some measures that are unique. First we'll look at FairLearn measures that are also found in AIF360 before explaining the measures that are distinct. 
 
-# In[21]:
+# In[67]:
 
 
-Image(url="img/[path to image].png", width=500)
+tutorial_helpers.print_table_of_measures()
 
 
 # In[25]:
 
 
-## Display Example Results for Measures that are Found in AIF360
+# Display Example Results for Measures that are Found in AIF360
 print("Selection rate", 
       selection_rate(y_test, y_pred_lang) )
 print("Demographic parity difference", 
@@ -420,13 +457,27 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 # This tutorial introduced multiple measures of ML fairness in the context of a healthcare model using the AIF360 and FairLearn Python libraries. A subset of the MIMIC-III database was used to generate a series of simple Length of Stay (LOS) models. It was shown that while the inclusion of a sensitive feature can significantly affect a model's bias as it relates to that feature, this is not always the case. 
 
 # # References 
-# * AI Fairness 360: An extensible toolkit for detecting, understanding, and mitigating unwanted algorithmic bias. Bellamy RK, Dey K, Hind M, Hoffman SC, Houde S, Kannan K, ... & Nagar S (2018). arXiv Preprint. [arXiv:1810.01943.](https://arxiv.org/abs/1810.01943)
+# <a id="barocas2016_ref"></a>
+# * Barocas S, & Selbst AD (2016). Big data's disparate impact. Calif. L. Rev., 104, 671. Available at [http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf](http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf) 
+# 
+# * Bellamy RK, Dey K, Hind M, Hoffman SC, Houde S, Kannan K, ... & Nagar S (2018). AI Fairness 360: An extensible toolkit for detecting, understanding, and mitigating unwanted algorithmic bias. arXiv Preprint. [arXiv:1810.01943.](https://arxiv.org/abs/1810.01943)
 # > See Also [AIF360 Documentation](http://aif360.mybluemix.net/) 
 # 
-# * HCUP CCS. Healthcare Cost and Utilization Project (HCUP) (2017). Agency for Healthcare Research and Quality, Rockville, MD. Available at [www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)
-# 
-# * Fairlearn: A toolkit for assessing and improving fairness in AI. Bird S, Dudík M,  Wallach H,  Walker K (2020). Microsoft Research. Available at [https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf](https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf)
+# * Bird S, Dudík M,  Wallach H,  & Walker K (2020). Fairlearn: A toolkit for assessing and improving fairness in AI. Microsoft Research. Available at [https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf](https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf)
 # > See Also [FairLearn Reference](https://fairlearn.github.io/).
 # 
-# * MIMIC-III, a freely accessible critical care database. Johnson AEW, Pollard TJ, Shen L, Lehman L, Feng M, Ghassemi M, Moody B, Szolovits P, Celi LA, and Mark RG. Scientific Data (2016). DOI: 10.1038/sdata.2016.35. Available at [http://www.nature.com/articles/sdata201635](http://www.nature.com/articles/sdata201635)
+# <a id="dwork2012_ref"></a>
+# * Dwork, C., Hardt, M., Pitassi, T., Reingold, O., & Zemel, R. (2012, January). Fairness through awareness. In Proceedings of the 3rd innovations in theoretical computer science conference (pp. 214-226). Available at [https://arxiv.org/pdf/1104.3913.pdf](https://arxiv.org/pdf/1104.3913.pdf)
 # 
+# * Healthcare Cost and Utilization Project (HCUP) (2017, March). HCUP CCS. Agency for Healthcare Research and Quality, Rockville, MD. Available at [www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)
+# 
+# * Johnson AEW, Pollard TJ, Shen L, Lehman L, Feng M, Ghassemi M, Moody B, Szolovits P, Celi LA, & Mark RG (2016). Scientific Data. MIMIC-III, a freely accessible critical care database. DOI: 10.1038/sdata.2016.35. Available at [http://www.nature.com/articles/sdata201635](http://www.nature.com/articles/sdata201635)
+#     
+# <a id="zafar2017_ref"></a>
+# * Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).  https://arxiv.org/pdf/1610.08452.pdf
+
+# In[ ]:
+
+
+
+

@@ -28,7 +28,7 @@ def custom_round(col, base=5, sig_dec=0):
 
 def load_icd_ccs_xwalk(code_type):
     """ Returns dataframe containing an ICD-9 to CCS crosswalk
-    
+
         Args:
             code_type (str): key for file location (one of 'dx' or 'px')
     """
@@ -39,7 +39,7 @@ def load_icd_ccs_xwalk(code_type):
     s = requests.get(urls[code_type]).content
     df = pd.read_csv(io.StringIO(s.decode('utf-8')))
     df = df.loc[:,['icd', 'ccs', 'icddesc']
-            ].rename(columns={'icd':'ICD9_CODE', 'ccs':f'{code_type}_CCS', 
+            ].rename(columns={'icd':'ICD9_CODE', 'ccs':f'{code_type}_CCS',
                               'icddesc':f'{code_type}_ICD_DESC'})
     return(df)
 
@@ -51,8 +51,8 @@ class mimic_loader():
         self.output_file = os.path.expanduser(data_file)
         mimic_dir = os.path.dirname(self.output_file)
         if mimic_dir != "":
-            assert os.path.exists(self.data_dir), (
-                f"Invalid mimic data directory passed: {self.data_dir}")
+            assert os.path.exists(mimic_dir), (
+                f"Invalid mimic data directory passed: {mimic_dir}")
         self.data_dir = os.path.join(mimic_dir, 'zipped_files')
         assert os.path.exists(self.data_dir), (
             "MIMIC directory must contain the folder \'zipped_files\',",
@@ -64,6 +64,7 @@ class mimic_loader():
         adm_data = self.load_admit_dscg_data()
         dx_data = self.load_dxpx_data('dx')
         px_data = self.load_dxpx_data('px')
+        import pdb; pdb.set_trace()
         df = adm_data.merge(dx_data, on='HADM_ID', how='inner'
                     ).merge(px_data, on='HADM_ID', how='inner')
         # Test dataset before saving
@@ -101,22 +102,22 @@ class mimic_loader():
             Note: drops data for patients with  age>120 y.o. or age<0
         """
         admissions = self.__load_mimic_data("ax")
-        # Load patient information and use it to calculate age
-        dob = self.__load_mimic_data('pt')[['SUBJECT_ID', 'DOB', 'GENDER']]
+        # Calculate AGE
         adm = admissions.groupby(['SUBJECT_ID', 'HADM_ID'], as_index=False
-                        )['ADMITTIME'].min()
-        df = dob.merge(adm, on='SUBJECT_ID')
-        df['DOB'] = pd.to_datetime(df['DOB']).dt.date
-        df['ADMITTIME'] = pd.to_datetime(df['ADMITTIME']).dt.date
-        df['AGE'] = (df['ADMITTIME'] - df['DOB'])
-        df['AGE'] = (df['AGE']).apply(lambda t: t.days)/365
-        df.loc[df['AGE'].ge(5),'AGE'] = custom_round(df['AGE'], base=5)
-        df.loc[df['AGE'].ge(1) & df['AGE'].lt(5),'AGE'] = df['AGE'].round()
-        df.loc[df['AGE'].lt(1), 'AGE'] = 0
-        df = df.loc[df['AGE'].le(120) & df['AGE'].ge(0), :]
-        #
-        adm_data = admissions.merge(df, how='inner', on='HADM_ID')
-        adm_data = adm_data[['HADM_ID', 'AGE', 'GENDER', 'INSURANCE', 
+                                 )['ADMITTIME'].min()
+        dob = self.__load_mimic_data('pt')[['SUBJECT_ID', 'DOB', 'GENDER']]
+        age_df = dob.merge(adm, on='SUBJECT_ID')
+        age_df['DOB'] = pd.to_datetime(age_df['DOB']).dt.date
+        age_df['ADMITTIME'] = pd.to_datetime(age_df['ADMITTIME']).dt.date
+        age_df['AGE'] = (age_df['ADMITTIME'] - age_df['DOB'])
+        age_df['AGE'] = (age_df['AGE']).apply(lambda t: t.days)/365
+        age_df.loc[age_df['AGE'].ge(5),'AGE'] = custom_round(age_df['AGE'], base=5)
+        age_df.loc[age_df['AGE'].ge(1) & age_df['AGE'].lt(5),'AGE'] = age_df['AGE'].round()
+        age_df.loc[age_df['AGE'].lt(1), 'AGE'] = 0
+        age_df = age_df.loc[age_df['AGE'].le(120) & age_df['AGE'].ge(0), :]
+        # Attach AGE to admission information
+        adm_data = admissions.merge(age_df, how='inner', on='HADM_ID')
+        adm_data = adm_data[['HADM_ID', 'AGE', 'GENDER', 'INSURANCE',
                          'MARITAL_STATUS', 'ETHNICITY', 'LANGUAGE',
                         'RELIGION']]
         # Calculate and Attach Length of Stay
@@ -131,7 +132,6 @@ class mimic_loader():
         assert adm_data.notnull().any().any()
         assert not adm_data['HADM_ID'].duplicated().any()
         # Reformat data to one-hot encode
-        #age = pd.get_dummies(adm_data.AGE, prefix='AGE')
         gender = pd.get_dummies(adm_data.GENDER, prefix='GENDER')[['GENDER_M']]
         eth = pd.get_dummies(adm_data.ETHNICITY, prefix='ETHNICITY')
         lang = pd.get_dummies(adm_data.LANGUAGE, prefix='LANGUAGE')
@@ -140,7 +140,7 @@ class mimic_loader():
         relig = pd.get_dummies(adm_data.RELIGION, prefix='RELIGION')
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
         output = id_df.join(gender).join(eth).join(lang).join(ins
-                      ).join(married).join(relig) #.join(age)
+                      ).join(married).join(relig) 
         assert not output[f'HADM_ID'].isnull().any()
         assert not output[f'HADM_ID'].duplicated().any()
         return output
@@ -182,5 +182,5 @@ class mimic_loader():
 
 
 if __name__ == "__main__":
-    fmd = mimic_loader("~/data/MIMIC/kdd_tutorial_mimic_data.csv")
+    fmd = mimic_loader("~/data/MIMIC/test_data.csv")
     fmd.generate_tutorial_data()
