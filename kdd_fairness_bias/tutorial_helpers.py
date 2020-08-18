@@ -117,28 +117,28 @@ def load_example_data(mimic_dirpath):
     return(df)
 
 
-def print_table_of_measures():
+def print_table_of_measure_availability():
     ''' Displays a table comparing the measures available in AIF360 vs FairLearn
     '''
     tb_dict = {
-        ("General Measures","Base Rate"):["-", "Y", "-"],
-        ("General Measures","Selection Rate"):["-", "Y","Y"],
+        ("General Measures","Base Rate"):["Y", "-"],
+        ("General Measures","Selection Rate"):["Y","Y"],
 
-        ("Group Fairness Measures","Demographic (Statistical) Parity Difference"):["A difference of 0 indicates fairness, (-) favors privileged group, (+) favors unprivileged group", "Y","Y"],
-        ("Group Fairness Measures","Disparate Impact Ratio (Demographic Parity Ratio)"):["A difference of 1 indicates fairness, < 1 favors privileged group, > 1 favors unprivileged group", "Y","Y"],
+        ("Group Fairness Measures","Demographic (Statistical) Parity Difference"):["Y","Y"],
+        ("Group Fairness Measures","Disparate Impact Ratio (Demographic Parity Ratio)"):["Y","Y"],
         ("Group Fairness Measures",
-          "Generalized Between-Group Predictive Disparity (eg. difference in ROC)"):["-", "Y","Y"],
-        ("Group Fairness Measures","Average Odds Difference"):["0 indicates fairness, (-) favors privileged group, (+) favors unprivileged group", "Y","-"],
-        ("Group Fairness Measures","Average Odds Error"):["0 indicates fairness, (-) favors privileged group, (+) favors unprivileged group", "Y","-"],
-        ("Group Fairness Measures","Equalized Odds Difference"):["0 indicates fairness, (-) favors privileged group, (+) favors unprivileged group", "-","Y"],
-        ("Group Fairness Measures","Equalized Odds Ratio"):["1 indicates fairness, < 1 favors privileged group, > 1 favors unprivileged group", "-","Y"],
+          "Generalized Between-Group Predictive Disparity (eg. difference in ROC)"):["Y","Y"],
+        ("Group Fairness Measures","Average Odds Difference"):["Y","-"],
+        ("Group Fairness Measures","Average Odds Error"):["Y","-"],
+        ("Group Fairness Measures","Equalized Odds Difference"):["-","Y"],
+        ("Group Fairness Measures","Equalized Odds Ratio"):["-","Y"],
         
-        ("Individual Fairness Measures","Consistency Score"):["0 indicates fairness, (+) indicates unfairness","Y","-"],
-        ("Individual Fairness Measures","Generalized Entropy Index"):["-","Y","-"],
-        ("Individual Fairness Measures","Between-Group Generalized Entropy Error"):["0 indicates fairness, (+) indicates unfairness", "Y","-"],
-        ("Individual Fairness Measures","Generalized Entropy Error"):["0 indicates fairness, (+) indicates unfairness", "Y","-"]
+        ("Individual Fairness Measures","Consistency Score"):["Y","-"],
+        ("Individual Fairness Measures","Generalized Entropy Index"):["Y","-"],
+        ("Individual Fairness Measures","Between-Group Generalized Entropy Error"):["Y","-"],
+        ("Individual Fairness Measures","Generalized Entropy Error"):["Y","-"]
     }
-    display(pd.DataFrame(tb_dict, index=["Interpretation", "AIF360","FairLearn"]).transpose())
+    display(pd.DataFrame(tb_dict, index=["AIF360","FairLearn"]).transpose())
 
 
 def print_table_of_algorithms():

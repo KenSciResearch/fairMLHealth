@@ -210,14 +210,13 @@ print('Selection rate for the privileged group =', y_pred_aif.loc[~females, 'lon
 
 
 # ### Measures of Demographic Parity
-# A model has demographic parity if the predicted positve rates (selection rates) are approximately the same for all sensitive attribute groups. Two common measures for demographic parity are the Disparate Impact Ratio and the Statistical Parity Difference.
-# 
-# The *Disparate Impact Ratio* is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group. A ratio of 1 indicates that the model is fair relative to the sensitive attribute (it favors neither the privileged nor the unprivileged group).
-# > $disparate\_impact\_ratio = \dfrac{P(ŷ =1 | unprivileged)}{P(ŷ =1 | privileged)} = \dfrac{selection\_rate(ŷ_{unprivileged})}{selection\_rate(ŷ_{privileged})}$
+# A model has demographic parity if the predicted positve rates (selection rates) are approximately the same for all sensitive attribute groups. Two common measures for demographic parity are the Statistical Parity Difference and the Disparate Impact Ratio.
 # 
 # The *Statistical Parity Difference* is the difference in the probability of prediction between the two groups. A difference of 0 indicates that the model is fair relative to the sensitive attribute (it favors neither the privileged nor the unprivileged group).
 # > $statistical\_parity\_difference = P(ŷ =1 | unprivileged) - P(ŷ =1 | privileged) $
 # 
+# The *Disparate Impact Ratio* is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group. A ratio of 1 indicates that the model is fair relative to the sensitive attribute (it favors neither the privileged nor the unprivileged group).
+# > $disparate\_impact\_ratio = \dfrac{P(ŷ =1 | unprivileged)}{P(ŷ =1 | privileged)} = \dfrac{selection\_rate(ŷ_{unprivileged})}{selection\_rate(ŷ_{privileged})}$
 # 
 
 # In[248]:
@@ -331,6 +330,24 @@ print('\n', 'between_group_generalized_entropy_error',
      )
 
 
+# ### Quick Reference for Fairness Measures
+# | Metric | Measure | <div style="width:400px" align="center">Definition</div>  | Interpretation |
+# |----|----|----|----|
+# | **General Measures** | **Base Rate** | $\sum_{i=0}^N(y_i)/N$  |- |
+# | | **Selection Rate** | $\sum_{i=0}^N(ŷ_i)/N$ | - |
+# | **Group Fairness Measures** | **Demographic (Statistical) Parity Difference** | $P(ŷ =1 | unprivileged) - P(ŷ =1 | privileged) $| 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
+# | | **Disparate Impact Ratio (Demographic Parity Ratio)** | $\dfrac{P(ŷ =1 | unprivileged)}{P(ŷ =1 | privileged)} = \dfrac{selection\_rate(ŷ_{unprivileged})}{selection\_rate(ŷ_{privileged})}$ | 1 indicates fairness <br>  < 1 favors privileged group <br>  > 1 favors unprivileged group |
+# | | **Generalized Between-Group Predictive Disparity (eg. difference in ROC)** | - |
+# | | **Average Odds Difference** | $\dfrac{(FPR_{unprivileged} - FPR_{privileged}) + (TPR_{unprivileged} - TPR_{privileged})}{2}$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
+# | | **Average Odds Error** | $\dfrac{|FPR_{unprivileged} - FPR_{privileged}| + |TPR_{unprivileged} - TPR_{privileged}|}{2}$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
+# | | **Equal Opportunity Difference** | $Recall(ŷ_{unprivileged}) - Recall(ŷ_{privileged})$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
+# | | **Equalized Odds Difference** | $max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
+# | | **Equalized Odds Ratio**** | $min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$ | 1 indicates fairness <br>  < 1 favors privileged group <br>  > 1 favors unprivileged group |
+# | **Individual Fairness Measures** | **Consistency Score** | $1 - |mean_{distance}(mean({nearest\ neighbor}) )$ | 0 indicates fairness<br>(+) indicates unfairness |
+# | | **Generalized Entropy Index** | - |
+# | | **Between-Group Generalized Entropy Error** | $GE(\hat{y}_i - y_i + 1) $ | 0 indicates fairness<br>(+) indicates unfairness |
+# | | **Generalized Entropy Error** | $GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $ | 0 indicates fairness<br>(+) indicates unfairness |
+
 # ## Part 3 - Comparing Against a Second Model <a class="anchor" id="part3"></a>
 # ### Evaluating Unawareness 
 # A model is unaware relative to a sensitive attribute so long as that attribute is not included in the model. 
@@ -338,7 +355,6 @@ print('\n', 'between_group_generalized_entropy_error',
 # To facilitate comparison between our GENDER_M-inclusive model and the baseline, this tutorial includes a helper function which returns all of the previously seen measures in a convenient pandas dataframe. This function will be used to save space for the remainder of the tutorial. 
 # 
 # Below we generate a table conatining fairness scores for our LOS models. The scores we just generated are constrasted against gender-relative scores for the baseline model, which importantly does not contain GENDER_M as an attribute. As the table shows, removal of the gender attribute produces little change in measure values. 
-# 
 
 # In[254]:
 
@@ -418,12 +434,12 @@ full_comparison.round(4)
 # 
 # The FairLearn and AIF360 APIs for Scikit and XGBOOST models are very similar in user experience, and contain a similar set of measures as shown in the table below. Although the set of measures provided by AIF360 is more comprehensive, FairLearn does provide some measures that are unique. First we'll look at FairLearn measures that are also found in AIF360 before explaining the measures that are distinct. 
 
-# In[277]:
+# In[4]:
 
 
 # Print Summary Table of Available Measures
 print("Summary Table of Available Measures")
-tutorial_helpers.print_table_of_measures()
+tutorial_helpers.print_table_of_measure_availability()
 
 
 # In[25]:
