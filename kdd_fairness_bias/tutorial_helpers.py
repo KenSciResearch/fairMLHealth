@@ -50,45 +50,54 @@ def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, sensitive_attrib
                             y_prob], axis=1).set_index(sensitive_attributes)
     y_pred.columns = y_test.columns
     y_prob.columns = y_test.columns
-    #
-    scores = [ ['overall selection_rate', selection_rate(y_test, y_pred)] ]
-    scores.append( ['disparate_impact_ratio',
-                        disparate_impact_ratio(y_test, y_pred,
-                                    prot_attr=sensitive_attributes)] )
-    scores.append( ['statistical_parity_difference',
+    # Start dataframe as lists of performance measures
+    scores = [["* General Performance Measures *", None],]
+    scores.append( ['Selection Rate', selection_rate(y_test, y_pred)] )
+    if y_prob is not None:
+        scores.append( ['ROC Score', roc_auc_score(y_test, y_prob) ])
+        scores.append( ['Accuracy Score', accuracy_score(y_test, y_pred) ])
+        scores.append( ['Precision Score', precision_score(y_test, y_pred) ])
+    else: 
+        pass
+    # Attach lists of fairness measures
+    scores.append( ["* Fairness Measures *", None]) # spacer to separate general model measures from group-specific ones
+    scores.append( ['Statistical Parity Difference',
                         statistical_parity_difference(y_test, y_pred,
                                     prot_attr=sensitive_attributes)] )
-    #import pdb; pdb.set_trace()
-    scores.append( ['average_odds_difference',
+    scores.append( ['Disparate Impact Ratio',
+                        disparate_impact_ratio(y_test, y_pred,
+                                    prot_attr=sensitive_attributes)] )
+    scores.append( ['Average Odds Difference',
                         average_odds_difference(y_test, y_pred,  
                                     prot_attr=sensitive_attributes)] )
-    scores.append( ['average_odds_error',
+    scores.append( ['Average Odds Error',
                         average_odds_error(y_test, y_pred,
                                      prot_attr=sensitive_attributes)] )
-    scores.append( ['equal_opportunity_difference',
+    scores.append( ['Equal Opportunity Difference',
                         equal_opportunity_difference(y_test, y_pred,
                                     prot_attr=sensitive_attributes)] )
-    scores.append( ['generalized_entropy_error',
-                        generalized_entropy_error(y_test.iloc[:,0], y_pred.iloc[:,0])] )
-    scores.append( ['between_group_generalized_entropy_error',
-                        between_group_generalized_entropy_error(y_test, y_pred,
-                                    prot_attr=sensitive_attributes)] )
-    scores.append( ['consistency_score', consistency_score(X_test, y_pred.iloc[:,0])] )
     if y_prob is not None:
+        scores.append( ['Positive Predictive Parity Difference',
+                          difference(precision_score, y_test, y_pred, 
+                                     prot_attr=sensitive_attributes, priv_group=1)] )
         scores.append( ['Between-Group AUC Difference',
                         difference(roc_auc_score, y_test, y_prob,
                                    prot_attr=sensitive_attributes, priv_group=1)] )
         scores.append( ['Between-Group Balanced Accuracy Difference',
                         difference(balanced_accuracy_score, y_test, y_pred,
                                    prot_attr=sensitive_attributes, priv_group=1)] )
-        scores.append( ['Predictive Parity Difference',
-                          difference(precision_score, y_test, y_pred, 
-                                     prot_attr=sensitive_attributes, priv_group=1)] )
-        scores.append( ['ROC Score', roc_auc_score(y_test, y_prob) ])
-        scores.append( ['Accuracy Score', accuracy_score(y_test, y_pred) ])
+    else:
+        pass
+    scores.append( ['Consistency Score', consistency_score(X_test, y_pred.iloc[:,0])] )
+    scores.append( ['Generalized Entropy Error',
+                        generalized_entropy_error(y_test.iloc[:,0], y_pred.iloc[:,0])] )
+    scores.append( ['Between-Group Generalized Entropy Error',
+                        between_group_generalized_entropy_error(y_test, y_pred,
+                                    prot_attr=sensitive_attributes)] )
     #
-    model_scores =  pd.DataFrame(scores, columns=['measure','value'])
-    return(model_scores)
+    model_scores =  pd.DataFrame(scores, columns=['Measure','Value'])
+    model_scores['Value'] = model_scores.loc[:,'Value'].round(4)
+    return(model_scores.fillna(""))
 
 
 
