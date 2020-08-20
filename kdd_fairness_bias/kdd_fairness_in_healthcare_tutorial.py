@@ -112,7 +112,7 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # ## Data Subset <a id="datasubset"></a>
 # Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
 
-# In[152]:
+# In[158]:
 
 
 df = tutorial_helpers.load_example_data(path_to_mimic_data_folder) 
