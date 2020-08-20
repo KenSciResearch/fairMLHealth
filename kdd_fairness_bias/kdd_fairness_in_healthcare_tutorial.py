@@ -62,7 +62,7 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. We will use it to generate a simple baseline model that will be used throughout the tutorial.
 
-# In[31]:
+# In[125]:
 
 
 # Standard Libraries
@@ -112,18 +112,18 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # ## Data Subset <a id="datasubset"></a>
 # Example models in this notebook use data from all years of the MIMIC-III dataset for patients aged 65 and older. Data are imported at the encounter level with all additional patient identification dropped. All models include an "AGE" feature, simplified to 5-year bins, as well as boolean diagnosis and procedure features categorized through the Clinical Classifications Software system ([HCUP](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)). All features other than age are one-hot encoded and prefixed with their variable type (e.g. "GENDER_", "ETHNICITY_").  
 
-# In[86]:
+# In[152]:
 
 
 df = tutorial_helpers.load_example_data(path_to_mimic_data_folder) 
-print(f"\n Our data subset has {df.shape[0]} total observations and {df.shape[1]-2} input features \n")
-df.head()
+tutorial_helpers.print_feature_table(df)
+display(df.head())
 
 
 # ## Baseline Length of Stay Model
 # The example models in this tutorial predict the total length of time spent in the Intensive Care Unity (ICU) for a given hospital admission, a.k.a. the "Length of Stay" (LOS). The baseline model will use only the patient's age, their diagnosis, and the use of medical procedures during their stay to predict this value. 
 # 
-# Two target variables will be used in the following experiments: 'length_of_stay' and 'long_los'. The length_of_stay target contains the true value in days for the patient's stay in ICU. The long_los target is a binary variable indicating whether or not the length_of_stay for a given admission is greater than the mean. We will generate variable below, then generate our baseline model.
+# Two target variables will be used in the following experiments: 'length_of_stay' and 'long_los'. The length_of_stay target contains the true value in days for the patient's stay in ICU. The long_los target is a binary variable indicating whether or not the length_of_stay for a given admission is greater than the mean. Observations have been dropped where LOS values are extremely long (30 days or greater) or negative (indicating that the patient was deceased upon arrival at the ICU). We will generate variable below, then generate our baseline model.
 
 # In[87]:
 
@@ -419,7 +419,7 @@ comparison
 # Our next experiment will test the presence of bias relative to a patient\'s language. Here we assume that individuals who speak English may be given preferential treatment in an English-speaking society due to the requirement of using a translator. English-speaking ability may also be a proxy for race or religion. As above, we will generate a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 # <a id="engldist"></a>
 
-# In[101]:
+# In[155]:
 
 
 # Update Split Data to Include Language as a Feature
@@ -437,13 +437,9 @@ ax_e = df.groupby(english_speaking)['length_of_stay'].plot(kind='kde', title="Pr
 plt.show()
 
 
-deg_f = 2*(len(df)) - 2
 ttest = stats.ttest_ind(df.loc[english_speaking,'length_of_stay'],df.loc[~english_speaking,'length_of_stay'])
 print("\n", "- Results of Independent T-Test -", "\n",
-      "Degrees of Freedom:", deg_f, "\n",
-      "T Value:", ttest[0], "\n",
-      "Critical Value:", stats.t.ppf(0.95, deg_f), "\n", 
-      "P Value:", ttest[1]
+      "T Value:", ttest[0], "\n", "P Value:", ttest[1]
      )
 
 

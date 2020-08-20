@@ -118,12 +118,30 @@ def load_example_data(mimic_dirpath):
         assert success, "Error generating tutorial data."
     else:
         pass
-    #
+    # 
     df = pd.read_csv(data_file)
     df['HADM_ID'] = df['HADM_ID'] + np.random.randint(10**6)
     df.rename(columns={'HADM_ID':'ADMIT_ID'}, inplace=True)
     df = df.loc[df['AGE'].ge(65),:]
+    # Ensure that length_of_stay is at the end of the dataframe to reduce confusion for
+    #   first-time tutorial users
+    df = df.loc[:,[c for c in df.columns if c != 'length_of_stay']+['length_of_stay']]
     return(df)
+
+
+def print_feature_table(df):
+    ''' Displays a table containing statistics on the features available in the passed
+        df
+        
+        Args:
+            df (pandas df): dataframe containing MIMIC data for the tutorial
+    '''
+    print(f"\n This data subset has {df.shape[0]} total observations and {df.shape[1]-2} input features \n")
+    feat_df = pd.DataFrame({'feature':df.columns.tolist()}).query('feature not in ["ADMIT_ID","length_of_stay"]')
+    feat_df['Feature Category'] = feat_df['feature'].str.split("_").str[0]
+    count_df = feat_df.groupby('Feature Category', as_index=False)['feature'].count().rename(columns={'feature':'Count'})
+    count_df = pd.DataFrame({'Feature Category':['ADMIT_ID'], 'Count':len(df)}).append(count_df)
+    display(count_df)
 
 
 def print_table_of_measure_availability():
