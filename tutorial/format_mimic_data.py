@@ -1,6 +1,7 @@
 """
-    Formats MIMIC-III data for use with the KDD 2020 Tutorial on Fairness and Bias 
-    in Healthcare
+    Formats MIMIC-III data for use with the KDD 2020 Tutorial on Measuring Fairness
+    for Healthcare.
+    To be called by Tutorial Notebook.
 """
 
 import io
