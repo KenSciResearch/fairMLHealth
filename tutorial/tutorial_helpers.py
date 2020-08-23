@@ -1,5 +1,5 @@
 """
-    Add-ons for loading data, formatting, and generating tables as part of 
+    Add-ons for loading data, formatting, and generating tables as part of
     KDD 2020 Tutorial on Measuring Fairness for Healthcare.
     To be called by Tutorial Notebook.
 
@@ -65,71 +65,71 @@ def highlight_row(df, colname, values, color='aquamarine', h_type='field'):
 Loaders and Printers
 '''
 
-def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, protected_attr=None):
+def get_aif360_measures_df(X, protected_attr, y_true, y_pred, y_prob=None):
     """ Returns a dataframe containing results for the set of AIF360 measures
         used in the KDD tutorial
 
         Args:
-            X_test (array-like): Sample features; must include protected attribute
-            y_test (array-like, 1-D): Sample targets
+            X (array-like): Sample features
+            protected_attr (array-like, named): values for the protected attribute
+                (note: protected attribute may also be present in X)
+            y_true (array-like, 1-D): Sample targets
             y_pred (array-like, 1-D): Sample target probabilities
             protected_attr (list): list of column names or locations in
-                X_test containing the protected attribute(s) against which
+                X containing the protected attribute(s) against which
                 fairness is measured
     """
-    assert isinstance(protected_attr, list) and all(
-        [c in X_test.columns for c in protected_attr]), (
-            "protected_attr must be list of columns in X_test")
-    if isinstance(X_test, np.ndarray):
-        X_test = pd.DataFrame(X_test)
+    if isinstance(X, np.ndarray):
+        X = pd.DataFrame(X)
+    if isinstance(protected_attr, np.ndarray) or isinstance(protected_attr, pd.Series):
+        protected_attr = pd.DataFrame(protected_attr)
     if isinstance(y_pred, np.ndarray):
         y_pred = pd.Series(y_pred)
     if isinstance(y_prob, np.ndarray):
         if len(np.shape(y_prob)) == 2:
             y_prob = y_prob[:, 1]
         y_prob = pd.Series(y_prob)
-    # Set senstitive attributes as index for y dataframes
-    y_test = pd.concat([X_test.loc[:,protected_attr], y_test],
-                           axis=1).set_index(protected_attr)
-    y_pred = pd.concat([X_test.loc[:,protected_attr].reset_index(drop=True),
-                            y_pred], axis=1).set_index(protected_attr)
-    y_prob = pd.concat([X_test.loc[:,protected_attr].reset_index(drop=True),
-                            y_prob], axis=1).set_index(protected_attr)
-    y_pred.columns = y_test.columns
-    y_prob.columns = y_test.columns
+    # Format and set senstitive attributes as index for y dataframes
+    pa_name = protected_attr.columns.tolist()
+    protected_attr.reset_index(inplace=True, drop=True)
+    y_true.reset_index(inplace=True, drop=True)
+    y_true = pd.concat([protected_attr, y_true], axis=1).set_index(pa_name)
+    y_pred = pd.concat([protected_attr, y_pred], axis=1).set_index(pa_name)
+    y_prob = pd.concat([protected_attr,y_prob], axis=1).set_index(pa_name)
+    y_pred.columns = y_true.columns
+    y_prob.columns = y_true.columns
     # Generate lists of performance measures to be converted to dataframe
     scores = []
     scores.append( ['** Group Measures **', None])
     scores.append( ['Statistical Parity Difference',
-                        statistical_parity_difference(y_test, y_pred,
-                                    prot_attr=protected_attr)] )
+                        statistical_parity_difference(y_true, y_pred,
+                                    prot_attr=pa_name)] )
     scores.append( ['Disparate Impact Ratio',
-                        disparate_impact_ratio(y_test, y_pred,
-                                    prot_attr=protected_attr)] )
+                        disparate_impact_ratio(y_true, y_pred,
+                                    prot_attr=pa_name)] )
     scores.append( ['Average Odds Difference',
-                        average_odds_difference(y_test, y_pred,
-                                    prot_attr=protected_attr)] )
+                        average_odds_difference(y_true, y_pred,
+                                    prot_attr=pa_name)] )
     scores.append( ['Equal Opportunity Difference',
-                        equal_opportunity_difference(y_test, y_pred,
-                                    prot_attr=protected_attr)] )
+                        equal_opportunity_difference(y_true, y_pred,
+                                    prot_attr=pa_name)] )
     if y_prob is not None:
         scores.append( ['Positive Predictive Parity Difference',
-                          difference(precision_score, y_test, y_pred,
-                                     prot_attr=protected_attr, priv_group=1)] )
+                          difference(precision_score, y_true, y_pred,
+                                     prot_attr=pa_name, priv_group=1)] )
         scores.append( ['Between-Group AUC Difference',
-                        difference(roc_auc_score, y_test, y_prob,
-                                   prot_attr=protected_attr, priv_group=1)] )
+                        difference(roc_auc_score, y_true, y_prob,
+                                   prot_attr=pa_name, priv_group=1)] )
         scores.append( ['Between-Group Balanced Accuracy Difference',
-                        difference(balanced_accuracy_score, y_test, y_pred,
-                                   prot_attr=protected_attr, priv_group=1)] )
+                        difference(balanced_accuracy_score, y_true, y_pred,
+                                   prot_attr=pa_name, priv_group=1)] )
     else:
         pass
     scores.append( ['** Individual Measures **', None])
-    scores.append( ['Consistency Score - Truth', consistency_score(X_test, y_test.iloc[:,0])] )
-    scores.append( ['Consistency Score - Prediction', consistency_score(X_test, y_pred.iloc[:,0])] )
+    scores.append( ['Consistency Score', consistency_score(X, y_pred.iloc[:,0])] )
     scores.append( ['Between-Group Generalized Entropy Error',
-                        between_group_generalized_entropy_error(y_test, y_pred,
-                                    prot_attr=protected_attr)] )
+                        between_group_generalized_entropy_error(y_true, y_pred,
+                                                            prot_attr=pa_name)])
     #
     model_scores =  pd.DataFrame(scores, columns=['Measure','Value'])
     model_scores['Value'] = model_scores.loc[:,'Value'].round(4)
