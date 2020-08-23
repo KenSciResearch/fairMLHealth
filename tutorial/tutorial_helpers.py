@@ -1,7 +1,9 @@
 """
-    Add-ons for loading data and generating tables as part of KDD 2020 Tutorial on
-    Measuring Fairness for Healthcare.
-    To be called by Tutorial Notebook. 
+    Add-ons for loading data, formatting, and generating tables as part of 
+    KDD 2020 Tutorial on Measuring Fairness for Healthcare.
+    To be called by Tutorial Notebook.
+
+    Author: camagallen
 """
 
 from IPython.display import display
@@ -19,22 +21,65 @@ import format_mimic_data
 
 
 
+'''
+Formatting Helpers
+'''
+class cprint:
+    ''' ANSI escape sequences for text hilghting
+    '''
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    MAGENTA = '\u001b[35m'
+    CYAN = '\u001b[36m'
+    BLUE = '\u001b[34m'
+    OFF = '\033[0m'
 
-def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, sensitive_attr=None):
+
+def highlight_col(df, color='aquamarine'):
+    return f'background-color: {color}'
+
+
+def highlight_row(df, colname, values, color='aquamarine', h_type='field'):
+    ''' Returns a list of strings setting the background color at each index of
+        df where a[column] is in the list of values
+
+        Args:
+            df (pandas df): any dataframe
+            colname (str): name of column
+            values (list-like): values in colname to be highlighted
+            color (str): css color name
+    '''
+    assert h_type in ['text', 'field'], "Wrong h_type sent"
+    highlight = pd.Series(data=False, index=df.index)
+    highlight[colname] = df[colname] in values
+    if h_type == 'text':
+        return [f'color: {color}'
+                    if highlight.any() else '' for v in highlight]
+    elif h_type == 'field':
+        return [f'background-color: {color}'
+                    if highlight.any() else '' for v in highlight]
+
+
+
+'''
+Loaders and Printers
+'''
+
+def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, protected_attr=None):
     """ Returns a dataframe containing results for the set of AIF360 measures
         used in the KDD tutorial
 
         Args:
-            X_test (array-like): Sample features; must include sensitive attribute
+            X_test (array-like): Sample features; must include protected attribute
             y_test (array-like, 1-D): Sample targets
             y_pred (array-like, 1-D): Sample target probabilities
-            sensitive_attr (list): list of column names or locations in
-                X_test containing the sensitive attribute(s) against which
+            protected_attr (list): list of column names or locations in
+                X_test containing the protected attribute(s) against which
                 fairness is measured
     """
-    assert isinstance(sensitive_attr, list) and all(
-        [c in X_test.columns for c in sensitive_attr]), (
-            "sensitive_attr must be list of columns in X_test")
+    assert isinstance(protected_attr, list) and all(
+        [c in X_test.columns for c in protected_attr]), (
+            "protected_attr must be list of columns in X_test")
     if isinstance(X_test, np.ndarray):
         X_test = pd.DataFrame(X_test)
     if isinstance(y_pred, np.ndarray):
@@ -44,64 +89,51 @@ def get_aif360_measures_df(X_test, y_test, y_pred, y_prob=None, sensitive_attr=N
             y_prob = y_prob[:, 1]
         y_prob = pd.Series(y_prob)
     # Set senstitive attributes as index for y dataframes
-    y_test = pd.concat([X_test.loc[:,sensitive_attr], y_test],
-                           axis=1).set_index(sensitive_attr)
-    y_pred = pd.concat([X_test.loc[:,sensitive_attr].reset_index(drop=True),
-                            y_pred], axis=1).set_index(sensitive_attr)
-    y_prob = pd.concat([X_test.loc[:,sensitive_attr].reset_index(drop=True),
-                            y_prob], axis=1).set_index(sensitive_attr)
+    y_test = pd.concat([X_test.loc[:,protected_attr], y_test],
+                           axis=1).set_index(protected_attr)
+    y_pred = pd.concat([X_test.loc[:,protected_attr].reset_index(drop=True),
+                            y_pred], axis=1).set_index(protected_attr)
+    y_prob = pd.concat([X_test.loc[:,protected_attr].reset_index(drop=True),
+                            y_prob], axis=1).set_index(protected_attr)
     y_pred.columns = y_test.columns
     y_prob.columns = y_test.columns
     # Generate lists of performance measures to be converted to dataframe
-    scores = [["* General Performance Measures *", None],]
-    scores.append( ['Selection Rate', selection_rate(y_test, y_pred)] )
-    if y_prob is not None:
-        scores.append( ['ROC Score', roc_auc_score(y_test, y_prob) ])
-        scores.append( ['Accuracy Score', accuracy_score(y_test, y_pred) ])
-        scores.append( ['Precision Score', precision_score(y_test, y_pred) ])
-    else: 
-        pass
-    # Add spacer to metalist to separate general measures from group-specific ones
-    scores.append( ["* Fairness Measures *", None]) 
+    scores = []
+    scores.append( ['** Group Measures **', None])
     scores.append( ['Statistical Parity Difference',
                         statistical_parity_difference(y_test, y_pred,
-                                    prot_attr=sensitive_attr)] )
+                                    prot_attr=protected_attr)] )
     scores.append( ['Disparate Impact Ratio',
                         disparate_impact_ratio(y_test, y_pred,
-                                    prot_attr=sensitive_attr)] )
+                                    prot_attr=protected_attr)] )
     scores.append( ['Average Odds Difference',
-                        average_odds_difference(y_test, y_pred,  
-                                    prot_attr=sensitive_attr)] )
-    scores.append( ['Average Odds Error',
-                        average_odds_error(y_test, y_pred,
-                                     prot_attr=sensitive_attr)] )
+                        average_odds_difference(y_test, y_pred,
+                                    prot_attr=protected_attr)] )
     scores.append( ['Equal Opportunity Difference',
                         equal_opportunity_difference(y_test, y_pred,
-                                    prot_attr=sensitive_attr)] )
+                                    prot_attr=protected_attr)] )
     if y_prob is not None:
         scores.append( ['Positive Predictive Parity Difference',
-                          difference(precision_score, y_test, y_pred, 
-                                     prot_attr=sensitive_attr, priv_group=1)] )
+                          difference(precision_score, y_test, y_pred,
+                                     prot_attr=protected_attr, priv_group=1)] )
         scores.append( ['Between-Group AUC Difference',
                         difference(roc_auc_score, y_test, y_prob,
-                                   prot_attr=sensitive_attr, priv_group=1)] )
+                                   prot_attr=protected_attr, priv_group=1)] )
         scores.append( ['Between-Group Balanced Accuracy Difference',
                         difference(balanced_accuracy_score, y_test, y_pred,
-                                   prot_attr=sensitive_attr, priv_group=1)] )
+                                   prot_attr=protected_attr, priv_group=1)] )
     else:
         pass
-    scores.append( ['Consistency Score', consistency_score(X_test, y_pred.iloc[:,0])] )
-    scores.append( ['Generalized Entropy Error',
-                        generalized_entropy_error(y_test.iloc[:,0], y_pred.iloc[:,0])] )
+    scores.append( ['** Individual Measures **', None])
+    scores.append( ['Consistency Score - Truth', consistency_score(X_test, y_test.iloc[:,0])] )
+    scores.append( ['Consistency Score - Prediction', consistency_score(X_test, y_pred.iloc[:,0])] )
     scores.append( ['Between-Group Generalized Entropy Error',
                         between_group_generalized_entropy_error(y_test, y_pred,
-                                    prot_attr=sensitive_attr)] )
+                                    prot_attr=protected_attr)] )
     #
     model_scores =  pd.DataFrame(scores, columns=['Measure','Value'])
     model_scores['Value'] = model_scores.loc[:,'Value'].round(4)
     return(model_scores.fillna(""))
-
-
 
 
 def load_example_data(mimic_dirpath):
@@ -124,7 +156,6 @@ def load_example_data(mimic_dirpath):
     df = pd.read_csv(data_file)
     df['HADM_ID'] = df['HADM_ID'] + np.random.randint(10**6)
     df.rename(columns={'HADM_ID':'ADMIT_ID'}, inplace=True)
-    df = df.loc[df['AGE'].ge(65),:]
     # Ensure that length_of_stay is at the end of the dataframe to reduce confusion for
     #   first-time tutorial users
     df = df.loc[:,[c for c in df.columns if c != 'length_of_stay']+['length_of_stay']]
@@ -139,11 +170,12 @@ def print_feature_table(df):
             df (pandas df): dataframe containing MIMIC data for the tutorial
     '''
     print(f"\n This data subset has {df.shape[0]} total observations",
-            "and {df.shape[1]-2} input features \n")
+            f"and {df.shape[1]-2} input features \n")
     feat_df = pd.DataFrame({'feature':df.columns.tolist()}
                            ).query('feature not in ["ADMIT_ID","length_of_stay"]')
     feat_df['Raw Feature'] = feat_df['feature'].str.split("_").str[0]
     count_df = feat_df.groupby('Raw Feature', as_index=False)['feature'].count(
                 ).rename(columns={'feature':'Category Count (Encoded Features)'})
     display(count_df)
+
 

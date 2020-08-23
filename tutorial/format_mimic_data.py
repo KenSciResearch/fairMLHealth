@@ -2,6 +2,8 @@
     Formats MIMIC-III data for use with the KDD 2020 Tutorial on Measuring Fairness
     for Healthcare.
     To be called by Tutorial Notebook.
+
+    Author: camagallen
 """
 
 import io
@@ -103,6 +105,8 @@ class mimic_loader():
             Note: drops data for patients with  age>120 y.o. or age<0
         """
         admissions = self.__load_mimic_data("ax")
+        assert not admissions['HADM_ID'].duplicated().any(), (
+            "Error loading admission data: duplicate admission IDs present")
         # Calculate AGE
         adm = admissions.groupby(['SUBJECT_ID', 'HADM_ID'], as_index=False
                                  )['ADMITTIME'].min()
