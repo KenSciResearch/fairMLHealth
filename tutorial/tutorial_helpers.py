@@ -177,5 +177,3 @@ def print_feature_table(df):
     count_df = feat_df.groupby('Raw Feature', as_index=False)['feature'].count(
                 ).rename(columns={'feature':'Category Count (Encoded Features)'})
     display(count_df)
-
-
