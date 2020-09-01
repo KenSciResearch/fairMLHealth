@@ -137,15 +137,11 @@ class mimic_loader():
         assert adm_data.notnull().any().any()
         assert not adm_data['HADM_ID'].duplicated().any()
         # Reformat data to one-hot encode
-        gender = pd.get_dummies(adm_data.GENDER, prefix='GENDER')[['GENDER_M']]
-        eth = pd.get_dummies(adm_data.ETHNICITY, prefix='ETHNICITY')
-        lang = pd.get_dummies(adm_data.LANGUAGE, prefix='LANGUAGE')
-        ins = pd.get_dummies(adm_data.INSURANCE, prefix='INSURANCE')
-        married = pd.get_dummies(adm_data.MARITAL_STATUS, prefix='MARRIED')
-        relig = pd.get_dummies(adm_data.RELIGION, prefix='RELIGION')
+        adm_data.rename(columns={'MARITAL_STATUS':'MARRIED'}, inplace=True)
+        dummy_cats = ['GENDER', 'ETHNICITY', 'LANGUAGE', 'INSURANCE','MARRIED','RELIGION']
+        ohe_df = pd.get_dummies(adm_data[dummy_cats], columns=dummy_cats , prefix_sep='_')
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
-        output = id_df.join(gender).join(eth).join(lang).join(ins
-                      ).join(married).join(relig) 
+        output = id_df.join(ohe_df)
         assert not output[f'HADM_ID'].isnull().any()
         assert not output[f'HADM_ID'].duplicated().any()
         return output
