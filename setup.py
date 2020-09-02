@@ -44,12 +44,7 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate you support Python 3. These classifiers are *not*
         # checked by 'pip install'. See instead 'python_requires' below.
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3'
     ],
     keywords='healthcare, machine learning, fairness',
 
@@ -68,6 +63,7 @@ setup(
     #
     #packages=find_packages(where='src'),  # Required
     python_requires='>=3.5, <4',
-    install_requires=['scipy', 'scikit-learn', 'xgboost', 'requests'],
+    install_requires=['aif360', 'fairlearn', 'requests', 'scipy', 'scikit-learn',
+                      'xgboost'],
     project_urls={'KenSci': 'https://www.kensci.com'}
 )
