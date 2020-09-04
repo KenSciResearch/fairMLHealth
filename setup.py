@@ -27,6 +27,7 @@ setup(
     install_requires=['aif360',
                       'fairlearn',
                       'requests',
+                      'pandas>=0.21.0'
                       'scipy',
                       'scikit-learn>=0.2.0',
                       'xgboost'],

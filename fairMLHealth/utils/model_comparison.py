@@ -3,6 +3,9 @@ from aif360.sklearn.metrics import *
 import pandas as pd
 import numpy as np
 import sklearn.metrics as skmetric
+import warnings
+# Temporarily hide pandas SettingWithCopy warning
+warnings.filterwarnings('ignore', module='pandas' )
 
 
 
@@ -65,7 +68,7 @@ class fairCompare(ABC):
         valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
         for data in [self.X, self.y]:
             if not isinstance(data, valid_data_types):
-                raise TypeError(f"{data.__name__} must be numpy array" +
+                raise TypeError("input data must be numpy array" +
                                     " or similar pandas object")
         if not self.X.shape[0] == self.y.shape[0]:
             raise ValueError("test and target data mismatch")
@@ -110,16 +113,17 @@ class fairCompare(ABC):
             print(f"Error measuring fairness: {model_name} does not appear in" +
                   f" the models. Available models include {list(self.models.keys())}")
             return pd.DataFrame()
-        #
         m = self.models[model_name]
+        # Cannot measure fairness without predictions
         try:
             y_pred =  m.predict(self.X)
         except:
             raise ValueError(f"Error generating predictions for {model_name}" +
                 " Check that it is a trained, scikit-compatible model" +
                 " that can generate predictions using the test data")
+        # Since most fairness measures do not require probabilities, y_prob is optional
         try:
-            y_prob = m.predict_proba(self.X)
+            y_prob = m.predict_proba(self.X)[:,1]
         except:
             print(f"Failure predicting probabilities for {model_name}." +
                   " Related metrics will be skipped.")
@@ -145,12 +149,19 @@ class fairCompare(ABC):
             self.__toggle_validation()
             for model_name in self.models.keys():
                 res = self.measure_model(model_name)
-                res.set_index('Measure', inplace=True)
-                res.rename(columns={'Value':model_name}, inplace=True)
-                test_results.append(res)
+                if res is None:
+                    continue
+                    print("ping")
+                else:
+                    res.set_index('Measure', inplace=True)
+                    res.rename(columns={'Value':model_name}, inplace=True)
+                    test_results.append(res)
             self.__toggle_validation()
-            output = pd.concat(test_results, axis=1)
-            return output
+            if len(test_results) > 0:
+                output = pd.concat(test_results, axis=1)
+                return output
+            else:
+                return None
 
 
 
@@ -173,9 +184,9 @@ def report_classification_fairness(X, protected_attr, y_true, y_pred, y_prob=Non
     valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
     for data in [X, protected_attr, y_true, y_pred]:
         if not isinstance(data, valid_data_types):
-            raise TypeError(f"{data.__name} is invalid type")
+            raise TypeError("input data is invalid type")
         if not data.shape[0] > 1:
-            raise ValueError(f"{data.__name} is too small to measure")
+            raise ValueError("input data is too small to measure")
     if y_prob is not None:
         if not isinstance(y_prob, valid_data_types):
             raise TypeError("y_prob is invalid type")
@@ -187,35 +198,43 @@ def report_classification_fairness(X, protected_attr, y_true, y_pred, y_prob=Non
         if isinstance(protected_attr, pd.Series):
             protected_attr = pd.DataFrame(protected_attr,
                                           columns=[protected_attr.name])
+        else:
+            protected_attr = pd.DataFrame(protected_attr)
+    if isinstance(y_true, (np.ndarray, pd.Series)):
+        y_true = pd.DataFrame(y_true)
     if isinstance(y_pred, np.ndarray):
-        y_pred = pd.Series(y_pred)
+        y_pred = pd.DataFrame(y_pred)
     if isinstance(y_prob, np.ndarray):
-        if len(np.shape(y_prob)) == 2:
-            y_prob = y_prob[:, 1]
-        y_prob = pd.Series(y_prob)
+        y_prob = pd.DataFrame(y_prob)
+    for data in [y_true, y_pred, y_prob]:
+        if data.shape[1] > 1:
+            raise TypeError("targets and predictions must be 1-Dimensional")
 
     # Ensure that protected_attr is integer-valued
-    for c in protected_attr.columns:
+    pa_cols = protected_attr.columns.tolist()
+    for c in pa_cols:
         binary = ( set(protected_attr[c].astype(int)) == set(protected_attr[c]) )
         boolean = ( protected_attr[c].dtype == bool )
         two_valued = ( set(protected_attr[c].astype(int)) == {0,1} )
         if not two_valued and (binary or boolean):
             raise ValueError(
             "protected_attr must be binary or boolean and heterogeneous")
-        protected_attr[c] = protected_attr[c].astype(int)
+        protected_attr.loc[:, c] = protected_attr[c].astype(int)
+        if isinstance(c, int):
+            protected_attr.rename(columns={c:f"protected_attribute_{c}"}, inplace=True)
 
     # Format and set sensitive attributes as index for y dataframes
     pa_name = protected_attr.columns.tolist()
     protected_attr.reset_index(inplace=True, drop=True)
-    y_true.reset_index(inplace=True, drop=True)
-    y_true = pd.concat([protected_attr, y_true], axis=1).set_index(pa_name)
-    y_pred = pd.concat([protected_attr, y_pred], axis=1).set_index(pa_name)
-    y_prob = pd.concat([protected_attr,y_prob], axis=1).set_index(pa_name)
+    y_true = pd.concat([protected_attr, y_true.reset_index(drop=True)], axis=1).set_index(pa_name)
+    y_pred = pd.concat([protected_attr, y_pred.reset_index(drop=True)], axis=1).set_index(pa_name)
+    y_prob = pd.concat([protected_attr, y_prob.reset_index(drop=True)], axis=1).set_index(pa_name)
     y_pred.columns = y_true.columns
     y_prob.columns = y_true.columns
 
     # Generate lists of performance measures to be converted to dataframe
     scores = []
+
     #
     scores.append( ['** Group Fairness **', None])
     scores.append( ['Statistical Parity Difference',
@@ -238,7 +257,7 @@ def report_classification_fairness(X, protected_attr, y_true, y_pred, y_prob=Non
                         difference(skmetric.roc_auc_score, y_true, y_prob,
                                    prot_attr=pa_name, priv_group=1)] )
         scores.append( ['Between-Group Balanced Accuracy Difference',
-                        difference(skmetric.balanced_accuracy_score, y_true, 
+                        difference(skmetric.balanced_accuracy_score, y_true,
                                    y_pred, prot_attr=pa_name, priv_group=1)] )
     else:
         pass
@@ -247,21 +266,24 @@ def report_classification_fairness(X, protected_attr, y_true, y_pred, y_prob=Non
     scores.append( ['Consistency Score', consistency_score(X, y_pred.iloc[:,0])] )
     scores.append( ['Between-Group Generalized Entropy Error',
                         between_group_generalized_entropy_error(y_true, y_pred,
-                                                            prot_attr=pa_name)])
+                                                                prot_attr=pa_name)])
+
     #
     scores.append( ['** Model Performance **', None])
     target_labels = [f"target = {t}" for t in set(np.unique(y_true))]
-    report = report_scikit(y_true, y_pred, target_labels)
+    report = report_scikit(y_true.iloc[:,0], y_pred.iloc[:,0], target_labels)
     avg_lbl = "avg / total" if len(target_labels) > 2 else target_labels[-1]
     scores.append( ['precision', report.loc[avg_lbl, 'precision']])
     scores.append( ['recall', report.loc[avg_lbl, 'recall']])
     scores.append( ['f1-score', report.loc[avg_lbl, 'f1-score']])
     if len(target_labels) == 2:
         scores.append( ['accuracy', report.loc[avg_lbl, 'accuracy']])
+
     # Convert scores to a formatted dataframe and return
     model_scores =  pd.DataFrame(scores, columns=['Measure','Value'])
     model_scores['Value'] = model_scores.loc[:,'Value'].round(4)
-    return(model_scores.fillna(""))
+    model_scores.fillna("", inplace=True)
+    return model_scores
 
 
 

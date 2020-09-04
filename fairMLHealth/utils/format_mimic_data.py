@@ -20,8 +20,10 @@ def custom_round(col, base=5, sig_dec=0):
 
         Args:
             col (str): name of column to round
-            base (float): base value to which data should be rounded (may be decimal)
-            sig_dec (int): number of significant decimals for the custom-rounded value
+            base (float): base value to which data should be rounded (may be
+                decimal)
+            sig_dec (int): number of significant decimals for the custom-rounded
+                value
     """
     if not base >= 0.01:
         raise ValueError(
@@ -57,17 +59,16 @@ class mimic_loader():
         mimic_dir = os.path.dirname(self.output_file)
         if mimic_dir != "":
             if not os.path.exists(mimic_dir):
-                raise OSError(
+                raise OSError("Cannot load example data. " +
                 f"Invalid mimic data directory passed: {mimic_dir}")
         self.data_dir = os.path.join(mimic_dir, 'zipped_files')
         if not os.path.exists(self.data_dir):
-            raise OSError(
-            "MIMIC directory must contain the folder \'zipped_files\'," +
-            " which should be present in the raw download")
+            raise OSError("MIMIC directory must contain the folder \'zipped_files\'," +
+                " which should be present in the raw download")
 
 
     def generate_tutorial_data(self):
-        print("Generating Tutorial Data...")
+        print("Generating Example Dataset from MIMIC-III Download...")
         adm_data = self.load_admit_dscg_data()
         dx_data = self.load_dxpx_data('dx')
         px_data = self.load_dxpx_data('px')
@@ -84,7 +85,7 @@ class mimic_loader():
 
     def __load_mimic_data(self, data_key):
         """ Returns transfer data as pd dataframe after removing the ROW_ID column
-                (unneccessary column that causes problems)
+                (unnecessary column that causes problems)
             :arg data_key : key for the filename of interest (see get_file_dict() )
             :arg data_dir : the directory in which the file is stored
                             (default is get_data_dir() )
@@ -120,8 +121,7 @@ class mimic_loader():
         age_df = dob.merge(adm, on='SUBJECT_ID')
         age_df['DOB'] = pd.to_datetime(age_df['DOB']).dt.date
         age_df['ADMITTIME'] = pd.to_datetime(age_df['ADMITTIME']).dt.date
-        age_df['AGE'] = (age_df['ADMITTIME'] - age_df['DOB'])
-        age_df['AGE'] = (age_df['AGE']).apply(lambda t: t.days)/365
+        age_df['AGE'] = age_df.apply(lambda e: (e['ADMITTIME'] - e['DOB']).days/365, axis=1)
         age_df.loc[age_df['AGE'].ge(5),'AGE'] = custom_round(age_df['AGE'], base=5)
         age_df.loc[age_df['AGE'].ge(1) & age_df['AGE'].lt(5),'AGE'] = age_df['AGE'].round()
         age_df.loc[age_df['AGE'].lt(1), 'AGE'] = 0
@@ -143,7 +143,7 @@ class mimic_loader():
         if not adm_data.notnull().any().any():
             raise ValueError("Missing hospital admission information after merge")
         if adm_data['HADM_ID'].duplicated().any():
-            raise ValueError("Duplicate hosptial admission information after merge")
+            raise ValueError("Duplicate hospital admission information after merge")
         # Reformat data to one-hot encode
         adm_data.rename(columns={'MARITAL_STATUS':'MARRIED'}, inplace=True)
         dummy_cats = ['GENDER', 'ETHNICITY', 'LANGUAGE', 'INSURANCE','MARRIED','RELIGION']
@@ -151,9 +151,9 @@ class mimic_loader():
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
         output = id_df.join(ohe_df)
         if output[f'HADM_ID'].isnull().any():
-            raise ValueError("Missing hosptial admission information in output")
+            raise ValueError("Missing hospital admission information in output")
         if output[f'HADM_ID'].duplicated().any():
-            raise ValueError("Duplicate hosptial admission information in output")
+            raise ValueError("Duplicate hospital admission information in output")
         return output
 
     def load_dxpx_data(self, feature_type):
@@ -181,7 +181,7 @@ class mimic_loader():
             raise ValueError("Duplicate CCS Information found")
         # Reformat data to one-hot encode
         prefix_dict = {'dx':'DIAGNOSIS', 'px':'PROCEDURE'}
-        ohe_df = pd.get_dummies(df[f'{feature_type}_CCS'], 
+        ohe_df = pd.get_dummies(df[f'{feature_type}_CCS'],
                                 prefix=f'{prefix_dict[feature_type]}_CCS')
         ohe_df['HADM_ID'] = df['HADM_ID']
         agg_dict = {c:'max' for c in ohe_df.columns if c != 'HADM_ID'}
