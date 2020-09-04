@@ -23,7 +23,8 @@ def custom_round(col, base=5, sig_dec=0):
             base (float): base value to which data should be rounded (may be decimal)
             sig_dec (int): number of significant decimals for the custom-rounded value
     """
-    assert base >= 0.01, (
+    if not base >= 0.01:
+        raise ValueError(
         f"cannot round with base {base}. custom_round designed for base>=0.01.")
     result = col.apply(lambda x: round(base * round(float(x)/base), sig_dec))
     return result
@@ -38,7 +39,8 @@ def load_icd_ccs_xwalk(code_type):
     urls = {'dx':"https://data.nber.org/ahrq/ccs/dxicd2ccsxw.csv",
             'px':"https://data.nber.org/ahrq/ccs/pricd2ccsxw.csv"
             }
-    assert code_type in urls.keys(), f"Invalid code_type. Must be one of {urls.keys()}"
+    if not code_type in urls.keys():
+        raise KeyError(f"Invalid code_type. Must be one of {urls.keys()}")
     s = requests.get(urls[code_type]).content
     df = pd.read_csv(io.StringIO(s.decode('utf-8')))
     df = df.loc[:,['icd', 'ccs', 'icddesc']
@@ -54,12 +56,14 @@ class mimic_loader():
         self.output_file = os.path.expanduser(data_file)
         mimic_dir = os.path.dirname(self.output_file)
         if mimic_dir != "":
-            assert os.path.exists(mimic_dir), (
+            if not os.path.exists(mimic_dir):
+                raise OSError(
                 f"Invalid mimic data directory passed: {mimic_dir}")
         self.data_dir = os.path.join(mimic_dir, 'zipped_files')
-        assert os.path.exists(self.data_dir), (
-            "MIMIC directory must contain the folder \'zipped_files\',",
-            "which should be present in the raw download")
+        if not os.path.exists(self.data_dir):
+            raise OSError(
+            "MIMIC directory must contain the folder \'zipped_files\'," +
+            " which should be present in the raw download")
 
 
     def generate_tutorial_data(self):
@@ -67,12 +71,13 @@ class mimic_loader():
         adm_data = self.load_admit_dscg_data()
         dx_data = self.load_dxpx_data('dx')
         px_data = self.load_dxpx_data('px')
-        import pdb; pdb.set_trace()
         df = adm_data.merge(dx_data, on='HADM_ID', how='inner'
                     ).merge(px_data, on='HADM_ID', how='inner')
         # Test dataset before saving
-        assert not df['HADM_ID'].isnull().any()
-        assert not df['HADM_ID'].duplicated().any()
+        if df['HADM_ID'].isnull().any():
+            raise ValueError("Missing admission information in MIMIC data")
+        if df['HADM_ID'].duplicated().any():
+            raise ValueError("Duplicates found in MIMIC data")
         df.to_csv(self.output_file, index=False)
         return True
 
@@ -105,7 +110,8 @@ class mimic_loader():
             Note: drops data for patients with  age>120 y.o. or age<0
         """
         admissions = self.__load_mimic_data("ax")
-        assert not admissions['HADM_ID'].duplicated().any(), (
+        if admissions['HADM_ID'].duplicated().any():
+            raise ValueError(
             "Error loading admission data: duplicate admission IDs present")
         # Calculate AGE
         adm = admissions.groupby(['SUBJECT_ID', 'HADM_ID'], as_index=False
@@ -134,16 +140,20 @@ class mimic_loader():
         ax = ax.loc[ax['length_of_stay'].ge(0) & ax['length_of_stay'].lt(30),:]
         adm_data = adm_data.merge(ax[['HADM_ID', 'length_of_stay']], how='inner')
         # Test result before proceeding
-        assert adm_data.notnull().any().any()
-        assert not adm_data['HADM_ID'].duplicated().any()
+        if not adm_data.notnull().any().any():
+            raise ValueError("Missing hospital admission information after merge")
+        if adm_data['HADM_ID'].duplicated().any():
+            raise ValueError("Duplicate hosptial admission information after merge")
         # Reformat data to one-hot encode
         adm_data.rename(columns={'MARITAL_STATUS':'MARRIED'}, inplace=True)
         dummy_cats = ['GENDER', 'ETHNICITY', 'LANGUAGE', 'INSURANCE','MARRIED','RELIGION']
         ohe_df = pd.get_dummies(adm_data[dummy_cats], columns=dummy_cats , prefix_sep='_')
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
         output = id_df.join(ohe_df)
-        assert not output[f'HADM_ID'].isnull().any()
-        assert not output[f'HADM_ID'].duplicated().any()
+        if output[f'HADM_ID'].isnull().any():
+            raise ValueError("Missing hosptial admission information in output")
+        if output[f'HADM_ID'].duplicated().any():
+            raise ValueError("Duplicate hosptial admission information in output")
         return output
 
     def load_dxpx_data(self, feature_type):
@@ -154,7 +164,8 @@ class mimic_loader():
                 feature_type (str): one of ['dx', 'px'] (i.e. ["diagnosis", "procedure"])
         """
         ftypes = ['dx','px']
-        assert feature_type in ftypes, f"Invalid code_type. Must be one of {ftypes}"
+        if not feature_type in ftypes:
+            raise ValueError(f"Invalid code_type. Must be one of {ftypes}")
         #
         data = self.__load_mimic_data(feature_type)
         icd_map = load_icd_ccs_xwalk(code_type=feature_type
@@ -164,8 +175,10 @@ class mimic_loader():
                         ).drop_duplicates(
                         ).rename(columns={'ICD9_CODE':f'{feature_type}_ICD9_CODE'})
         # Test result before proceeding
-        assert not df[f'{feature_type}_CCS'].isnull().any()
-        assert not df.duplicated().any().any()
+        if df[f'{feature_type}_CCS'].isnull().any():
+            raise ValueError("Missing CCS information")
+        if df.duplicated().any().any():
+            raise ValueError("Duplicate CCS Information found")
         # Reformat data to one-hot encode
         prefix_dict = {'dx':'DIAGNOSIS', 'px':'PROCEDURE'}
         ohe_df = pd.get_dummies(df[f'{feature_type}_CCS'], 
@@ -173,9 +186,11 @@ class mimic_loader():
         ohe_df['HADM_ID'] = df['HADM_ID']
         agg_dict = {c:'max' for c in ohe_df.columns if c != 'HADM_ID'}
         output = ohe_df.groupby('HADM_ID', as_index=False).agg(agg_dict)
-        assert not output[f'HADM_ID'].isnull().any(), (
+        if output[f'HADM_ID'].isnull().any():
+            raise ValueError(
             f"Error loading {feature_type}. Missing admissions found in formatting")
-        assert not output[f'HADM_ID'].duplicated().any(), (
+        if output[f'HADM_ID'].duplicated().any():
+            raise ValueError(
             f"Error loading {feature_type}. Duplicate admissions found in formatting")
         return output
 

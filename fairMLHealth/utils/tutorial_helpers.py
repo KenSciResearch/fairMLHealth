@@ -49,7 +49,8 @@ def highlight_row(df, colname, values, color='aquamarine', h_type='field'):
             values (list-like): values in colname to be highlighted
             color (str): css color name
     '''
-    assert h_type in ['text', 'field'], "Wrong h_type sent"
+    if not h_type in ['text', 'field']:
+        raise ValueError("Wrong h_type sent")
     highlight = pd.Series(data=False, index=df.index)
     highlight[colname] = df[colname] in values
     if h_type == 'text':
@@ -149,7 +150,8 @@ def load_example_data(mimic_dirpath):
     if not os.path.exists(data_file):
         formatter = format_mimic_data.mimic_loader(data_file)
         success = formatter.generate_tutorial_data()
-        assert success, "Error generating tutorial data."
+        if not success:
+            raise RuntimeError("Error generating tutorial data.")
     else:
         pass
     # Load data and restrict to only age 65+
@@ -169,8 +171,8 @@ def print_feature_table(df):
         Args:
             df (pandas df): dataframe containing MIMIC data for the tutorial
     '''
-    print(f"\n This data subset has {df.shape[0]} total observations",
-            f"and {df.shape[1]-2} input features \n")
+    print(f"\n This data subset has {df.shape[0]} total observations" +
+            f" and {df.shape[1]-2} input features \n")
     feat_df = pd.DataFrame({'feature':df.columns.tolist()}
                            ).query('feature not in ["ADMIT_ID","length_of_stay"]')
     feat_df['Raw Feature'] = feat_df['feature'].str.split("_").str[0]
