@@ -52,34 +52,39 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. We will use it to generate a simple baseline model that will be used throughout the tutorial.
 
-# In[1]:
+# In[22]:
 
 
 # Standard Libraries
-from IPython.display import Image, Markdown
+from IPython.display import Markdown
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 from scipy import stats
 import sys
+import warnings
 
 # Load Prediction Libraries
 import sklearn.metrics as sk_metrics
 from sklearn.model_selection import train_test_split
-from xgboost import XGBClassifier, XGBRegressor
+from xgboost import XGBClassifier
 
 # Helpers from local folder
-import tutorial_helpers as helper
-bold_on = helper.cprint.BOLD
-bold_cyan =  helper.cprint.CYAN + bold_on
-bold_mgta =  helper.cprint.MAGENTA + bold_on
-cyan_title = helper.cprint.UNDERLINE + bold_cyan
-clr_off = helper.cprint.OFF
+from fairMLHealth.utils import helpers, model_comparison
+bold_on = helpers.cprint.BOLD
+bold_cyan =  helpers.cprint.CYAN + bold_on
+bold_mgta =  helpers.cprint.MAGENTA + bold_on
+cyan_title = helpers.cprint.UNDERLINE + bold_cyan
+clr_off = helpers.cprint.OFF
 
 # Remove limit to the number of columns and column widths displayed by pandas
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', 0) # adjust column width as needed
+
+# Hide Nearest Neighbors warning rising from AIF360 Consistency Score Measure
+warnings.filterwarnings('ignore', category=FutureWarning, 
+                        message="Pass n_neighbors=5 as keyword args. From version 0.25")
 
 
 # ## Loading MIMIC III Data
@@ -100,9 +105,9 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # In[3]:
 
 
-df = helper.load_example_data(path_to_mimic_data_folder) 
+df = helpers.load_example_data(path_to_mimic_data_folder) 
 df = df.loc[df['AGE'].ge(65),:]
-helper.print_feature_table(df)
+helpers.print_feature_table(df)
 display(Markdown('---'))
 display(df.head())
 
@@ -119,7 +124,7 @@ display(df.head())
 mean_val=df['length_of_stay'].mean()
 df['long_los'] = df['length_of_stay'].apply(lambda x: 1 if x > mean_val else 0)
 los_tbl = df[['length_of_stay', 'long_los']].describe().transpose().round(4)
-display(los_tbl.style.applymap(helper.highlight_col, subset=pd.IndexSlice[:, 'mean']))
+display(los_tbl.style.applymap(helpers.highlight_col, subset=pd.IndexSlice[:, 'mean']))
 
 # Display LOS distributions
 display(Markdown('---'))
@@ -162,7 +167,7 @@ print("\n", "Prediction Scores for Baseline Model:", "\n",
 # Show LOS Distribtuion Relative to GENDER_M
 is_male = df['GENDER_M'].eq(1)
 gender_tbl = df.groupby('GENDER_M')['length_of_stay'].describe().round(4)
-display(gender_tbl.style.applymap(helper.highlight_col, subset=pd.IndexSlice[:, 'mean']))
+display(gender_tbl.style.applymap(helpers.highlight_col, subset=pd.IndexSlice[:, 'mean']))
 
 display(Markdown('---'))
 ax_g = df.groupby('GENDER_M')['length_of_stay'].plot(kind='kde', title="Probability Density of Length of Stay by Gender")
@@ -172,7 +177,7 @@ plt.show()
 display(Markdown('---'))
 deg_f = 2*(len(df)) - 2
 ttest = stats.ttest_ind(df.loc[is_male,'length_of_stay'],df.loc[~is_male,'length_of_stay'])
-print(cyan_title + "Results of Independent T-Test" + helper.cprint.OFF, "\n",
+print(cyan_title + "Results of Independent T-Test" + helpers.cprint.OFF, "\n",
       "T Value:", ttest[0], "\n",
       "P Value:", ttest[1], "\n"
      )
@@ -362,7 +367,7 @@ print()
 # Measures of individual fairness determine if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions.
 # 
 # ### Consistency Scores <a id="consistency_score"></a>
-# Consistency scores measure the similarity between specific predictions and the predictions of like individuals. In AIF360, the Consistency Score is calculated as the compliment of the mean distance to the score of the mean nearest neighbhor, using Scikit's Nearest Neighbors algorithm (default: 5 neighbors determined by BallTree algorithm). For this measure, values closer to zero indicate greater fairness, with increasing values indicating increased unfairness. However, since this measure is dimensionless, it's most useful for measuring relative fairness. More information about consistency scores is available in [Zemel (2013)](#zemel2013_ref).
+# Consistency scores are measure the similarity between specific predictions and the predictions of like individuals. They are not specific to a particular attribute, but rather they evaluate the generally equal treatment of equal individuals. In AIF360, the Consistency Score is calculated as the compliment of the mean distance to the score of the mean nearest neighbhor, using Scikit's Nearest Neighbors algorithm (default: 5 neighbors determined by BallTree algorithm). For this measure, values closer to 1 indicate greater consistency, and those closer to zero indicate less consistency. More information about consistency scores is available in [Zemel (2013)](#zemel2013_ref).
 # > $ consistency\_score = 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j| $
 # 
 
@@ -370,10 +375,7 @@ print()
 
 
 print(bold_mgta+ "Nearest Neighbors-Based Consistency" +clr_off)
-print(bold_on+ 'Consistency Score - Ground Truth = ' +clr_off,
-      consistency_score(X_test_gender, y_test['long_los'])
-     )
-print(bold_on+ 'Consistency Score - Prediction = ' +clr_off,
+print(bold_on+ 'Consistency Score = ' +clr_off,
       consistency_score(X_test_gender, y_pred_gender)
      )
 print()
@@ -381,7 +383,7 @@ print()
 
 # 
 # ### The Generalized Entropy Index and Related Measures
-# The *Generalized Entropy (GE) Index* was proposed as a metric for income inequality ([Shorrocks 1980](#shorrocks_ref)), although it originated as a measure of redundancy in information theory. In 2018, [Speicher *et al*](#speicher2018_ref) proposed its use for Machine Learning models.
+# The *Generalized Entropy (GE) Index* was proposed as a metric for income inequality ([Shorrocks 1980](#shorrocks_ref)), although it originated as a measure of redundancy in information theory. In 2018, [Speicher *et al*](#speicher2018_ref) proposed its use for Machine Learning models. These measures are dimensionless, and therefore are most useful in comparison relative to each other. Values closer to zero indicate greater fairness, and increasing values indicating decreased fairness.
 # > $ GE = \mathcal{E}(\alpha) = \begin{cases}
 #             \frac{1}{n \alpha (\alpha-1)}\sum_{i=1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1,\\
 #             \frac{1}{n}\sum_{i=1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha=1,\\
@@ -390,7 +392,7 @@ print()
 #         $
 #         
 # #### Special Cases      
-# The *Theil Index* occurs where the $GE$ alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1, where 0 is perfectly fair and 1 is perfectly unfair.
+# The *Theil Index* occurs where the $GE$ alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1.
 # > $ Theil Index = GE(\alpha = 1) $
 # 
 # The *Coefficient of Variation* is is two times the square root of the $GE$ where alpha is equal to 2.
@@ -400,7 +402,7 @@ print()
 # *Generalized Entropy Error* is the Generalized Entropy Index of the prediction error. Like the consistency_score above, this measure is dimensionless; however, it does not provide specific information to allow discernment between groups.
 # > $ GE(Error, \alpha = 2) = GE(\hat{y}_i - y_i + 1) $
 # 
-# *Between Group Generalized Entropy Error* is the Generalized Entropy Index for the weighted means of group-specific errors. Again this measure is dimensionless, with values closer to zero indicate greater fairness and increasing values indicating decreased fairness. More information is available in [Speicher (2013)](#speicher2018_ref).
+# *Between Group Generalized Entropy Error* is the Generalized Entropy Index for the weighted means of group-specific errors. More information is available in [Speicher (2013)](#speicher2018_ref).
 # > $ GE(Error_{group}, \alpha = 2) =  GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $
 # 
 
@@ -431,7 +433,7 @@ print()
 # | |Equal Opportunity Difference| $$recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})$$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
 # | |Equalized Odds Difference| $$max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$$ | 0 indicates fairness <br> (-) favors privileged group <br> (+) favors unprivileged group |
 # | |Equalized Odds Ratio| $$min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$$ | 1 indicates fairness <br>  < 1 favors privileged group <br>  > 1 favors unprivileged group |
-# |**Individual Fairness Measures**|Consistency Score| $$ 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|$$ | 0 indicates fairness<br>(+) indicates unfairness |
+# |**Individual Fairness Measures**|Consistency Score| $$ 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i=1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|$$ | 1 indicates consistency <br> 0 indicates inconsistency |
 # | |Generalized Entropy Index| $$ GE = \mathcal{E}(\alpha) = \begin{cases} \frac{1}{n \alpha (\alpha-1)}\sum_{i=1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1,\\ \frac{1}{n}\sum_{i=1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha=1,\\ -\frac{1}{n}\sum_{i=1}^n\ln\frac{b_{i}}{\mu},& \alpha=0. \end{cases} $$ | - |
 # | |Generalized Entropy Error| $$GE(\hat{y}_i - y_i + 1) $$ | - |
 # | |Between-Group Generalized Entropy Error| $$GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $$ | 0 indicates fairness<br>(+) indicates unfairness |
@@ -445,26 +447,29 @@ print()
 # 
 # Below we generate a table conatining fairness scores for our LOS models. The scores we just generated are constrasted against gender-relative scores for the baseline model, which importantly does not contain GENDER_M as an attribute. As the table shows, removal of the gender attribute produces little change in measure values. 
 
-# In[16]:
+# In[31]:
 
+
+#
+gender_values = X_test_gender[['GENDER_M']]
 
 # Use Tutorial Helper Function to Generate Dataframe of Measure Values for Gender-Included Model, Relative to Patient Gender
-gender_scores = helper.get_aif360_measures_df(X_test_gender, y_test, y_pred_gender, y_prob_gender, protected_attr=['GENDER_M'])
+gender_scores = model_comparison.report_classification_fairness(X_test_gender, gender_values, y_test, y_pred_gender, y_prob_gender[:,1])
 
 # Use Tutorial Helper Function to Generate Dataframe of Measure Values for Baseline Model, Relative to Patient Gender
-baseline_scores = helper.get_aif360_measures_df(X_test_gender, y_test, y_pred_baseline, y_prob_baseline, protected_attr=['GENDER_M'])
+baseline_scores = model_comparison.report_classification_fairness(X_test, gender_values, y_test, y_pred_baseline, y_prob_baseline[:,1])
 
 # Merge Results to Compare Values
 comparison = gender_scores.rename(columns={'Value':'Gender Fairness (GENDER_M Included)'}
                                 ).merge(baseline_scores.rename(columns={'Value':'Gender Fairness, Baseline (GENDER_M Excluded)'}))
 
 # Highlight Groups differentially
-im_loc = comparison[comparison['Measure'].eq('** Individual Measures **')].index[0]
+im_loc = comparison[comparison['Measure'].eq('** Individual Fairness **')].index[0]
 grp_measures = comparison.loc[(comparison.index < im_loc), 'Measure'].tolist()
 comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-Inclusive Model vs Baseline'     
-               ).apply(helper.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
-               ).apply(helper.highlight_row, colname='Measure', 
-                       values=['Disparate Impact Ratio', 'Consistency Score - Truth', 'Consistency Score - Prediction'], axis=1)
+               ).apply(helpers.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
+               ).apply(helpers.highlight_row, colname='Measure', 
+                       values=['Disparate Impact Ratio', 'Consistency Score'], axis=1)
 
 
 # ### Evaluating Significance: The Four-Fifths Rule 
@@ -474,8 +479,10 @@ comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-In
 # 
 # The Disparate Impact Ratios shown in the table above can be used as an example of this rule. A model whose Disparate Impact Ratio is 1 is considered to be perfectly "fair" relative to the protected attribute in question. Since neither model in this example has a Disparate Impact Ratio greater than or equal to 1.2 (or <= 0.8), we can say that neither model imposes a significantly disparate impact with respect to gender *according to the **Demographic Parity** metric*. Although, as will be clear in the next example, "fairness" by one measure does not necessarily mean that a model imposes no disparate impact.
 # 
+# In terms of **Individual Fairness**, the Consistency Score for gender-inclusive model prediction is slightly less higher than that of the baseline model. This may indicate that the gender-inclusive model is able to discern gender-associated medical nuance, differing efficacy in gender-associated treatments. Hence, we can hypothesize that the gender-inclusive model is actually more consistent, although additional work will be needed to understand the care pattern prove and disprove the hypothesis. 
 # 
-# In terms of **Individual Fairness**, the Consistency Score for gender-inclusive model prediction is slightly less fair than the ground truth. The same measure for the baseline model, while  still less fair than the ground truth, is relatively closer to the ground truth score than is the score for the gender-inclusive prediction. So, by that measure, our baseline model is slightly more fair at the individual level than the gender-inclusive one. However, notably, these are relative measures of individual fairness, which are not necessarily specific to the gender feature. 
+# It is also worth noting that these measure values apply to one split of these data. We will want to do additional testing to determine the effect of randomness on these results.
+# 
 
 # ----
 # # Part 4 - Testing Other Protected Attributes
@@ -484,7 +491,7 @@ comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-In
 # Our next experiment will test the presence of bias relative to a patient\'s language. Here we assume that individuals who speak English may be given preferential treatment in an English-speaking society due to the requirement of using a translator. In addition to being a protected attribute in its own right, language may also be a proxy for race or religion. As above, we will generate a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 # 
 
-# In[17]:
+# In[32]:
 
 
 # Update Split Data to Include Language as a Feature
@@ -498,7 +505,7 @@ X_lang = X_lang.drop(lang_cols, axis=1).fillna(0)
 
 # Show LOS Statistics Relative to LANG_ENGL
 lang_tbl = X_lang.join(df['length_of_stay']).groupby('LANG_ENGL')['length_of_stay'].describe().round(4)
-display(lang_tbl.style.applymap(helper.highlight_col, subset=pd.IndexSlice[:, 'mean']))
+display(lang_tbl.style.applymap(helpers.highlight_col, subset=pd.IndexSlice[:, 'mean']))
         
 display(Markdown('---'))
 ax_e = df.groupby(english_speaking)['length_of_stay'
@@ -508,12 +515,12 @@ plt.show()
 # Show Results of T-Test
 display(Markdown('---'))
 ttest = stats.ttest_ind(df.loc[english_speaking,'length_of_stay'],df.loc[~english_speaking,'length_of_stay'])
-print(cyan_title + "Results of Independent T-Test" + helper.cprint.OFF, "\n",
+print(cyan_title + "Results of Independent T-Test" + helpers.cprint.OFF, "\n",
       "T Value:", ttest[0], "\n", "P Value:", ttest[1], "\n"
      )
 
 
-# In[18]:
+# In[33]:
 
 
 # Train New Model with Language Feature
@@ -525,14 +532,16 @@ y_pred_lang = lang_model.predict(X_test_lang)
 y_prob_lang = lang_model.predict_proba(X_test_lang)
 
 
-# In[19]:
+# In[34]:
 
+
+lang_values = X_test_lang['LANG_ENGL']
 
 # Generate Dataframe of  Measure Values for Language-Inclusive Model, Relative to Patient Language
-lang_scores = helper.get_aif360_measures_df(X_test_lang, y_test, y_pred_lang, y_prob_lang, protected_attr=['LANG_ENGL'])
+lang_scores = model_comparison.report_classification_fairness(X_test_lang, lang_values, y_test, y_pred_lang, y_prob_lang[:,1])
 
 # Generate Dataframe of Measure Values for Baseline Model, Relative to Patient Language
-lang_ko_scores = helper.get_aif360_measures_df(X_test_lang, y_test, y_pred_baseline, y_prob_baseline, protected_attr=['LANG_ENGL']) 
+lang_ko_scores = model_comparison.report_classification_fairness(X_test_lang, lang_values, y_test, y_pred_baseline, y_prob_baseline[:,1]) 
 
 # Merge Results to Display a Full Comparison
 lang_comparison = lang_scores.rename(columns={'Value':'Language Fairness'}
@@ -540,9 +549,9 @@ lang_comparison = lang_scores.rename(columns={'Value':'Language Fairness'}
                             )
 
 lang_comparison.style.set_caption('Fairness Measures Relative to Language for Language-Inclusive Model vs Baseline'
-                    ).apply(helper.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
-                    ).apply(helper.highlight_row, colname='Measure', 
-                       values=['Disparate Impact Ratio', 'Consistency Score - Truth', 'Consistency Score - Prediction'], axis=1)
+                    ).apply(helpers.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
+                    ).apply(helpers.highlight_row, colname='Measure', 
+                       values=['Disparate Impact Ratio', 'Consistency Score'], axis=1)
 
 
 # ## Evaluating Justification
@@ -556,7 +565,7 @@ lang_comparison.style.set_caption('Fairness Measures Relative to Language for La
 # 
 # The FairLearn and AIF360 APIs for Scikit and XGBOOST models are very similar in user experience, and contain a similar set of measures as shown in the table below. Although the set of measures provided by AIF360 is more comprehensive, FairLearn does provide some measures that are unique. First we'll look at FairLearn measures that are also found in AIF360 before explaining the measures that are distinct. 
 
-# In[20]:
+# In[35]:
 
 
 # Load FairLearn Measures
@@ -607,7 +616,7 @@ from fairlearn.metrics import (
 # The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in AIF360).
 # > $ equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$
 
-# In[21]:
+# In[36]:
 
 
 # Display Example Results for Measures that are Found in AIF360
@@ -635,7 +644,7 @@ print("Equalized Odds Ratio",
 # 
 # To extend the summary functionality, FairLearn also offers a "difference_from_summary" function (shown below), which calculates the between-group prediction difference (again, as we calculated [above](#aif_difference_func)). However, this function requres a dictionary input as returned by the specific group_summary mentioned above.
 
-# In[22]:
+# In[37]:
 
 
 print(bold_mgta+"Group Summary and Summary Difference Examples"+clr_off)
@@ -650,6 +659,24 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 # 
 # For a deeper understanding of these metrics and measures of fairness, please see the KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare. Other additional resources and tutorials are also listed [below](#additional_resources).
 # 
+
+# ## Unfairness Mitigating Algorithms <a id="mitigation"></a>
+# 
+# |Algorithm| AIF360 | FairLearn| Reference|
+# |:----|:----|:----|:----|
+# |Optimized Preprocessing | Y | - | Calmon et al. (2017) |
+# |Disparate Impact Remover | Y | - | Feldman et al. (2015) |
+# |Equalized Odds Postprocessing (Threshold Optimizer) | Y | Y | Hardt et al. (2016) |
+# |Reweighing | Y | - | Kamiran and Calders (2012) |
+# |Reject Option Classification | Y | - | Kamiran et al. (2012) |
+# |Prejudice Remover Regularizer | Y | - | Kamishima et al. (2012) |
+# |Calibrated Equalized Odds Postprocessing | Y | - | Pleiss et al. (2017) |
+# |Learning Fair Representations | Y | - | [Zemel (2013)](#zemel2013_ref) |
+# |Adversarial Debiasing | Y | - | Zhang et al. (2018 |
+# |Meta-Algorithm for Fair Classification | Y | - | Celis et al. (2018) |
+# |Rich Subgroup Fairness | Y | - | Kearns, Neel, Roth, & Wu (2018) |
+# |Exponentiated Gradient | - | Y | Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
+# |Grid Search | - | Y |  Agarwal, Dudik, & Wu (2019); Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
 
 # ----
 # # References 
@@ -711,27 +738,3 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 #    
 # ["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning" by Valeria Cortez](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text=Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D) - Another source for background on fairness metrics.
 # 
-
-# ## Unfairness Mitigating Algorithms <a id="mitigation"></a>
-# 
-# |Algorithm| AIF360 | FairLearn| Reference|
-# |:----|:----|:----|:----|
-# |Optimized Preprocessing | Y | - | Calmon et al. (2017) |
-# |Disparate Impact Remover | Y | - | Feldman et al. (2015) |
-# |Equalized Odds Postprocessing (Threshold Optimizer) | Y | Y | Hardt et al. (2016) |
-# |Reweighing | Y | - | Kamiran and Calders (2012) |
-# |Reject Option Classification | Y | - | Kamiran et al. (2012) |
-# |Prejudice Remover Regularizer | Y | - | Kamishima et al. (2012) |
-# |Calibrated Equalized Odds Postprocessing | Y | - | Pleiss et al. (2017) |
-# |Learning Fair Representations | Y | - | [Zemel (2013)](#zemel2013_ref) |
-# |Adversarial Debiasing | Y | - | Zhang et al. (2018 |
-# |Meta-Algorithm for Fair Classification | Y | - | Celis et al. (2018) |
-# |Rich Subgroup Fairness | Y | - | Kearns, Neel, Roth, & Wu (2018) |
-# |Exponentiated Gradient | - | Y | Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
-# |Grid Search | - | Y |  Agarwal, Dudik, & Wu (2019); Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
-
-# In[ ]:
-
-
-
-
