@@ -1,4 +1,4 @@
-"""A setuptools based setup module for fairMLHealth
+"""A setuptools based setup module for fairMLHealthHealth
 
 """
 from setuptools import setup, find_packages

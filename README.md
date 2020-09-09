@@ -1,4 +1,4 @@
-# fairml
+# fairMLHealth
 Tools and libraries for fairness and bias evaluation of machine learning models for healthcare.
 
 ## Tutorial
