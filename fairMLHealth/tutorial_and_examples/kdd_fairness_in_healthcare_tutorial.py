@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Practical Measurement of Fairness in Machine Learning for Healthcare
+# # Practical Fairness Measurement of Classifcation Tasks in Healthcare
 # ----
 
 # ## Overview
-# This tutorial introduces methods and libraries for measuring fairness in machine learning models as as it relates to problems in healthcare. Through the tutorial you will first learn basic background, before generating a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/). This baseline model will be used as an example to understand common measures such as the *Disparate Impact Ratio* and *Consistency Scores*. You gain familiarity with the Scikit-Learn-compatible tools available in [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/), two of the most comprehensive and flexible Python libraries for measuring and addressing bias in machine learning models.
+# This tutorial introduces methods and libraries for measuring fairness in machine learning models as it relates to problems in healthcare, presented in conjunction with the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](https://github.com/KenSciResearch/fairMLHealth/blob/master/publications/FairnessInHealthcareML-KDD-2020.pptx). Through the this noebook you will first learn basic background about fairness metrics", before generating a simple baseline model predicting Length of Stay (LOS) using data from the [MIMIC-III database](https://mimic.physionet.org/gettingstarted/access/). This baseline model will be used as an example to understand common measures like *Disparate Impact Ratios* and *Consistency Scores*. Through this notebook you will gain a familiarity with the Scikit-Learn-compatible tools available in [AIF360](http://aif360.mybluemix.net/) and [FairLearn](https://fairlearn.github.io/), two of the most comprehensive and flexible Python libraries for measuring and addressing bias in machine learning models.
 
 # ## Tutorial Contents
 # [Part 0](#part0) - Metrics of Fairness
@@ -27,6 +27,8 @@
 
 # ----
 # # Part 0 - Metrics of Fairness <a class="anchor" id="part0"></a>
+# Here we provide some brief context for the evaluation of fairness in machine learning. For more information, see the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](https://github.com/KenSciResearch/fairMLHealth/blob/master/publications/FairnessInHealthcareML-KDD-2020.pptx).
+# 
 # ## What is a "Fair" Model
 # In the context of this tutorial, a "fair" model is one that imposes no discrimination - the unjustified differential treatment of individuals based on their demographic status. [Romei and Ruggieri (2014)](#romei2014_ref) We refer to these "socially salient" groups ([Speicher 2018](#speicher2018_ref)) as ***protected attributes***, aka. *sensitive attributes* or *protected features*. There are six common metrics for determining whether a given machine learning model meets this definition: Equal Treatment ("Unawareness"), Demographic Parity, Equalized Odds, Predictive Parity, Individual Fairness, and Counterfactual Fairness. Basic definitions for each of these metrics are provided for you in the [Quick Reference](#metric_quickref) below. 
 # 
@@ -52,7 +54,7 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. We will use it to generate a simple baseline model that will be used throughout the tutorial.
 
-# In[22]:
+# In[1]:
 
 
 # Standard Libraries
@@ -447,7 +449,7 @@ print()
 # 
 # Below we generate a table conatining fairness scores for our LOS models. The scores we just generated are constrasted against gender-relative scores for the baseline model, which importantly does not contain GENDER_M as an attribute. As the table shows, removal of the gender attribute produces little change in measure values. 
 
-# In[31]:
+# In[16]:
 
 
 #
@@ -469,19 +471,20 @@ grp_measures = comparison.loc[(comparison.index < im_loc), 'Measure'].tolist()
 comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-Inclusive Model vs Baseline'     
                ).apply(helpers.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
                ).apply(helpers.highlight_row, colname='Measure', 
-                       values=['Disparate Impact Ratio', 'Consistency Score'], axis=1)
+                       values=['Disparate Impact Ratio', 'Consistency Score'], axis=1
+               ).set_properties(**{'text-align': 'right'})
 
 
 # ### Evaluating Significance: The Four-Fifths Rule 
-# As shown in the table above, the baseline model that excluded the GENDER_M feature had slightly greater performance to the gender-included version by some measures (for example ROC). It was even measured to have reduced disparity by some measures, although these differences are slight and may be an effect of randomness in the model. Moreover, the baseline model is also measured to have slightly increased disparity by other metrics. For example, the Statistical Parity Difference, Disparate Impact Ratio, and Average Odds Difference values are all slightly higher for the baseline model than for the GENDER_M-included model. How do we determine if this change is significant?
+# As shown in the table above, the baseline model had slightly greater model performance, and by some measures indicate that this model has lesser disparity than the gender-inclusive model. However, the baseline model is also measured to have slightly **increased** disparity by other metrics. For example, the Statistical Parity Difference, Disparate Impact Ratio, and Average Odds Difference values are all slightly higher for the baseline model than for the GENDER_M-included model. How do we determine if this change is significant?
 # 
-# In 1978, the United States Equal Employment Opportunity Commission adopted the "four-fifths rule", a guideline stating that, "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact." [EOC (1978)](#fourfifths_ref) This rubric has since been adopted for measures of fairness in machine learning as well, although the group with the "highest rate" is considered to be the group with the 
+# In 1978, the United States Equal Employment Opportunity Commission adopted the "four-fifths rule", a guideline stating that, "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact." [EOC (1978)](#fourfifths_ref) This rubric has since been adopted for measures of fairness in machine learning.
 # 
-# The Disparate Impact Ratios shown in the table above can be used as an example of this rule. A model whose Disparate Impact Ratio is 1 is considered to be perfectly "fair" relative to the protected attribute in question. Since neither model in this example has a Disparate Impact Ratio greater than or equal to 1.2 (or <= 0.8), we can say that neither model imposes a significantly disparate impact with respect to gender *according to the **Demographic Parity** metric*. Although, as will be clear in the next example, "fairness" by one measure does not necessarily mean that a model imposes no disparate impact.
+# The Disparate Impact Ratios shown in the table above can be used as an example of this rule. A model whose Disparate Impact Ratio is 1 is considered to be perfectly "fair" relative to the protected attribute in question. Since neither model in this example has a Disparate Impact Ratio greater than or equal to 1.2 (or <= 0.8), we can say that neither model imposes a significantly disparate impact with respect to gender according to the **[Demographic Parity](#metric_quickref)** metric. Although, as will be clear in the next example, "fairness" by one measure does not necessarily mean that a model imposes no disparate impact.
 # 
-# In terms of **Individual Fairness**, the Consistency Score for gender-inclusive model prediction is slightly less higher than that of the baseline model. This may indicate that the gender-inclusive model is able to discern gender-associated medical nuance, differing efficacy in gender-associated treatments. Hence, we can hypothesize that the gender-inclusive model is actually more consistent, although additional work will be needed to understand the care pattern prove and disprove the hypothesis. 
+# In terms of **[Individual Fairness](#metric_quickref)**, the Consistency Score for gender-inclusive model prediction is slightly less higher than that of the baseline model. This may indicate that the gender-inclusive model is able to discern gender-associated medical nuance, differing efficacy in gender-associated treatments. Hence, we can hypothesize that the gender-inclusive model is actually more consistent, although additional work will be needed to understand the care pattern prove and disprove the hypothesis. 
 # 
-# It is also worth noting that these measure values apply to one split of these data. We will want to do additional testing to determine the effect of randomness on these results.
+# Also note that since these measure values apply to only one split of these data, we have not yet accounted for the effect of randomness.
 # 
 
 # ----
@@ -491,7 +494,7 @@ comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-In
 # Our next experiment will test the presence of bias relative to a patient\'s language. Here we assume that individuals who speak English may be given preferential treatment in an English-speaking society due to the requirement of using a translator. In addition to being a protected attribute in its own right, language may also be a proxy for race or religion. As above, we will generate a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 # 
 
-# In[32]:
+# In[17]:
 
 
 # Update Split Data to Include Language as a Feature
@@ -520,7 +523,7 @@ print(cyan_title + "Results of Independent T-Test" + helpers.cprint.OFF, "\n",
      )
 
 
-# In[33]:
+# In[18]:
 
 
 # Train New Model with Language Feature
@@ -532,7 +535,7 @@ y_pred_lang = lang_model.predict(X_test_lang)
 y_prob_lang = lang_model.predict_proba(X_test_lang)
 
 
-# In[34]:
+# In[19]:
 
 
 lang_values = X_test_lang['LANG_ENGL']
@@ -565,7 +568,7 @@ lang_comparison.style.set_caption('Fairness Measures Relative to Language for La
 # 
 # The FairLearn and AIF360 APIs for Scikit and XGBOOST models are very similar in user experience, and contain a similar set of measures as shown in the table below. Although the set of measures provided by AIF360 is more comprehensive, FairLearn does provide some measures that are unique. First we'll look at FairLearn measures that are also found in AIF360 before explaining the measures that are distinct. 
 
-# In[35]:
+# In[20]:
 
 
 # Load FairLearn Measures
@@ -616,7 +619,7 @@ from fairlearn.metrics import (
 # The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in AIF360).
 # > $ equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$
 
-# In[36]:
+# In[21]:
 
 
 # Display Example Results for Measures that are Found in AIF360
@@ -644,7 +647,7 @@ print("Equalized Odds Ratio",
 # 
 # To extend the summary functionality, FairLearn also offers a "difference_from_summary" function (shown below), which calculates the between-group prediction difference (again, as we calculated [above](#aif_difference_func)). However, this function requres a dictionary input as returned by the specific group_summary mentioned above.
 
-# In[37]:
+# In[22]:
 
 
 print(bold_mgta+"Group Summary and Summary Difference Examples"+clr_off)
@@ -657,26 +660,8 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 # # Conclusion
 # This tutorial introduced multiple measures of ML fairness in the context of a healthcare model using Scikit-compatible APIs from the AIF360 and FairLearn Python libraries. It discussed the four-fifths rule for evaluating the significance of fairness measures, and demonstrated the value of comparing multiple measures against each other both for a single model and across multiple models. Through the tutorial you considered reasonable justification for the inclusion of protected attributes within a machine learning model. And finally, you saw the similarity between the APIs for AIF360 and FairLearn. The knowledge gained from this tutorial can be applied to better-understand the effects of unfairness-mitigating algorithms, many of which are available in AIF360 and FairLearn as shown in the [table below](#mitigation).
 # 
-# For a deeper understanding of these metrics and measures of fairness, please see the KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare. Other additional resources and tutorials are also listed [below](#additional_resources).
+# For additional tutorial content, please see the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](https://github.com/KenSciResearch/fairMLHealth/blob/master/publications/FairnessInHealthcareML-KDD-2020.pptx). Other additional resources and tutorials are also listed [below](#additional_resources).
 # 
-
-# ## Unfairness Mitigating Algorithms <a id="mitigation"></a>
-# 
-# |Algorithm| AIF360 | FairLearn| Reference|
-# |:----|:----|:----|:----|
-# |Optimized Preprocessing | Y | - | Calmon et al. (2017) |
-# |Disparate Impact Remover | Y | - | Feldman et al. (2015) |
-# |Equalized Odds Postprocessing (Threshold Optimizer) | Y | Y | Hardt et al. (2016) |
-# |Reweighing | Y | - | Kamiran and Calders (2012) |
-# |Reject Option Classification | Y | - | Kamiran et al. (2012) |
-# |Prejudice Remover Regularizer | Y | - | Kamishima et al. (2012) |
-# |Calibrated Equalized Odds Postprocessing | Y | - | Pleiss et al. (2017) |
-# |Learning Fair Representations | Y | - | [Zemel (2013)](#zemel2013_ref) |
-# |Adversarial Debiasing | Y | - | Zhang et al. (2018 |
-# |Meta-Algorithm for Fair Classification | Y | - | Celis et al. (2018) |
-# |Rich Subgroup Fairness | Y | - | Kearns, Neel, Roth, & Wu (2018) |
-# |Exponentiated Gradient | - | Y | Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
-# |Grid Search | - | Y |  Agarwal, Dudik, & Wu (2019); Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
 
 # ----
 # # References 
@@ -738,3 +723,29 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 #    
 # ["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning" by Valeria Cortez](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text=Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D) - Another source for background on fairness metrics.
 # 
+# 
+# # Table of Fairness-Aware ML Algorithms <a id="mitigation"></a>
+# The following ML algorithms are available through the libraries discussed in this notebook.
+# 
+# |Algorithm| AIF360 | FairLearn| Reference|
+# |:----|:----|:----|:----|
+# |Optimized Preprocessing | Y | - | Calmon et al. (2017) |
+# |Disparate Impact Remover | Y | - | Feldman et al. (2015) |
+# |Equalized Odds Postprocessing (Threshold Optimizer) | Y | Y | Hardt et al. (2016) |
+# |Reweighing | Y | - | Kamiran and Calders (2012) |
+# |Reject Option Classification | Y | - | Kamiran et al. (2012) |
+# |Prejudice Remover Regularizer | Y | - | Kamishima et al. (2012) |
+# |Calibrated Equalized Odds Postprocessing | Y | - | Pleiss et al. (2017) |
+# |Learning Fair Representations | Y | - | [Zemel (2013)](#zemel2013_ref) |
+# |Adversarial Debiasing | Y | - | Zhang et al. (2018 |
+# |Meta-Algorithm for Fair Classification | Y | - | Celis et al. (2018) |
+# |Rich Subgroup Fairness | Y | - | Kearns, Neel, Roth, & Wu (2018) |
+# |Exponentiated Gradient | - | Y | Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
+# |Grid Search | - | Y |  Agarwal, Dudik, & Wu (2019); Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
+# 
+
+# In[ ]:
+
+
+
+
