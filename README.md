@@ -1,4 +1,4 @@
-c# fairMLHealth
+# fairMLHealth
 Tools and libraries for fairness and bias evaluation of machine learning models for healthcare.
 
 ## Tutorial
@@ -7,4 +7,7 @@ oThe tutorial introduces concepts for measuring fairness in machine learning mod
 The tutorial assumes basic knowledge of machine learning implementation in Python.
 
 The tutorial notebook uses data from the [MIMIC III Critical Care database](https://mimic.physionet.org/gettingstarted/access/). Note that although the data are freely available, it may take a few days to gain approval. Please save the data with the default directory name ("MIMIC"). The notebook also requires the following Python libraries: AIF360, FairLearn, Scipy, Pandas, Numpy, Scikit, and XGBOOST.
+
+## Citation
+Ahmad, M. A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). Fairness in Machine Learning for Healthcare. In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
 
