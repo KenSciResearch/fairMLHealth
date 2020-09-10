@@ -54,7 +54,7 @@
 # 
 # This section introduces and loads the data subset that will be used in this tutorial. We will use it to generate a simple baseline model that will be used throughout the tutorial.
 
-# In[1]:
+# In[22]:
 
 
 # Standard Libraries
@@ -449,7 +449,7 @@ print()
 # 
 # Below we generate a table conatining fairness scores for our LOS models. The scores we just generated are constrasted against gender-relative scores for the baseline model, which importantly does not contain GENDER_M as an attribute. As the table shows, removal of the gender attribute produces little change in measure values. 
 
-# In[16]:
+# In[31]:
 
 
 #
@@ -494,7 +494,7 @@ comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-In
 # Our next experiment will test the presence of bias relative to a patient\'s language. Here we assume that individuals who speak English may be given preferential treatment in an English-speaking society due to the requirement of using a translator. In addition to being a protected attribute in its own right, language may also be a proxy for race or religion. As above, we will generate a boolean 'LANGUAGE_ENGL' feature to the baseline data.
 # 
 
-# In[17]:
+# In[32]:
 
 
 # Update Split Data to Include Language as a Feature
@@ -523,7 +523,7 @@ print(cyan_title + "Results of Independent T-Test" + helpers.cprint.OFF, "\n",
      )
 
 
-# In[18]:
+# In[33]:
 
 
 # Train New Model with Language Feature
@@ -535,8 +535,10 @@ y_pred_lang = lang_model.predict(X_test_lang)
 y_prob_lang = lang_model.predict_proba(X_test_lang)
 
 
-# In[19]:
+# In[34]:
 
+
+lang_values = X_test_lang['LANG_ENGL']
 
 lang_values = X_test_lang['LANG_ENGL']
 
@@ -568,7 +570,7 @@ lang_comparison.style.set_caption('Fairness Measures Relative to Language for La
 # 
 # The FairLearn and AIF360 APIs for Scikit and XGBOOST models are very similar in user experience, and contain a similar set of measures as shown in the table below. Although the set of measures provided by AIF360 is more comprehensive, FairLearn does provide some measures that are unique. First we'll look at FairLearn measures that are also found in AIF360 before explaining the measures that are distinct. 
 
-# In[20]:
+# In[35]:
 
 
 # Load FairLearn Measures
@@ -619,7 +621,7 @@ from fairlearn.metrics import (
 # The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in AIF360).
 # > $ equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$
 
-# In[21]:
+# In[36]:
 
 
 # Display Example Results for Measures that are Found in AIF360
@@ -647,7 +649,7 @@ print("Equalized Odds Ratio",
 # 
 # To extend the summary functionality, FairLearn also offers a "difference_from_summary" function (shown below), which calculates the between-group prediction difference (again, as we calculated [above](#aif_difference_func)). However, this function requres a dictionary input as returned by the specific group_summary mentioned above.
 
-# In[22]:
+# In[37]:
 
 
 print(bold_mgta+"Group Summary and Summary Difference Examples"+clr_off)
@@ -662,6 +664,24 @@ print("Between-Group Balanced Accuracy Difference", difference_from_summary(bala
 # 
 # For additional tutorial content, please see the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](https://github.com/KenSciResearch/fairMLHealth/blob/master/publications/FairnessInHealthcareML-KDD-2020.pptx). Other additional resources and tutorials are also listed [below](#additional_resources).
 # 
+
+# ## Unfairness Mitigating Algorithms <a id="mitigation"></a>
+# 
+# |Algorithm| AIF360 | FairLearn| Reference|
+# |:----|:----|:----|:----|
+# |Optimized Preprocessing | Y | - | Calmon et al. (2017) |
+# |Disparate Impact Remover | Y | - | Feldman et al. (2015) |
+# |Equalized Odds Postprocessing (Threshold Optimizer) | Y | Y | Hardt et al. (2016) |
+# |Reweighing | Y | - | Kamiran and Calders (2012) |
+# |Reject Option Classification | Y | - | Kamiran et al. (2012) |
+# |Prejudice Remover Regularizer | Y | - | Kamishima et al. (2012) |
+# |Calibrated Equalized Odds Postprocessing | Y | - | Pleiss et al. (2017) |
+# |Learning Fair Representations | Y | - | [Zemel (2013)](#zemel2013_ref) |
+# |Adversarial Debiasing | Y | - | Zhang et al. (2018 |
+# |Meta-Algorithm for Fair Classification | Y | - | Celis et al. (2018) |
+# |Rich Subgroup Fairness | Y | - | Kearns, Neel, Roth, & Wu (2018) |
+# |Exponentiated Gradient | - | Y | Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
+# |Grid Search | - | Y |  Agarwal, Dudik, & Wu (2019); Agarwal, Beygelzimer, Dudik, Langford, & Wallach (2018) |
 
 # ----
 # # References 
