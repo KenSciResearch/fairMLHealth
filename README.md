@@ -2,7 +2,7 @@
 Tools and libraries for fairness and bias evaluation of machine learning models for healthcare.
 
 ## Tutorial
-oThe tutorial introduces concepts for measuring fairness in machine learning models as as it relates to problems in healthcare (slides: `publications/FairnessInHealthcareML-KDD-2020.pptx`). Through the associated notebook (`fairMLHealth/tutorial_and_examples/kdd_fairness_in_healthcare_tutorial.ipynb`) you will review the background introduced in the slides before generating a simple baseline model. This baseline will be used as an example to understand common measures such as Disparate Impact Ratio and Consistency Scores. It will also introduce you to the Scikit-Learn-compatible tools available in AIF360 and FairLearn, two of the most comprehensive and flexible Python libraries for measuring and addressing bias in machine learning models.
+The tutorial introduces concepts for measuring fairness in machine learning models as as it relates to problems in healthcare (slides: `publications/FairnessInHealthcareML-KDD-2020.pptx`). Through the associated notebook (`fairMLHealth/tutorial_and_examples/kdd_fairness_in_healthcare_tutorial.ipynb`) you will review the background introduced in the slides before generating a simple baseline model. This baseline will be used as an example to understand common measures such as Disparate Impact Ratio and Consistency Scores. It will also introduce you to the Scikit-Learn-compatible tools available in AIF360 and FairLearn, two of the most comprehensive and flexible Python libraries for measuring and addressing bias in machine learning models.
 
 The tutorial assumes basic knowledge of machine learning implementation in Python.
 
