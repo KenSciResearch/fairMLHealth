@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Practical Fairness Measurement of Classifcation Tasks in Healthcare
+# # Practical Measurement of Fairness in Classifcation Tasks for Healthcare
 # ----
 
 # ## Overview
@@ -472,7 +472,7 @@ comparison.style.set_caption('Fairness Measures Relative to Gender for Gender-In
                ).apply(helpers.highlight_row, colname='Measure', h_type='text', values=grp_measures, color='slateblue', axis=1
                ).apply(helpers.highlight_row, colname='Measure', 
                        values=['Disparate Impact Ratio', 'Consistency Score'], axis=1
-               ).set_properties(**{'text-align': 'right'})
+               )
 
 
 # ### Evaluating Significance: The Four-Fifths Rule 
