@@ -273,11 +273,11 @@ def report_classification_fairness(X, protected_attr, y_true, y_pred, y_prob=Non
     target_labels = [f"target = {t}" for t in set(np.unique(y_true))]
     report = report_scikit(y_true.iloc[:,0], y_pred.iloc[:,0], target_labels)
     avg_lbl = "avg / total" if len(target_labels) > 2 else target_labels[-1]
-    scores.append( ['precision', report.loc[avg_lbl, 'precision']])
-    scores.append( ['recall', report.loc[avg_lbl, 'recall']])
-    scores.append( ['f1-score', report.loc[avg_lbl, 'f1-score']])
+    scores.append( ['Precision', report.loc[avg_lbl, 'precision']])
+    scores.append( ['Recall', report.loc[avg_lbl, 'recall']])
+    scores.append( ['F1-Score', report.loc[avg_lbl, 'f1-score']])
     if len(target_labels) == 2:
-        scores.append( ['accuracy', report.loc[avg_lbl, 'accuracy']])
+        scores.append( ['Accuracy', report.loc[avg_lbl, 'accuracy']])
 
     # Convert scores to a formatted dataframe and return
     model_scores =  pd.DataFrame(scores, columns=['Measure','Value'])
