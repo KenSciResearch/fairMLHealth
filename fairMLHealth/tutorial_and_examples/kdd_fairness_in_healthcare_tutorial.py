@@ -68,7 +68,7 @@ import sys
 import warnings
 
 # Load Prediction Libraries
-import sklearn.metrics as sk_metrics
+import sklearn.metrics as sk_metric
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
@@ -107,7 +107,7 @@ path_to_mimic_data_folder = "~/data/MIMIC"
 # In[3]:
 
 
-df = helpers.load_example_data(path_to_mimic_data_folder) 
+df = helpers.load_mimic3_exmpl_df(path_to_mimic_data_folder) 
 df = df.loc[df['AGE'].ge(65),:]
 helpers.print_feature_table(df)
 display(Markdown('---'))
@@ -154,7 +154,7 @@ y_pred_baseline = baseline_model.predict(X_test)
 y_prob_baseline = baseline_model.predict_proba(X_test)
 
 print("\n", "Prediction Scores for Baseline Model:", "\n", 
-      sk_metrics.classification_report(y_test.iloc[:,0], y_pred_baseline, target_names=['LOS <= mean', 'LOS > mean']
+      sk_metric.classification_report(y_test.iloc[:,0], y_pred_baseline, target_names=['LOS <= mean', 'LOS > mean']
                                       ).replace("LOS <=", bold_mgta+ "LOS <=").replace("LOS >", clr_off + "LOS >") )
 
 
@@ -199,7 +199,7 @@ y_pred_gender = gender_model.predict(X_test_gender)
 y_prob_gender = gender_model.predict_proba(X_test_gender)
 
 print("\n", "Prediction Scores for Model with Gender Included:", "\n", 
-      sk_metrics.classification_report(y_test.iloc[:,0], y_pred_gender, target_names=['LOS <= mean', 'LOS > mean']
+      sk_metric.classification_report(y_test.iloc[:,0], y_pred_gender, target_names=['LOS <= mean', 'LOS > mean']
                                       ).replace("LOS <=", bold_mgta+ "LOS <=").replace("LOS >", clr_off + "LOS >") )
 
 
@@ -341,13 +341,13 @@ print()
 # Display examples using the difference function
 print(bold_mgta+ "Examples of Difference Function" +clr_off)
 print(bold_on + 'Positive Predictive Parity Difference = ' + clr_off,
-          difference(sk_metrics.precision_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1)
+          difference(sk_metric.precision_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1)
      )
 print(bold_on + 'Between-Group AUC Difference = ' + clr_off,
-          difference(sk_metrics.roc_auc_score, y_test_aif, y_prob_gender[:, 1], prot_attr='GENDER_M', priv_group=1)
+          difference(sk_metric.roc_auc_score, y_test_aif, y_prob_gender[:, 1], prot_attr='GENDER_M', priv_group=1)
      )
 print(bold_on+'Between-Group Balanced Accuracy Difference = '+clr_off, 
-          difference(sk_metrics.balanced_accuracy_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1)
+          difference(sk_metric.balanced_accuracy_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1)
      )
 
 # Display examples using the ratio function
@@ -357,10 +357,10 @@ print(bold_on + 'Selection Rate Ratio (Disparate Impact Ratio) = ' + clr_off,
         ratio(selection_rate, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
      )
 print(bold_on + 'Precision Ratio = ' + clr_off, 
-        ratio(sk_metrics.precision_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
+        ratio(sk_metric.precision_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
      )
 print(bold_on + 'Recall Ratio = ' + clr_off, 
-        ratio(sk_metrics.recall_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
+        ratio(sk_metric.recall_score, y_test_aif, y_pred_gender, prot_attr='GENDER_M', priv_group=1) 
      )
 print()
 

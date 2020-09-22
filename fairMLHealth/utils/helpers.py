@@ -66,7 +66,7 @@ def highlight_row(df, colname, values, color='aquamarine', h_type='field'):
 Loaders and Printers
 '''
 
-def load_example_data(mimic_dirpath):
+def load_mimic3_example(mimic_dirpath):
     """ Returns a formatted MIMIC-III data subset for use in KDD Tutorial
 
         If formatted data file exists, loads that file. Else, generates
@@ -74,6 +74,9 @@ def load_example_data(mimic_dirpath):
 
         Args:
             mimic_dirpath (str): valid path to downloaded MIMIC data
+
+        Returns:
+            pandas dataframe of formatted MIMIC-III data
     """
     data_file = os.path.join(os.path.expanduser(mimic_dirpath), "kdd_tutorial_data.csv")
     if not os.path.exists(data_file):
@@ -108,3 +111,31 @@ def print_feature_table(df):
     count_df = feat_df.groupby('Raw Feature', as_index=False)['feature'].count(
                 ).rename(columns={'feature':'Category Count (Encoded Features)'})
     display(count_df)
+
+
+'''
+Tutorial-Specific Helpers
+'''
+
+def simplify_tutorial_report(comparison_report_df):
+    """Updates a fainress comparison report to exlude FairLearn measures. For
+        use in the KDD Tutorial, which first introduces AIF360 measures before
+        introducing FairLearn
+
+        Args:
+            comparison_report_df (pandas df): a fairMLHealth model_comparison
+            report
+
+        Returns:
+            an updated version of the comparison_report_df
+    """
+    print("Note: this report has been simplified for this tutorial.",
+          "For a more extensive report, omit the simplify_tutorial_report function")
+    fl_measures = ["demographic_parity_difference", "demographic_parity_ratio",
+                   "equalized_odds_difference", "equalized_odds_ratio"]
+    ix_vals = comparison_report_df.index
+    ix_vals = [v.replace(" ", "_").lower() for v in ix_vals]
+    drop_meas = [ix_vals.index(v) for v in ix_vals if v in fl_measures]
+    df = comparison_report_df.drop(drop_meas, axis=0)
+    return(df)
+

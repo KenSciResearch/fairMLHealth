@@ -44,7 +44,7 @@ output_file = os.path.expanduser("~/data/fairness_and_bias/mimic_model_compariso
 # In[4]:
 
 
-df = helpers.load_example_data(path_to_mimic_data_folder) 
+df = helpers.load_mimic3_exmpl_df(path_to_mimic_data_folder) 
 df = df.loc[df['AGE'].ge(65),:]
 helpers.print_feature_table(df)
 display(Markdown('---'))
@@ -75,7 +75,7 @@ plt.show()
 
 # Shared Functions
 from sklearn.model_selection import train_test_split
-import sklearn.metrics as sk_metrics
+import sklearn.metrics as sk_metric
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from joblib import dump
 
@@ -97,7 +97,7 @@ y_prob_baseline = y_pred_baseline
 
 # display baseline performance 
 print("\n", "Prediction Scores for Random Sampling:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_baseline, target_names=['LOS <= mean', 'LOS > mean']))
+      sk_metric.classification_report(y_test, y_pred_baseline, target_names=['LOS <= mean', 'LOS > mean']))
 
 
 # ## Split Data for other Models
@@ -128,7 +128,7 @@ y_pred_nb = nb_model.predict(X_test)
 
 # display performance 
 print("\n", "Naive Bayes Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_nb, target_names=['LOS <= mean', 'LOS > mean']))
+      sk_metric.classification_report(y_test, y_pred_nb, target_names=['LOS <= mean', 'LOS > mean']))
 
 
 # ## Decision Tree Model
@@ -148,7 +148,7 @@ y_pred_dt = dt_model.predict(X_test)
 
 # display performance 
 print("\n", "Decision Tree Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_dt, target_names=['LOS <= mean', 'LOS > mean']) )
+      sk_metric.classification_report(y_test, y_pred_dt, target_names=['LOS <= mean', 'LOS > mean']) )
 
 
 # ## Random Forest Model
@@ -168,7 +168,7 @@ y_pred_rf = rf_model.predict(X_test)
 
 # display performance 
 print("\n", "Random Forest Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_rf, target_names=['LOS <= mean', 'LOS > mean']) )
+      sk_metric.classification_report(y_test, y_pred_rf, target_names=['LOS <= mean', 'LOS > mean']) )
 
 
 # ## Logit Regression Model
@@ -188,7 +188,7 @@ y_pred_lr = lr_model.predict(X_test)
 
 # display performance 
 print("\n", "Logit Regression Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_lr, zero_division=0, target_names=['LOS <= mean', 'LOS > mean']) )
+      sk_metric.classification_report(y_test, y_pred_lr, zero_division=0, target_names=['LOS <= mean', 'LOS > mean']) )
 
 
 # ## SVM Model
@@ -210,7 +210,7 @@ y_pred_svm = svm_model.predict(X_test)
 
 # display performance 
 print("\n", "SVM Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_svm, target_names=['LOS <= mean', 'LOS > mean'], zero_division=0) )
+      sk_metric.classification_report(y_test, y_pred_svm, target_names=['LOS <= mean', 'LOS > mean'], zero_division=0) )
 
 
 # ## XGBOOST Model
@@ -231,7 +231,7 @@ y_pred_xgb = xgb_model.predict(X_test)
 
 # display performance 
 print("\n", "XGBOOST Prediction Scores:", "\n", 
-      sk_metrics.classification_report(y_test, y_pred_xgb, target_names=['LOS <= mean', 'LOS > mean']) )
+      sk_metric.classification_report(y_test, y_pred_xgb, target_names=['LOS <= mean', 'LOS > mean']) )
 
 
 # # Save Model Packet
