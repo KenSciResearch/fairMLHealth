@@ -411,40 +411,29 @@ def report_regression_fairness(X, protected_attr, y_true, y_pred):
     gf_vals['R2 Ratio'] = \
             aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
                            prot_attr=pa_names, priv_group=1)
-    gf_vals['R2 Difference'] = \
-            aif_mtrc.difference(sk_metric.r2_score, y_true, y_pred,
-                                prot_attr=pa_names, priv_group=1)
     gf_vals['MAE Ratio'] = \
             aif_mtrc.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
                            prot_attr=pa_names, priv_group=1)
-    gf_vals['MAE Difference'] = \
-            aif_mtrc.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                           prot_attr=pa_names,priv_group=1)
     gf_vals['MSE Ratio'] = \
             aif_mtrc.ratio(sk_metric.mean_squared_error, y_true, y_pred,
                            prot_attr=pa_names, priv_group=1)
-    gf_vals['MSE Difference'] = \
-            aif_mtrc.difference(sk_metric.mean_squared_error, y_true,  y_pred,
-                    prot_attr=pa_names, priv_group=1)
     #
     if_vals, if_key = __individual_fairness_measures(X, y_true, y_pred, pa_names)
     #
     mp_vals = {}
-    mp_key = f'** Model Performance **'
+    mp_key = '** Model Performance **'
     report = regression_report(y_true, y_pred)
     for row in report.iterrows():
         mp_vals[row[0]] = row[1]['Score']
     # Convert scores to a formatted dataframe and return
-    measures = [{gf_key:None}, gf_vals, {if_key:None}, if_vals, 
-                {mp_key:None}, mp_vals]
-    scores = [[k,v] for d in measures for k,v in d.items() ]
-    df =  pd.DataFrame(scores, columns=['Measure','Value'])
+    measures = {gf_key:gf_vals,if_key:if_vals, mp_key: mp_vals}
+    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
+    df.columns = ['Value']
     df['Value'] = df.loc[:,'Value'].round(4)
     df.fillna("", inplace=True)
     return df
 
-
-    
 
 
 def regression_report(y_true, y_pred):
@@ -462,3 +451,40 @@ def regression_report(y_true, y_pred):
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0:'Score'})
     return(report)
+
+
+def highlight_suspicious_scores(df, caption="", model_type="binary"):
+    """ Returns a pandas styler table containing a hilighted version of a
+        model comparison dataframe
+
+    Args:
+        df (pandas dataframe): model comparison dataframe as output by
+            report_regression_fairness or report_classification_fairness
+        caption (str, optional): Optional caption for the table. Defaults to "".
+
+    Returns:
+        pandas.io.formats.style.Styler
+    """
+    if caption is None:
+        caption = "Fairness Meaures"
+    #
+    idx = pd.IndexSlice
+    measures = df.index.get_level_values(1)
+    ratios = df.loc[idx['** Group Fairness **',
+                    [c.lower().endswith("ratio") for c in measures]],:].index
+    difference = df.loc[idx['** Group Fairness **',
+                    [c.lower().endswith("difference") for c in measures]],:].index
+    cs = df.loc[idx['** Group Fairness **',
+                    [c.lower().replace(" ", "_") == "consistency_score" for c in measures]],:].index
+
+    return(df.style.set_caption(caption
+            ).apply(lambda x: ['color:orange'
+                    if (x.name in ratios and not 1 < x.iloc[0] < 1.2)
+                    else '' for i in x], axis=1
+            ).apply(lambda x: ['color:orange'
+                    if (x.name in difference and not -0.1 < x.iloc[0] < 0.1)
+                    else '' for i in x], axis=1
+            ).apply(lambda x: ['color:orange'
+                    if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x], axis=1
+            )
+    )

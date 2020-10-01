@@ -35,30 +35,57 @@ class cprint:
     OFF = '\033[0m'
 
 
+
+
 def highlight_col(df, color='aquamarine'):
     return f'background-color: {color}'
 
 
-def highlight_row(df, colname, values, color='aquamarine', h_type='field'):
-    ''' Returns a list of strings setting the background color at each index of
+def highlight_vals(df, values, colname=None, criteria=None, color='aquamarine', h_type='field'):
+    """ Returns a list of strings setting the background color at each index of
         df where a[column] is in the list of values
 
-        Args:
-            df (pandas df): any dataframe
-            colname (str): name of column
-            values (list-like): values in colname to be highlighted
-            color (str): css color name
-    '''
+    Args:
+        df (pandas df): any dataframe
+        values (list-like): values in colname to be highlighted
+        colname (str): name of column against which to match values. Defaults to None.
+        criteria (str): query criteria. may not . Defaults to None.
+        color (str): css color name. Defaults to 'aquamarine'.
+        h_type (str, optional): [description]. Defaults to 'field'.
+
+    Raises:
+        ValueError: [description]
+
+    Returns:
+        [type]: [description]
+    """
+    if (criteria is not None and values is not None):
+        print("Cannot process both crieteria and values. Defaulting to criteria entry")
     if not h_type in ['text', 'field']:
         raise ValueError("Wrong h_type sent")
+    if not isinstance(colname, (list, tuple)):
+        colname = list(colname)
+    if values is None:
+        values = []
+    if not isinstance(values, (list, tuple)):
+        values = list(values)
+    #
+    if criteria is None:
+        criteria = f"in {values}"
     highlight = pd.Series(data=False, index=df.index)
-    highlight[colname] = df[colname] in values
+    for col in colname:
+        test_vals = values
+        if criteria is not None:
+            test_vals += df.query(" ".join([col, criteria]))
+        highlight[col] = bool(df[col] in values)
     if h_type == 'text':
         return [f'color: {color}'
                     if highlight.any() else '' for v in highlight]
     elif h_type == 'field':
         return [f'background-color: {color}'
                     if highlight.any() else '' for v in highlight]
+
+
 
 
 

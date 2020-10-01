@@ -31,7 +31,8 @@ setup(
                       'scikit-learn>=0.22.1',
                       'seaborn',
                       'tensorflow',
-                      'xgboost'],
+                      'xgboost'
+                    ],
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness',
     classifiers=[
@@ -39,4 +40,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
     ]
+    packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
 )
+
