@@ -21,6 +21,26 @@ from . import format_mimic_data
 
 
 
+
+
+'''
+    Global variable for backward compatibility with KDD2020 tutorial. Used to
+        reduce verbosity of comparison tables.
+'''
+TUTORIAL_ON = False
+
+def start_tutorial():
+    global TUTORIAL_ON
+    TUTORIAL_ON = True
+
+def stop_tutorial():
+    global TUTORIAL_ON
+    TUTORIAL_ON = True
+
+def is_tutorial_running():
+    return TUTORIAL_ON
+
+
 '''
 Formatting Helpers
 '''
