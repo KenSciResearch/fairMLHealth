@@ -44,19 +44,6 @@ def is_tutorial_running():
 '''
 Formatting Helpers
 '''
-class cprint:
-    ''' ANSI escape sequences for text hilghting
-    '''
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    MAGENTA = '\u001b[35m'
-    CYAN = '\u001b[36m'
-    BLUE = '\u001b[34m'
-    OFF = '\033[0m'
-
-
-
-
 def highlight_col(df, color='aquamarine'):
     return f'background-color: {color}'
 

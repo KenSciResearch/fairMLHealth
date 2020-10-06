@@ -8,7 +8,6 @@
 from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
-import fairMLHealth.tools.measures as fh_mtrc
 from IPython.display import HTML
 import pandas as pd
 import numpy as np
@@ -120,7 +119,7 @@ class fairCompare(ABC):
             self.__pause_validation = True
 
     def measure_model(self, model_name):
-        """ Generates a report comparing fairness measures for the model_name 
+        """ Generates a report comparing fairness measures for the model_name
                 specified
 
             Returns:
