@@ -12,10 +12,14 @@ from IPython.display import HTML
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
-import warnings
+
+from . import reports
+
+
 # Temporarily hide pandas SettingWithCopy warning
-warnings.filterwarnings('ignore', module='pandas' )
-warnings.filterwarnings('ignore', module='sklearn' )
+import warnings
+warnings.filterwarnings('ignore', module = 'pandas')
+warnings.filterwarnings('ignore', module = 'sklearn')
 
 
 
@@ -26,7 +30,8 @@ warnings.filterwarnings('ignore', module='sklearn' )
 '''
 
 
-def compare_models(test_data, target_data, protected_attr_data=None, models=None):
+def compare_models(test_data, target_data, protected_attr_data = None,
+                                                                models = None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the fairCompare.compare_models method.
             See fairCompare for more information.
@@ -38,15 +43,13 @@ def compare_models(test_data, target_data, protected_attr_data=None, models=None
     table = comp.compare_models()
     return(table)
 
+
 class fairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
-
-        TODO: inherit AIF360 data object
     """
-    def __init__(self, test_data, target_data, protected_attr_data=None,
-                                                                    models=None):
-        """ Validates and attaches attributes
-
+    def __init__(self, test_data, target_data, protected_attr_data = None,
+                                                                models = None):
+        """
             Args:
                 test_data (numpy array or similar pandas object): data to be
                     passed to the models to generate predictions. It's
@@ -60,8 +63,10 @@ class fairCompare(ABC):
                     test_data. Note that values must currently be binary or
                     boolean type
                 models (dict or list-like): the set of trained models to be
-                    evaluated. Dict keys assumed as model names. If a list-like
-                    object is passed, will set model names relative to their index
+                    evaluated. Models can be any object with a scikit-like
+                    predict() method. Dict keys assumed as model names. If a
+                    list-like object is passed, will set model names relative to
+                    their index
         """
         self.X = test_data
         self.protected_attr = protected_attr_data
@@ -74,8 +79,7 @@ class fairCompare(ABC):
                 appropriate
 
             Raises:
-                TypeError: data must by scikit-compatible format
-                ValueError: data must be of same length
+                TypeError(s), ValueError(s)
         """
         # Skip validation if paused
         if self.__validation_paused():
@@ -97,14 +101,14 @@ class fairCompare(ABC):
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
                 raise TypeError("Models must be dict or list-like group of" +
-                    " trained, scikit-compatible models")
+                    " trained, skikit-like models")
             self.models = {f'model_{i}':m for i,m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
                   f"{list(self.models.keys())}")
         if self.models is not None:
             if not len(self.models) > 0:
-                raise  "The set of models is empty"
+                raise ValueError("The set of models is empty")
         return None
 
     def __validation_paused(self):
@@ -127,29 +131,29 @@ class fairCompare(ABC):
         """
         self.__validate()
         if model_name not in self.models.keys():
-            print(f"Error measuring fairness: {model_name} does not appear in" +
-                  f" the models. Available models include {list(self.models.keys())}")
+            print(f"Error measuring fairness: {model_name} does not appear in",
+                  f"the models. Available models include {list(self.models.keys())}")
             return pd.DataFrame()
         m = self.models[model_name]
         # Cannot measure fairness without predictions
         try:
-            y_pred =  m.predict(self.X)
+            y_pred = m.predict(self.X)
         except:
             try:
-                y_pred =  m.predict(self.X.to_numpy())
+                y_pred = m.predict(self.X.to_numpy())
             except:
                 raise ValueError(f"Error generating predictions for {model_name}" +
-                    " Check that it is a trained, scikit-compatible model" +
+                    " Check that it is a trained, scikit-like model" +
                     " that can generate predictions using the test data")
         # Since most fairness measures do not require probabilities, y_prob is optional
         try:
-            y_prob = m.predict_proba(self.X)[:,1]
+            y_prob = m.predict_proba(self.X)[:, 1]
         except:
             print(f"Failure predicting probabilities for {model_name}." +
                   " Related metrics will be skipped.")
             y_prob = None
         finally:
-            res = report_classification_fairness(self.X, self.protected_attr,
+            res = reports.classification_fairness(self.X, self.protected_attr,
                                                  self.y, y_pred, y_prob)
             return res
 
@@ -166,18 +170,17 @@ class fairCompare(ABC):
             return pd.DataFrame()
         else:
             test_results = []
+            # self.measure_model runs __validate, but self has just been validated
+            #     Toggle-off model validation for faster/quieter processing
             self.__toggle_validation()
+            # Compile measure_model results for each model
             for model_name in self.models.keys():
                 res = self.measure_model(model_name)
-                if res is None:
-                    continue
-                    print("ping")
-                else:
-                    res.rename(columns={'Value':model_name}, inplace=True)
-                    test_results.append(res)
-            self.__toggle_validation()
+                res.rename(columns = {'Value':model_name}, inplace = True)
+                test_results.append(res)
+            self.__toggle_validation() # toggle-on
             if len(test_results) > 0:
-                output = pd.concat(test_results, axis=1)
+                output = pd.concat(test_results, axis = 1)
                 return output
             else:
                 return None

@@ -44,18 +44,20 @@ def is_tutorial_running():
 '''
 Formatting Helpers
 '''
-def highlight_col(df, color='aquamarine'):
+def highlight_col(df, color = 'aquamarine'):
     return f'background-color: {color}'
 
 
-def highlight_vals(df, values, colname=None, criteria=None, color='aquamarine', h_type='field'):
+def highlight_vals(df, values, colname = None, criteria = None,
+                                            color = 'magenta', h_type = 'field'):
     """ Returns a list of strings setting the background color at each index of
         df where a[column] is in the list of values
 
     Args:
         df (pandas df): any dataframe
         values (list-like): values in colname to be highlighted
-        colname (str): name of column against which to match values. Defaults to None.
+        colname (str): name of column against which to match values. Defaults
+            to None.
         criteria (str): query criteria. may not . Defaults to None.
         color (str): css color name. Defaults to 'aquamarine'.
         h_type (str, optional): [description]. Defaults to 'field'.
@@ -79,7 +81,7 @@ def highlight_vals(df, values, colname=None, criteria=None, color='aquamarine', 
     #
     if criteria is None:
         criteria = f"in {values}"
-    highlight = pd.Series(data=False, index=df.index)
+    highlight = pd.Series(data = False, index = df.index)
     for col in colname:
         test_vals = values
         if criteria is not None:
@@ -112,7 +114,8 @@ def load_mimic3_example(mimic_dirpath):
         Returns:
             pandas dataframe of formatted MIMIC-III data
     """
-    data_file = os.path.join(os.path.expanduser(mimic_dirpath), "kdd_tutorial_data.csv")
+    data_file = os.path.join(os.path.expanduser(mimic_dirpath),
+                                "kdd_tutorial_data.csv")
     if not os.path.exists(data_file):
         formatter = format_mimic_data.mimic_loader(data_file)
         success = formatter.generate_tutorial_data()
@@ -123,16 +126,17 @@ def load_mimic3_example(mimic_dirpath):
     # Load data and restrict to only age 65+
     df = pd.read_csv(data_file)
     df['HADM_ID'] = df['HADM_ID'] + np.random.randint(10**6)
-    df.rename(columns={'HADM_ID':'ADMIT_ID'}, inplace=True)
-    # Ensure that length_of_stay is at the end of the dataframe to reduce confusion for
-    #   first-time tutorial users
-    df = df.loc[:,[c for c in df.columns if c != 'length_of_stay']+['length_of_stay']]
+    df.rename(columns = {'HADM_ID':'ADMIT_ID'}, inplace = True)
+    # Ensure that length_of_stay is at the end of the dataframe to reduce
+    #   confusion for first-time tutorial users
+    df = df.loc[:, [c for c in df.columns
+                    if c != 'length_of_stay']+['length_of_stay']]
     return(df)
 
 
 def print_feature_table(df):
-    ''' Displays a table containing statistics on the features available in the passed
-        df
+    ''' Displays a table containing statistics on the features available in the
+            passed df
 
         Args:
             df (pandas df): dataframe containing MIMIC data for the tutorial
@@ -142,8 +146,8 @@ def print_feature_table(df):
     feat_df = pd.DataFrame({'feature':df.columns.tolist()}
                            ).query('feature not in ["ADMIT_ID","length_of_stay"]')
     feat_df['Raw Feature'] = feat_df['feature'].str.split("_").str[0]
-    count_df = feat_df.groupby('Raw Feature', as_index=False)['feature'].count(
-                ).rename(columns={'feature':'Category Count (Encoded Features)'})
+    count_df = feat_df.groupby('Raw Feature', as_index = False)['feature'].count(
+                ).rename(columns = {'feature':'Category Count (Encoded Features)'})
     display(count_df)
 
 
@@ -170,6 +174,6 @@ def simplify_tutorial_report(comparison_report_df):
     ix_vals = comparison_report_df.index
     ix_vals = [v.replace(" ", "_").lower() for v in ix_vals]
     drop_meas = [ix_vals.index(v) for v in ix_vals if v in fl_measures]
-    df = comparison_report_df.drop(drop_meas, axis=0)
+    df = comparison_report_df.drop(drop_meas, axis = 0)
     return(df)
 

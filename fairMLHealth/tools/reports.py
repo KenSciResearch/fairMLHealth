@@ -10,8 +10,8 @@ import numpy as np
 import sklearn.metrics as sk_metric
 import warnings
 # Temporarily hide pandas SettingWithCopy warning
-warnings.filterwarnings('ignore', module='pandas' )
-warnings.filterwarnings('ignore', module='sklearn' )
+warnings.filterwarnings('ignore', module = 'pandas' )
+warnings.filterwarnings('ignore', module = 'sklearn' )
 
 from . import tutorial_helpers as helper
 
@@ -22,11 +22,11 @@ __all__ = ["classification_fairness",
            "classification_performance",
            "regression_fairness",
            "regression_performance",
-           "flag_suspicous"]
+           "flag_suspicious"]
 
 
 
-def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
+def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob = None):
     """ Formats data for use by fairness reporting functions.
 
     Args:
@@ -49,7 +49,7 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if isinstance(prtc_attr, (np.ndarray, pd.Series)):
         if isinstance(prtc_attr, pd.Series):
             prtc_attr = pd.DataFrame(prtc_attr,
-                                          columns=[prtc_attr.name])
+                                          columns = [prtc_attr.name])
         else:
             prtc_attr = pd.DataFrame(prtc_attr)
     if isinstance(y_true, (np.ndarray, pd.Series)):
@@ -64,15 +64,16 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
 
     # Format and set sensitive attributes as index for y dataframes
     pa_name = prtc_attr.columns.tolist()
-    prtc_attr.reset_index(inplace=True, drop=True)
-    y_true = pd.concat([prtc_attr, y_true.reset_index(drop=True)], axis=1
+    prtc_attr.reset_index(inplace = True, drop = True)
+    y_true = pd.concat([prtc_attr, y_true.reset_index(drop = True)], axis = 1
                        ).set_index(pa_name)
-    y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop=True)], axis=1
+    y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop = True)], axis = 1
                        ).set_index(pa_name)
     y_pred.columns = y_true.columns
     if y_prob is not None:
-        y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)], axis=1
-                        ).set_index(pa_name)
+        y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop = True)],
+                           axis = 1
+                  ).set_index(pa_name)
         y_prob.columns = y_true.columns
 
     # Ensure that protected attributes are integer-valued
@@ -86,13 +87,13 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
             "prtc_attr must be binary or boolean and heterogeneous")
         prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
         if isinstance(c, int):
-            prtc_attr.rename(columns={c:f"prtc_attribute_{c}"}, inplace=True)
+            prtc_attr.rename(columns = {c:f"prtc_attribute_{c}"}, inplace = True)
 
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
-                                                                    priv_grp=1):
+def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob = None,
+                                                                    priv_grp = 1):
     """[summary]
 
     Args:
@@ -112,49 +113,51 @@ def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
     gf_key = 'Group Fairness'
     gf_vals['Statistical Parity Difference'] = \
             aif_mtrc.statistical_parity_difference(y_true, y_pred,
-                                                    prot_attr=pa_names)
+                                                    prot_attr = pa_names)
     gf_vals['Disparate Impact Ratio'] = \
             aif_mtrc.disparate_impact_ratio(y_true, y_pred,
-                                            prot_attr=pa_names)
+                                            prot_attr = pa_names)
     if not helper.is_tutorial_running():
         gf_vals['Demographic Parity Difference'] = \
             fl_mtrc.demographic_parity_difference(y_true, y_pred,
-                                        sensitive_features=prtc_attr)
+                                        sensitive_features = prtc_attr)
         gf_vals['Demographic Parity Ratio'] = \
             fl_mtrc.demographic_parity_ratio(y_true, y_pred,
-                                        sensitive_features=prtc_attr)
+                                        sensitive_features = prtc_attr)
     gf_vals['Average Odds Difference'] = \
             aif_mtrc.average_odds_difference(y_true, y_pred,
-                                                prot_attr=pa_names)
+                                                prot_attr = pa_names)
     gf_vals['Equal Opportunity Difference'] = \
             aif_mtrc.equal_opportunity_difference(y_true, y_pred,
-                                                    prot_attr=pa_names)
+                                                    prot_attr = pa_names)
     if not helper.is_tutorial_running():
         gf_vals['Equalized Odds Difference'] = \
             fl_mtrc.equalized_odds_difference(y_true, y_pred,
-                                        sensitive_features=prtc_attr)
+                                        sensitive_features = prtc_attr)
         gf_vals['Equalized Odds Ratio'] = \
             fl_mtrc.equalized_odds_ratio(y_true, y_pred,
-                                        sensitive_features=prtc_attr)
+                                        sensitive_features = prtc_attr)
     gf_vals['Positive Predictive Parity Difference'] = \
             aif_mtrc.difference(sk_metric.precision_score, y_true,
-                                y_pred, prot_attr=pa_names, priv_group=priv_grp)
+                                y_pred, prot_attr = pa_names,
+                                priv_group = priv_grp)
     gf_vals['Balanced Accuracy Difference'] = \
             aif_mtrc.difference(sk_metric.balanced_accuracy_score, y_true,
-                                    y_pred, prot_attr=pa_names, priv_group=priv_grp)
+                                y_pred, prot_attr = pa_names, priv_group = priv_grp)
     if y_prob is not None:
         gf_vals['AUC Difference'] = \
             aif_mtrc.difference(sk_metric.roc_auc_score, y_true, y_prob,
-                                    prot_attr=pa_names, priv_group=priv_grp)
+                                prot_attr = pa_names, priv_group = priv_grp)
     return (gf_key, gf_vals)
 
 
 def __classification_performance_measures(y_true, y_pred):
     # Generate a model performance report
     # If more than 2 classes, return the weighted average prediction scores
-    n_class = y_true.append(y_pred).iloc[:,0].nunique()
+    n_class = y_true.append(y_pred).iloc[:, 0].nunique()
     target_labels = [f"target = {t}" for t in set(np.unique(y_true))]
-    rprt = classification_performance(y_true.iloc[:,0], y_pred.iloc[:,0], target_labels)
+    rprt = classification_performance(y_true.iloc[:, 0], y_pred.iloc[:, 0],
+                                      target_labels)
     avg_lbl = "weighted avg" if n_class > 2 else target_labels[-1]
     #
     mp_vals = {}
@@ -184,29 +187,29 @@ def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
     if_vals = {}
     if_key = 'Individual Fairness'
     if_vals['Consistency Score'] = \
-            aif_mtrc.consistency_score(X, y_pred.iloc[:,0])
+            aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
     if_vals['Between-Group Generalized Entropy Error'] = \
             aif_mtrc.between_group_generalized_entropy_error(y_true, y_pred,
-                                                              prot_attr=pa_names)
+                                                            prot_attr = pa_names)
     return (if_key, if_vals)
 
 
-def __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=1):
+def __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp = 1):
     pa_names = prtc_attr.columns.tolist()
     gf_vals = {}
     gf_key = 'Group Fairness'
     gf_vals['Statistical Parity Ratio'] = \
             fh_mtrc.statistical_parity_ratio(y_true, y_pred,
-                                              prot_attr=prtc_attr)
+                                              prot_attr = prtc_attr)
     gf_vals['R2 Ratio'] = \
             aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
-                           prot_attr=pa_names, priv_group=priv_grp)
+                           prot_attr = pa_names, priv_group = priv_grp)
     gf_vals['MAE Ratio'] = \
             aif_mtrc.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                           prot_attr=pa_names, priv_group=priv_grp)
+                           prot_attr = pa_names, priv_group = priv_grp)
     gf_vals['MSE Ratio'] = \
             aif_mtrc.ratio(sk_metric.mean_squared_error, y_true, y_pred,
-                           prot_attr=pa_names, priv_group=priv_grp)
+                           prot_attr = pa_names, priv_group = priv_grp)
     return (gf_key, gf_vals)
 
 
@@ -219,7 +222,7 @@ def __regression_performance_measures(y_true, y_pred):
     return (mp_key, mp_vals)
 
 
-def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob=None):
+def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob = None):
     valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
     for data in [X, prtc_attr, y_true, y_pred]:
         if not isinstance(data, valid_data_types):
@@ -231,7 +234,7 @@ def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob=None):
             raise TypeError("y_prob is invalid type")
 
 
-def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
+def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob = None,
                                    priv_grp = 1):
     """ Returns a dataframe containing fairness measures for the model results
 
@@ -252,7 +255,7 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
         __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob)
 
     # Generate dict of group fairness measures, if applicable
-    n_class = y_true.append(y_pred).iloc[:,0].nunique()
+    n_class = y_true.append(y_pred).iloc[:, 0].nunique()
     if n_class == 2:
         gf_key, gf_vals = \
             __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred,
@@ -270,37 +273,37 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
 
     # Convert scores to a formatted dataframe and return
     measures = {gf_key : gf_vals, if_key : if_vals, mp_key : mp_vals}
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
+    df = pd.DataFrame.from_dict(measures, orient = "index").stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index = df.index)
     df.columns = ['Value']
-    df['Value'] = df.loc[:,'Value'].round(4)
-    df.fillna("", inplace=True)
+    df['Value'] = df.loc[:, 'Value'].round(4)
+    df.fillna("", inplace = True)
     return df
 
 
 
-def classification_performance(y_true, y_pred, target_labels=None):
+def classification_performance(y_true, y_pred, target_labels = None):
     """ Returns a formatted dataframe of the scikit-learn classification report
 
     Args:
-        y_true (scikit-compatible array): target values
-        y_pred (scikit-compatible array): prediction values
-        target_labels (list of str): optional labels to elucidate target values
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with model.predict().
+        target_labels (list of str): Optional labels to elucidate target values.
     """
     if target_labels is None:
         target_labels = [f"target = {t}" for t in set(y_true)]
-    report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
-                                            target_names=target_labels)
+    report = sk_metric.classification_report(y_true, y_pred, output_dict = True,
+                                            target_names = target_labels)
     report = pd.DataFrame(report).transpose()
     # Move accuracy to separate row
     accuracy = report.loc['accuracy',:]
-    report.drop('accuracy', inplace=True)
+    report.drop('accuracy', inplace = True)
     report.loc['accuracy', 'accuracy'] = accuracy[0]
     return(report)
 
 
 
-def flag_suspicious(df, caption="", as_styler=False):
+def flag_suspicious(df, caption = "", as_styler = False):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
 
@@ -332,25 +335,26 @@ def flag_suspicious(df, caption="", as_styler=False):
     styled = df.style.set_caption(caption
             ).apply(lambda x: ['color:magenta'
                     if (x.name in ratios and not 1 < x.iloc[0] < 1.2)
-                    else '' for i in x], axis=1
+                    else '' for i in x], axis = 1
             ).apply(lambda x: ['color:magenta'
-                    if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x], axis=1
+                    if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
+                    axis = 1
             )
     # Correct management of metric difference has yet to be determined for regression
     #   functions. Add style to o.o.r. difference for binary classification only
     if "MSE Ratio" not in measures:
         styled.apply(lambda x: ['color:magenta'
                     if (x.name in difference and not -0.1 < x.iloc[0] < 0.1)
-                    else '' for i in x], axis=1
+                    else '' for i in x], axis = 1
             )
     if as_styler:
-        return(HTML(styled.render()))
-    else:
         return(styled)
+    else:
+        return(HTML(styled.render()))
 
 
 
-def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
+def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp = 1):
     """ Generates a dataframe containing fairness measures for the model results
 
         Args:
@@ -369,7 +373,7 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
         __format_fairtest_input(X, prtc_attr, y_true, y_pred)
     #
     gf_key, gf_vals = \
-        __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=priv_grp)
+        __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp = priv_grp)
     #
     if_key, if_vals = \
         __individual_fairness_measures(X, prtc_attr, y_true, y_pred)
@@ -378,11 +382,11 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
         __regression_performance_measures(y_true, y_pred)
     # Convert scores to a formatted dataframe and return
     measures = {gf_key:gf_vals,if_key:if_vals, mp_key: mp_vals}
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
+    df = pd.DataFrame.from_dict(measures, orient = "index").stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index = df.index)
     df.columns = ['Value']
-    df['Value'] = df.loc[:,'Value'].round(4)
-    df.fillna("", inplace=True)
+    df['Value'] = df.loc[:, 'Value'].round(4)
+    df.fillna("", inplace = True)
     return df
 
 
@@ -392,8 +396,8 @@ def regression_performance(y_true, y_pred):
         classification_performance
 
     Args:
-        y_true (scikit-compatible array): target values
-        y_pred (scikit-compatible array): prediction values
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with model.predict().
 
     Returns:
         pandas dataframe
@@ -402,7 +406,7 @@ def regression_performance(y_true, y_pred):
     report['Rsqrd'] = sk_metric.r2_score(y_true, y_pred)
     report['MeanAE'] = sk_metric.mean_absolute_error(y_true, y_pred)
     report['MeanSE'] = sk_metric.mean_squared_error(y_true, y_pred)
-    report = pd.DataFrame().from_dict(report, orient='index'
-                          ).rename(columns={0:'Score'})
+    report = pd.DataFrame().from_dict(report, orient = 'index'
+                          ).rename(columns = {0:'Score'})
     return(report)
 
