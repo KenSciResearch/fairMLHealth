@@ -1,6 +1,8 @@
-''' Tools for measuring and comparing fairness across models
+# -*- coding: utf-8 -*-
+"""
+Tools for measuring and comparing fairness across models
 
-'''
+"""
 # Contributors: Christine Allen <christine.allen@kensci.com>
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
@@ -25,9 +27,9 @@ warnings.filterwarnings('ignore', module = 'sklearn')
 
 
 
-'''
+"""
     Model Comparison Tools
-'''
+"""
 
 
 def compare_models(test_data, target_data, protected_attr_data = None,
@@ -180,7 +182,7 @@ class fairCompare(ABC):
                 test_results.append(res)
             self.__toggle_validation() # toggle-on
             if len(test_results) > 0:
-                output = pd.concat(test_results, axis = 1)
+                output = pd.concat(test_results, axis=1)
                 return output
             else:
                 return None

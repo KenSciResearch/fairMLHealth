@@ -1,5 +1,7 @@
-''' Tools producing reports of fairness, bias, or model performance measures
-'''
+# -*- coding: utf-8 -*-
+"""
+Tools producing reports of fairness, bias, or model performance measures
+"""
 
 from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
@@ -65,14 +67,14 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob = None):
     # Format and set sensitive attributes as index for y dataframes
     pa_name = prtc_attr.columns.tolist()
     prtc_attr.reset_index(inplace = True, drop = True)
-    y_true = pd.concat([prtc_attr, y_true.reset_index(drop = True)], axis = 1
+    y_true = pd.concat([prtc_attr, y_true.reset_index(drop = True)], axis=1
                        ).set_index(pa_name)
-    y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop = True)], axis = 1
+    y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop = True)], axis=1
                        ).set_index(pa_name)
     y_pred.columns = y_true.columns
     if y_prob is not None:
         y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop = True)],
-                           axis = 1
+                           axis=1
                   ).set_index(pa_name)
         y_prob.columns = y_true.columns
 
@@ -335,17 +337,17 @@ def flag_suspicious(df, caption = "", as_styler = False):
     styled = df.style.set_caption(caption
             ).apply(lambda x: ['color:magenta'
                     if (x.name in ratios and not 1 < x.iloc[0] < 1.2)
-                    else '' for i in x], axis = 1
+                    else '' for i in x], axis=1
             ).apply(lambda x: ['color:magenta'
                     if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
-                    axis = 1
+                    axis=1
             )
     # Correct management of metric difference has yet to be determined for regression
     #   functions. Add style to o.o.r. difference for binary classification only
     if "MSE Ratio" not in measures:
         styled.apply(lambda x: ['color:magenta'
                     if (x.name in difference and not -0.1 < x.iloc[0] < 0.1)
-                    else '' for i in x], axis = 1
+                    else '' for i in x], axis=1
             )
     if as_styler:
         return(styled)

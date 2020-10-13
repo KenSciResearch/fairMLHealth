@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 """
-    Formats MIMIC-III data for use with the KDD 2020 Tutorial on Measuring Fairness
-    for Healthcare.
-    To be called by Tutorial Notebook.
+Formats MIMIC-III data for use with the KDD 2020 Tutorial on Measuring Fairness
+for Healthcare.
+To be called by Tutorial Notebook.
 
-    Author: camagallen
+Contributors:
+    camagallen
 """
 
 import io
@@ -27,7 +29,7 @@ def custom_round(col, base = 5, sig_dec = 0):
     """
     if not base >= 0.01:
         raise ValueError(
-        f"cannot round with base {base}. custom_round designed for base>= 0.01.")
+        f"cannot round with base {base}. custom_round designed for base >= 0.01.")
     result = col.apply(lambda x: round(base * round(float(x)/base), sig_dec))
     return result
 
@@ -47,7 +49,7 @@ def load_icd_ccs_xwalk(code_type):
     df = pd.read_csv(io.StringIO(s.decode('utf-8')))
     df = df.loc[:, ['icd', 'ccs', 'icddesc']
             ].rename(columns = {'icd':'ICD9_CODE', 'ccs':f'{code_type}_CCS',
-                              'icddesc':f'{code_type}_ICD_DESC'})
+                                'icddesc':f'{code_type}_ICD_DESC'})
     return(df)
 
 
@@ -121,33 +123,35 @@ class mimic_loader():
         age_df = dob.merge(adm, on = 'SUBJECT_ID')
         age_df['DOB'] = pd.to_datetime(age_df['DOB']).dt.date
         age_df['ADMITTIME'] = pd.to_datetime(age_df['ADMITTIME']).dt.date
-        age_df['AGE'] = age_df.apply(lambda e: (e['ADMITTIME'] - e['DOB']).days/365, axis = 1)
+        age_df['AGE'] = age_df.apply(lambda e: (e['ADMITTIME'] - e['DOB']).days/365, axis=1)
         age_df.loc[age_df['AGE'].ge(5), 'AGE'] = custom_round(age_df['AGE'], base = 5)
         age_df.loc[age_df['AGE'].ge(1) & age_df['AGE'].lt(5), 'AGE'] = age_df['AGE'].round()
         age_df.loc[age_df['AGE'].lt(1), 'AGE'] = 0
         age_df = age_df.loc[age_df['AGE'].le(120) & age_df['AGE'].ge(0), :]
         # Attach AGE to admission information
-        adm_data = admissions.merge(age_df, how = 'inner', on = 'HADM_ID')
+        adm_data = admissions.merge(age_df, how='inner', on = 'HADM_ID')
         adm_data = adm_data[['HADM_ID', 'AGE', 'GENDER', 'INSURANCE',
-                         'MARITAL_STATUS', 'ETHNICITY', 'LANGUAGE',
-                        'RELIGION']]
+                            'MARITAL_STATUS', 'ETHNICITY', 'LANGUAGE',
+                            'RELIGION']]
         # Calculate and Attach Length of Stay
         ax = admissions[['HADM_ID', 'ADMITTIME', 'DISCHTIME']
-                ].sort_values(by = ['HADM_ID', 'ADMITTIME']).drop_duplicates()
+                ].sort_values(by=['HADM_ID', 'ADMITTIME']).drop_duplicates()
         ax['ADMITTIME'] = pd.to_datetime(ax['ADMITTIME'])
         ax['DISCHTIME'] = pd.to_datetime(ax['DISCHTIME'])
         ax['length_of_stay'] = (ax['ADMITTIME'] - ax['DISCHTIME'])/pd.offsets.Day(-1)
         ax = ax.loc[ax['length_of_stay'].ge(0) & ax['length_of_stay'].lt(30), :]
-        adm_data = adm_data.merge(ax[['HADM_ID', 'length_of_stay']], how = 'inner')
+        adm_data = adm_data.merge(ax[['HADM_ID', 'length_of_stay']], how='inner')
         # Test result before proceeding
         if not adm_data.notnull().any().any():
             raise ValueError("Missing hospital admission information after merge")
         if adm_data['HADM_ID'].duplicated().any():
             raise ValueError("Duplicate hospital admission information after merge")
         # Reformat data to one-hot encode
-        adm_data.rename(columns = {'MARITAL_STATUS':'MARRIED'}, inplace = True)
-        dummy_cats = ['GENDER', 'ETHNICITY', 'LANGUAGE', 'INSURANCE', 'MARRIED', 'RELIGION']
-        ohe_df = pd.get_dummies(adm_data[dummy_cats], columns = dummy_cats , prefix_sep = '_')
+        adm_data.rename(columns={'MARITAL_STATUS':'MARRIED'}, inplace = True)
+        dummy_cats = ['GENDER', 'ETHNICITY', 'LANGUAGE', 'INSURANCE',
+                      'MARRIED', 'RELIGION']
+        ohe_df = pd.get_dummies(adm_data[dummy_cats], columns=dummy_cats,
+                                prefix_sep='_')
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
         output = id_df.join(ohe_df)
         if output[f'HADM_ID'].isnull().any():
@@ -157,11 +161,12 @@ class mimic_loader():
         return output
 
     def load_dxpx_data(self, feature_type):
-        """ Returns a pandas dataframe with formatted diagnosis or procedure data,
-                categorized in single-level CCS codes and one-hot encoded
+        """ Returns a pandas dataframe with formatted diagnosis or procedure
+                data, categorized in single-level CCS codes and one-hot encoded
 
             Args:
-                feature_type (str): one of ['dx', 'px'] (i.e. ["diagnosis", "procedure"])
+                feature_type (str): one of ['dx', 'px'] (i.e. ["diagnosis",
+                "procedure"])
         """
         ftypes = ['dx', 'px']
         if not feature_type in ftypes:
@@ -171,9 +176,9 @@ class mimic_loader():
         icd_map = load_icd_ccs_xwalk(code_type = feature_type
                                     )[['ICD9_CODE', f'{feature_type}_CCS']]
         df = data.merge(icd_map
-                        ).drop('SEQ_NUM', axis = 1
+                        ).drop('SEQ_NUM', axis=1
                         ).drop_duplicates(
-                        ).rename(columns = {'ICD9_CODE':f'{feature_type}_ICD9_CODE'})
+                        ).rename(columns={'ICD9_CODE': f'{feature_type}_ICD9_CODE'})
         # Test result before proceeding
         if df[f'{feature_type}_CCS'].isnull().any():
             raise ValueError("Missing CCS information")
@@ -182,10 +187,10 @@ class mimic_loader():
         # Reformat data to one-hot encode
         prefix_dict = {'dx':'DIAGNOSIS', 'px':'PROCEDURE'}
         ohe_df = pd.get_dummies(df[f'{feature_type}_CCS'],
-                                prefix = f'{prefix_dict[feature_type]}_CCS')
+                                prefix=f'{prefix_dict[feature_type]}_CCS')
         ohe_df['HADM_ID'] = df['HADM_ID']
         agg_dict = {c:'max' for c in ohe_df.columns if c != 'HADM_ID'}
-        output = ohe_df.groupby('HADM_ID', as_index = False).agg(agg_dict)
+        output = ohe_df.groupby('HADM_ID', as_index=False).agg(agg_dict)
         if output[f'HADM_ID'].isnull().any():
             raise ValueError(
             f"Error loading {feature_type}. Missing admissions found in formatting")

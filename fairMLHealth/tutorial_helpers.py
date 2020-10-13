@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 """
-    Add-ons for loading data, formatting, and generating tables as part of
-    KDD 2020 Tutorial on Measuring Fairness for Healthcare.
-    To be called by Tutorial Notebook.
+Add-ons for loading data, formatting, and generating tables as part of
+KDD 2020 Tutorial on Measuring Fairness for Healthcare.
+To be called by Tutorial Notebook.
 
-    Author: camagallen
+Contributors:
+    camagallen
+
 """
 
 from IPython.display import display
