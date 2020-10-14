@@ -14,17 +14,15 @@ from IPython.display import HTML
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
+import sklearn.utils.validation import skvalid
 
 from . import reports
 
 
 # Temporarily hide pandas SettingWithCopy warning
 import warnings
-warnings.filterwarnings('ignore', module = 'pandas')
-warnings.filterwarnings('ignore', module = 'sklearn')
-
-
-
+warnings.filterwarnings('ignore', module='pandas')
+warnings.filterwarnings('ignore', module='sklearn')
 
 
 """
@@ -32,25 +30,25 @@ warnings.filterwarnings('ignore', module = 'sklearn')
 """
 
 
-def compare_models(test_data, target_data, protected_attr_data = None,
-                                                                models = None):
+def compare_models(test_data, target_data, protected_attr_data=None,
+                   models=None):
     """ Generates a report comparing fairness measures for the models passed.
-            Note: This is a wrapper for the fairCompare.compare_models method.
-            See fairCompare for more information.
+            Note: This is a wrapper for the FairCompare.compare_models method.
+            See FairCompare for more information.
 
         Returns:
             a pandas dataframe
     """
-    comp = fairCompare(test_data, target_data, protected_attr_data, models)
+    comp = FairCompare(test_data, target_data, protected_attr_data, models)
     table = comp.compare_models()
     return(table)
 
 
-class fairCompare(ABC):
+class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
     """
-    def __init__(self, test_data, target_data, protected_attr_data = None,
-                                                                models = None):
+    def __init__(self, test_data, target_data, protected_attr_data=None,
+                 models=None):
         """
             Args:
                 test_data (numpy array or similar pandas object): data to be
@@ -91,20 +89,20 @@ class fairCompare(ABC):
         for data in [self.X, self.y]:
             if not isinstance(data, valid_data_types):
                 raise TypeError("input data must be numpy array" +
-                                    " or similar pandas object")
+                                " or similar pandas object")
         if not self.X.shape[0] == self.y.shape[0]:
             raise ValueError("test and target data mismatch")
         # Ensure that every column of the protected attributes is boolean
         if self.protected_attr is not None:
-            if not isinstance(self.protected_attr,valid_data_types):
+            if not isinstance(self.protected_attr, valid_data_types):
                 raise TypeError("Protected attribute(s) must be numpy array" +
-                                    " or similar pandas object")
+                                " or similar pandas object")
         # Validate models and ensure as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
                 raise TypeError("Models must be dict or list-like group of" +
-                    " trained, skikit-like models")
-            self.models = {f'model_{i}':m for i,m in enumerate(self.models)}
+                                " trained, skikit-like models")
+            self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
                   f"{list(self.models.keys())}")
@@ -147,7 +145,8 @@ class fairCompare(ABC):
                 raise ValueError(f"Error generating predictions for {model_name}" +
                     " Check that it is a trained, scikit-like model" +
                     " that can generate predictions using the test data")
-        # Since most fairness measures do not require probabilities, y_prob is optional
+        # Since most fairness measures do not require probabilities, y_prob is
+        #   optional
         try:
             y_prob = m.predict_proba(self.X)[:, 1]
         except:
@@ -156,7 +155,7 @@ class fairCompare(ABC):
             y_prob = None
         finally:
             res = reports.classification_fairness(self.X, self.protected_attr,
-                                                 self.y, y_pred, y_prob)
+                                                  self.y, y_pred, y_prob)
             return res
 
     def compare_models(self):
@@ -172,18 +171,34 @@ class fairCompare(ABC):
             return pd.DataFrame()
         else:
             test_results = []
-            # self.measure_model runs __validate, but self has just been validated
-            #     Toggle-off model validation for faster/quieter processing
+            # self.measure_model runs __validate, but self has just been
+            #   validated. Toggle-off model validation for faster/quieter
+            #   processing
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
                 res = self.measure_model(model_name)
-                res.rename(columns = {'Value':model_name}, inplace = True)
+                res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
-            self.__toggle_validation() # toggle-on
+            self.__toggle_validation()  # toggle-on model validation
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
                 return output
             else:
                 return None
 
+
+'''
+Test Functions
+'''
+
+
+def test_compare():
+    rng36 = np.random.default_rng(seed=36)
+    rng42 = np.random.default_rng(seed=42)
+    X = pd.DataFrame(rng36.integers(0, 1000, size=(100, 4)))
+    y = rng36.integers(0, 2, size=(100, 1))
+    protected_attr = rng42.integers(0, 2, size=(100, 1))
+    models = None
+    comparison = fhmc.compare_models(X, y, protected_attr, models)
+    assert comparison is not None
