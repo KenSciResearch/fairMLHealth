@@ -4,13 +4,15 @@
 from setuptools import setup, find_packages
 import pathlib
 
+version = '0.0.1'
+
 # Get the long description from the README file
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='fairMLHealth',
-    version='0.0.1',
+    version=version,
     description='Health-centered fairness measurement and management',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -18,13 +20,19 @@ setup(
     author='KenSci',
     author_email='christine.allen@kensci.com',
     python_requires='>=3.5, <4',
-    install_requires=['aif360',
-                      'fairlearn',
+    install_requires=['aif360>=0.3.0',
+                      'fairlearn>=0.4.6',
+                      'lightgbm',
+                      'matplotlib',
+                      'numpy>=1.17.2',
+                      'pandas>=0.25.1',
                       'requests',
-                      'pandas>=0.21.0'
-                      'scipy',
-                      'scikit-learn>=0.2.0',
-                      'xgboost'],
+                      'scipy>=1.3.1',
+                      'scikit-learn>=0.22.1',
+                      'seaborn',
+                      'tensorflow',
+                      'xgboost'
+                    ],
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness',
     classifiers=[
@@ -32,4 +40,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
     ]
+    packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
 )
+
