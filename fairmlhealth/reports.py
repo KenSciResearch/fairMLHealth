@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Tools producing reports of fairness, bias, or model performance measures
+
+Contributors:
+    camagallen <christine.allen@kensci.com>
 """
 
 
@@ -328,7 +331,7 @@ def flag_suspicious(df, caption="", as_styler=False):
 
     styled = df.style.set_caption(caption
               ).apply(lambda x: ['color:magenta'
-                      if (x.name in ratios and not 1 < x.iloc[0] < 1.2)
+                      if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
                       else '' for i in x], axis=1
               ).apply(lambda x: ['color:magenta'
                       if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],

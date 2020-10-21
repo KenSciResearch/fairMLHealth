@@ -2,8 +2,9 @@
 """
 Tools for measuring and comparing fairness across models
 
+Contributors:
+    camagallan <christine.allen@kensci.com>
 """
-# Contributors: Christine Allen <christine.allen@kensci.com>
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
@@ -11,10 +12,11 @@ from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
+from joblib import dump, load
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
-import sklearn.utils.validation import skvalid
+import os
 
 from . import reports
 
@@ -162,8 +164,8 @@ class FairCompare(ABC):
         """ Generates a report comparing fairness measures for all available
                 models
 
-            Returns:
-                a pandas dataframe
+        Returns:
+            a pandas dataframe
         """
         self.__validate()
         if len(self.models) == 0:
@@ -186,6 +188,27 @@ class FairCompare(ABC):
                 return output
             else:
                 return None
+
+    def save_comparison(self, filepath):
+        dirpath = os.path.dirname(filepath)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+        dump(self, filepath)
+
+
+def load_comparison(filepath):
+    """ Loads a file directly into a FairCompare object
+
+        Returns:
+            initialized FairCompare object
+    """
+    data = load(filepath)
+    fair_comp = FairCompare(test_data=data['test_data'],
+                            target_data=data['target_data'],
+                            models=data['models'],
+                            train_data=data['train_data']
+                            )
+    return fair_comp
 
 
 '''
