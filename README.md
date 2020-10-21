@@ -1,6 +1,7 @@
 # fairMLHealth
 Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
 
+
 ## Organization
 This library is constructed in three main parts:
 - ### [Tools (fairmlhealth)](fairmlhealth/README.md)
@@ -17,6 +18,7 @@ This library is constructed in three main parts:
 - ### [Publications](publications/README.md)
     - Tutorial presentations, papers, press releases
 
+
 ## Installation
 Installing directly from GitHub:
 
@@ -28,4 +30,15 @@ Installing from a local copy of the repo:
 
 
 ## Usage
-* This section coming soon... *
+The primary feature of this library is the model comparison tool, which is most easily accessed through the compare_models function, as shown here.
+
+<img src="img/eg_comparison.png"
+     alt="Example of a model comparison using fairMLHealth"
+     style="max-width: 50%;" />
+
+Note that there are also several useful reporting features, for example the comparison hilighting tool shown below.
+
+<img src="img/eg_highlighter.png"
+     alt="Example of a model comparison using fairMLHealth"
+     style="max-width: 50%;" />
+
