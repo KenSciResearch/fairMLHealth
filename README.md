@@ -64,20 +64,13 @@ fairmlhealth.reports.flag_suspicious(lin_comp)
 
 
 ## Citation
-@misc{fairMLHealth, \
-  title={{fairMLHealth: Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
-}}, \
-  author={Allen, Christine and Ahmad, Muhammad and Kumar, Vikas}, \
-  year={2020}, \
-  publisher = {GitHub}, \
-  journal = {GitHub repository}, \
-  howpublished = {\url{https://github.com/KenSciResearch/fairMLHealth}} \
+```
+@misc{fairMLHealth,
+    title={{fairMLHealth: Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.}},
+    author={Allen, Christine and Ahmad, Muhammad and Kumar, Vikas},
+    year={2020},
+    publisher = {GitHub},
+    journal = {GitHub repository},
+    howpublished = {\url{https://github.com/KenSciResearch/fairMLHealth}}
 }
-
-
-## Key Contributors
-* Muhammad A. Ahmad
-* Christine Allen
-* Juhua Hu
-* Vikas Kumar
-
+```
