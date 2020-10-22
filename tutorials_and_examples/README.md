@@ -1,9 +1,7 @@
 # Tutorials and Examples
 
 ## Tutorials
-### [Measuring Fairness in Binary Classification](Tutorial-MeasuringFairnessInBinaryClassification.ipynb)
-* Content coming soon... *
+* [Measuring Fairness in Binary Classification](Tutorial-MeasuringFairnessInBinaryClassification.ipynb)
 
 ## Examples
-### [Completed Binary Classification Assessment Template](Example-Template-BinaryClassificationAssessment.ipynb)
-* Content coming soon... *
+* [Completed Binary Classification Assessment Template](Example-Template-BinaryClassificationAssessment.ipynb)
