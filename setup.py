@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 import pathlib
 
-version = '0.0.1'
+version = '0.1.0'
 
 # Get the long description from the README file
 here = pathlib.Path(__file__).parent.resolve()

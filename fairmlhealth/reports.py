@@ -118,7 +118,7 @@ def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
         aif_mtrc.statistical_parity_difference(y_true, y_pred, prot_attr=pa_names)
     gf_vals['Disparate Impact Ratio'] = \
         aif_mtrc.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_names)
-    if not helper.is_tutorial_running():
+    if not helper.is_tutorial_running() and not len(pa_names) > 1:
         gf_vals['Demographic Parity Difference'] = \
             fl_mtrc.demographic_parity_difference(y_true, y_pred,
                                                   sensitive_features=prtc_attr)
@@ -129,7 +129,7 @@ def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
         aif_mtrc.average_odds_difference(y_true, y_pred, prot_attr=pa_names)
     gf_vals['Equal Opportunity Difference'] = \
         aif_mtrc.equal_opportunity_difference(y_true, y_pred, prot_attr=pa_names)
-    if not helper.is_tutorial_running():
+    if not helper.is_tutorial_running() and not len(pa_names) > 1:
         gf_vals['Equalized Odds Difference'] = \
             fl_mtrc.equalized_odds_difference(y_true, y_pred,
                                               sensitive_features=prtc_attr)
@@ -197,7 +197,7 @@ def __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=1):
     gf_vals = {}
     gf_key = 'Group Fairness'
     gf_vals['Statistical Parity Ratio'] = \
-        fh_mtrc.statistical_parity_ratio(y_true, y_pred,
+        fl_mtrc.statistical_parity_ratio(y_true, y_pred,
                                          prot_attr=prtc_attr)
     gf_vals['R2 Ratio'] = \
         aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
