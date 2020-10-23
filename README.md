@@ -37,19 +37,24 @@ The primary feature of this library is the model comparison tool. The current ve
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 from fairmlhealth import model_comparison as fhmc
+
 # Load data
 X = pd.DataFrame({'col1':[1,2,50,3,45,32], 'col2':[34,26,44,2,1,1],
                   'col3':[32,23,34,22,65,27], 'gender':[0,1,0,1,1,0]})
 y = pd.DataFrame({'y':[1,0,0,1,0,1]})
 split = train_test_split(X, y, test_size = 0.75, random_state=36)
-X_train, X_test, y_train, y_test
+X_train, X_test, y_train, y_test = split
+
 #Train models
 model_1 = BernoulliNB().fit(X_train, y_train)
 model_2 = DecisionTreeClassifier().fit(X_train, y_train)
+
 # Deterimine your set of protected attributes
 prtc_attr = X_test['gender']
+
 # Specify either a dict or a list of trained models to compare
 model_dict = {'model_1': model_1, 'model_2': model_2}
+
 # Pass the above to the compare models function
 fhmc.compare_measures(X_test, y_test, prtc_attr, model_dict)
 ```
@@ -96,8 +101,11 @@ Allen,  C.,  Ahmad,  C.,  Muhammad  Eckert,  Hu,  J.,  &  Kumar,  V. (2020). _fa
 }
 ```
 
-### [KDD Tutorial Presentation](./docs/publications)
+### KDD Tutorial Presentation
 Ahmad, M. A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
+
+See also: [Publications](./docs/publications)
+
 ```
 @incollection{APEKT_KDD2020,
     title = {Fairness in Machine Learning for Healthcare},
