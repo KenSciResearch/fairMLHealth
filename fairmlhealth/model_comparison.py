@@ -81,7 +81,7 @@ class FairCompare(ABC):
                 appropriate
 
             Raises:
-                TypeError(s), ValueError(s)
+                ValidationError
         """
         # Skip validation if paused
         if self.__validation_paused():
@@ -90,32 +90,31 @@ class FairCompare(ABC):
         valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
         for data in [self.X, self.y]:
             if not isinstance(data, valid_data_types):
-                raise TypeError("input data must be numpy array" +
-                                " or similar pandas object")
+                raise ValidationError("input data must be numpy array" +
+                                      " or similar pandas object")
         if not self.X.shape[0] == self.y.shape[0]:
-            raise ValueError("test and target data mismatch")
+            raise ValidationError("test and target data mismatch")
         # Ensure that every column of the protected attributes is boolean
         if self.protected_attr is not None:
             if not isinstance(self.protected_attr, valid_data_types):
-                raise TypeError("Protected attribute(s) must be numpy array" +
-                                " or similar pandas object")
+                raise ValidationError("Protected attribute(s) must be numpy array"
+                                      + " or similar pandas object")
             if self.protected_attr.shape[0] > 1:
-                raise Warning("Multiple protected attributes detected. "
-                              "Some measures are not yet available for multiple "
-                              + "attributes. These measures will be skipped."
-                              )
+                raise ValidationError("This library is not yet compatible with "
+                                      +"multiple protected attributes."
+                                    )
         # Validate models and ensure as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
-                raise TypeError("Models must be dict or list-like group of" +
-                                " trained, skikit-like models")
+                raise ValidationError("Models must be dict or list-like group of"
+                                      + " trained, skikit-like models")
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
                   f"{list(self.models.keys())}")
         if self.models is not None:
             if not len(self.models) > 0:
-                raise ValueError("The set of models is empty")
+                raise ValidationError("The set of models is empty")
         return None
 
     def __validation_paused(self):
@@ -149,9 +148,10 @@ class FairCompare(ABC):
             try:
                 y_pred = m.predict(self.X.to_numpy())
             except:
-                raise ValueError(f"Error generating predictions for {model_name}" +
-                    " Check that it is a trained, scikit-like model" +
-                    " that can generate predictions using the test data")
+                raise ValidationError(
+                            f"Error generating predictions for {model_name}" +
+                            " Check that it is a trained, scikit-like model" +
+                            " that can generate predictions using the test data")
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
         try:
@@ -214,6 +214,10 @@ def load_comparison(filepath):
                             train_data=data['train_data']
                             )
     return fair_comp
+
+
+class ValidationError(Exception):
+    pass
 
 
 '''
