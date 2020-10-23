@@ -32,17 +32,17 @@ warnings.filterwarnings('ignore', module='sklearn')
 """
 
 
-def compare_models(test_data, target_data, protected_attr_data=None,
+def compare_measures(test_data, target_data, protected_attr_data=None,
                    models=None):
     """ Generates a report comparing fairness measures for the models passed.
-            Note: This is a wrapper for the FairCompare.compare_models method.
+            Note: This is a wrapper for the FairCompare.compare_measures method.
             See FairCompare for more information.
 
         Returns:
             a pandas dataframe
     """
     comp = FairCompare(test_data, target_data, protected_attr_data, models)
-    table = comp.compare_models()
+    table = comp.compare_measures()
     return(table)
 
 
@@ -165,7 +165,7 @@ class FairCompare(ABC):
                                                   self.y, y_pred, y_prob)
             return res
 
-    def compare_models(self):
+    def compare_measures(self):
         """ Generates a report comparing fairness measures for all available
                 models
 
@@ -228,5 +228,5 @@ def test_compare():
     y = rng36.integers(0, 2, size=(100, 1))
     protected_attr = rng42.integers(0, 2, size=(100, 1))
     models = None
-    comparison = compare_models(X, y, protected_attr, models)
+    comparison = compare_measures(X, y, protected_attr, models)
     assert comparison is not None
