@@ -99,6 +99,11 @@ class FairCompare(ABC):
             if not isinstance(self.protected_attr, valid_data_types):
                 raise TypeError("Protected attribute(s) must be numpy array" +
                                 " or similar pandas object")
+            if self.protected_attr.shape[0] > 1:
+                raise Warning("Multiple protected attributes detected. "
+                              "Some measures are not yet available for multiple "
+                              + "attributes. These measures will be skipped."
+                              )
         # Validate models and ensure as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
@@ -223,5 +228,5 @@ def test_compare():
     y = rng36.integers(0, 2, size=(100, 1))
     protected_attr = rng42.integers(0, 2, size=(100, 1))
     models = None
-    comparison = fhmc.compare_models(X, y, protected_attr, models)
+    comparison = compare_models(X, y, protected_attr, models)
     assert comparison is not None
