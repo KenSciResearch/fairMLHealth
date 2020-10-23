@@ -118,7 +118,7 @@ See also: [Publications](./docs/publications)
 ```
 
 ## Key Contributors
-* Muhammad A. Ahmad
+* Muhammad Aurangzeb Ahmad
 * Christine Allen
 * Carly Eckert
 * Juhua Hu
