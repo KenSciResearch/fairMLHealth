@@ -9,7 +9,7 @@ The tutorial notebook uses data from the [MIMIC III Critical Care database](http
 Ahmad, M. A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). Fairness in Machine Learning for Healthcare. In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
 
 ### Key Contributors
-* Muhammad A. Ahmad
+* Muhammad Aurangzeb Ahmad
 * Christine Allen
 * Juhua Hu
 * Carly Eckert
