@@ -14,7 +14,6 @@ from IPython.display import HTML
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
-import sklearn.utils.validation import skvalid
 
 from . import reports
 
@@ -138,10 +137,10 @@ class FairCompare(ABC):
         # Cannot measure fairness without predictions
         try:
             y_pred = m.predict(self.X)
-        except:
+        except BaseException as e:
             try:
                 y_pred = m.predict(self.X.to_numpy())
-            except:
+            except BaseException as e:
                 raise ValueError(f"Error generating predictions for {model_name}" +
                     " Check that it is a trained, scikit-like model" +
                     " that can generate predictions using the test data")
@@ -149,7 +148,7 @@ class FairCompare(ABC):
         #   optional
         try:
             y_prob = m.predict_proba(self.X)[:, 1]
-        except:
+        except BaseException as e:
             print(f"Failure predicting probabilities for {model_name}." +
                   " Related metrics will be skipped.")
             y_prob = None
