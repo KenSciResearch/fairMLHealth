@@ -98,7 +98,8 @@ class FairCompare(ABC):
             if not isinstance(self.protected_attr, valid_data_types):
                 raise ValidationError("Protected attribute(s) must be numpy array"
                                       + " or similar pandas object")
-            if self.protected_attr.shape[0] > 1:
+            data_shape = self.protected_attr.shape
+            if len(data_shape) > 1 and data_shape[1] > 1:
                 raise ValidationError("This library is not yet compatible with "
                                       +"multiple protected attributes."
                                     )
