@@ -7,6 +7,6 @@ All notable changes to this project will be documented in this file.
 - Critical bug corrected
 - Notebook typos corrected
 
-## [0.1.0] - 2020-10-27
+## [0.1.0] - 2020-10-23
 ### Permissions
 - First public-facing version of repo
