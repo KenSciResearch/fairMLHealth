@@ -5,9 +5,10 @@ KDD 2020 Tutorial on Measuring Fairness for Healthcare.
 To be called by Tutorial Notebook.
 
 Contributors:
-    camagallen
-
+    camagallen <christine.allen@kensci.com>
 """
+# Copyright (c) KenSci and contributors.
+# Licensed under the MIT License.
 
 from IPython.display import display
 import numpy as np
