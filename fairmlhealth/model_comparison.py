@@ -117,8 +117,7 @@ class FairCompare(ABC):
             if not len(self.models) > 0:
                 raise ValidationError("The set of models is empty")
             else:
-                errant_models = []
-                for name,m in self.models.items():
+                for _, m in self.models.items():
                     pred_func = getattr(m, "predict", None)
                     if not callable(pred_func):
                         raise ValidationError(
