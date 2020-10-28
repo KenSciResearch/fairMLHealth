@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
-## [0.1.1] - 2020-10-28
+## [0.1.2] - 2020-10-28
 ### Added
 - Add CI.
 
