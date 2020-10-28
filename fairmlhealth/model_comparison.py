@@ -60,9 +60,10 @@ class FairCompare(ABC):
                     array corresponding to the test data. It is recommended that
                     the target is not present in the test_data.
                 protected_attr_data (numpy array or similar pandas object):
-                    protected attributes that may or may not be present in
-                    test_data. Note that values must currently be binary or
-                    boolean type
+                    data for the protected attributes. These data do not need to
+                    be present in test_data, but the rows must correspond
+                    with test_data.  Note that values must currently be
+                    binary or boolean type.
                 models (dict or list-like): the set of trained models to be
                     evaluated. Models can be any object with a scikit-like
                     predict() method. Dict keys assumed as model names. If a
@@ -96,18 +97,18 @@ class FairCompare(ABC):
         # Ensure that every column of the protected attributes is boolean
         if self.protected_attr is not None:
             if not isinstance(self.protected_attr, valid_data_types):
-                raise ValidationError("Protected attribute(s) must be numpy array"
-                                      + " or similar pandas object")
+                raise ValidationError("Protected attribute(s) must be numpy"
+                                      + " array or similar pandas object")
             data_shape = self.protected_attr.shape
             if len(data_shape) > 1 and data_shape[1] > 1:
-                raise ValidationError("This library is not yet compatible with "
-                                      +"multiple protected attributes."
+                raise ValidationError("This library is not yet compatible with"
+                                      + " multiple protected attributes."
                                     )
         # Ensure models appear as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
-                raise ValidationError("Models must be dict or list-like group of"
-                                      + " trained, skikit-like models")
+                raise ValidationError("Models must be dict or list-like group"
+                                      + " of trained, skikit-like models")
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
