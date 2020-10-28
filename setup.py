@@ -4,15 +4,25 @@
 from setuptools import setup, find_packages
 import pathlib
 
-version = '0.1.0'
 
 # Get the long description from the README file
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
+def _get_version():
+    import json
+    import os
+
+    version_file = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        'version.json'
+    )
+    return json.load(open(version_file))['version']
+
+
 setup(
     name='fairMLHealth',
-    version=version,
+    version=_get_version(),
     description='Health-centered fairness measurement and management',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -39,7 +49,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
-    ]
+    ],
     packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
 )
 
