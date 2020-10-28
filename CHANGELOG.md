@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.1] - 2020-10-27
 ### Hotfix
-- Critical bug corrected
+- Corrected critical bug: typo in test for number of protected attributes was rejecting all datasets
 - Notebook typos corrected
 
 ## [0.1.0] - 2020-10-23

@@ -32,7 +32,7 @@ warnings.filterwarnings('ignore', module='sklearn')
 
 
 def compare_measures(test_data, target_data, protected_attr_data=None,
-                   models=None):
+                     models=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method.
             See FairCompare for more information.
@@ -103,7 +103,7 @@ class FairCompare(ABC):
                 raise ValidationError("This library is not yet compatible with "
                                       +"multiple protected attributes."
                                     )
-        # Validate models and ensure as dict
+        # Ensure models appear as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
                 raise ValidationError("Models must be dict or list-like group of"
@@ -112,9 +112,17 @@ class FairCompare(ABC):
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
                   f"{list(self.models.keys())}")
+        # Ensure that models are present and have a predict function
         if self.models is not None:
             if not len(self.models) > 0:
                 raise ValidationError("The set of models is empty")
+            else:
+                errant_models = []
+                for name,m in self.models.items():
+                    pred_func = getattr(m, "predict", None)
+                    if not callable(pred_func):
+                        raise ValidationError(
+                                    f"{m} model does not have predict function")
         return None
 
     def __validation_paused(self):
@@ -138,26 +146,24 @@ class FairCompare(ABC):
         self.__validate()
         if model_name not in self.models.keys():
             print(f"Error measuring fairness: {model_name} does not appear in",
-                  f"the models. Available models include {list(self.models.keys())}")
+                  "the models. Available models include ",
+                  f"{list(self.models.keys())}")
             return pd.DataFrame()
         m = self.models[model_name]
-        # Cannot measure fairness without predictions
+        # Verify that predictions can be generated from the test data
         try:
             y_pred = m.predict(self.X)
         except BaseException as e:
-            try:
-                y_pred = m.predict(self.X.to_numpy())
-            except BaseException as e:
-                raise ValueError(f"Error generating predictions for {model_name}" +
-                    " Check that it is a trained, scikit-like model" +
-                    " that can generate predictions using the test data")
+            raise ValidationError("Failure generating predictions for " +
+                                  f"{model_name}. Verify that data are " +
+                                  f"correctly formatted for this model. {e}")
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
         try:
             y_prob = m.predict_proba(self.X)[:, 1]
         except BaseException as e:
-            print(f"Failure predicting probabilities for {model_name}." +
-                  " Related metrics will be skipped.")
+            warnings.warn(f"Failure predicting probabilities for {model_name}."
+                          + f" Related metrics will be skipped. {e}")
             y_prob = None
         finally:
             res = reports.classification_fairness(self.X, self.protected_attr,
