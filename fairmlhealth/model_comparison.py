@@ -15,7 +15,6 @@ from IPython.display import HTML
 from joblib import dump, load
 import pandas as pd
 import numpy as np
-import sklearn.metrics as sk_metric
 import os
 
 from . import reports
@@ -33,7 +32,7 @@ warnings.filterwarnings('ignore', module='sklearn')
 
 
 def compare_measures(test_data, target_data, protected_attr_data=None,
-                   models=None):
+                     models=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method.
             See FairCompare for more information.
@@ -61,9 +60,10 @@ class FairCompare(ABC):
                     array corresponding to the test data. It is recommended that
                     the target is not present in the test_data.
                 protected_attr_data (numpy array or similar pandas object):
-                    protected attributes that may or may not be present in
-                    test_data. Note that values must currently be binary or
-                    boolean type
+                    data for the protected attributes. These data do not need to
+                    be present in test_data, but the rows must correspond
+                    with test_data.  Note that values must currently be
+                    binary or boolean type.
                 models (dict or list-like): the set of trained models to be
                     evaluated. Models can be any object with a scikit-like
                     predict() method. Dict keys assumed as model names. If a
@@ -97,24 +97,32 @@ class FairCompare(ABC):
         # Ensure that every column of the protected attributes is boolean
         if self.protected_attr is not None:
             if not isinstance(self.protected_attr, valid_data_types):
-                raise ValidationError("Protected attribute(s) must be numpy array"
-                                      + " or similar pandas object")
-            if self.protected_attr.shape[0] > 1:
-                raise ValidationError("This library is not yet compatible with "
-                                      +"multiple protected attributes."
+                raise ValidationError("Protected attribute(s) must be numpy"
+                                      + " array or similar pandas object")
+            data_shape = self.protected_attr.shape
+            if len(data_shape) > 1 and data_shape[1] > 1:
+                raise ValidationError("This library is not yet compatible with"
+                                      + " multiple protected attributes."
                                     )
-        # Validate models and ensure as dict
+        # Ensure models appear as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
-                raise ValidationError("Models must be dict or list-like group of"
-                                      + " trained, skikit-like models")
+                raise ValidationError("Models must be dict or list-like group"
+                                      + " of trained, skikit-like models")
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   "been assigned to the models per their indexes:",
                   f"{list(self.models.keys())}")
+        # Ensure that models are present and have a predict function
         if self.models is not None:
             if not len(self.models) > 0:
                 raise ValidationError("The set of models is empty")
+            else:
+                for _, m in self.models.items():
+                    pred_func = getattr(m, "predict", None)
+                    if not callable(pred_func):
+                        raise ValidationError(
+                                    f"{m} model does not have predict function")
         return None
 
     def __validation_paused(self):
@@ -138,27 +146,24 @@ class FairCompare(ABC):
         self.__validate()
         if model_name not in self.models.keys():
             print(f"Error measuring fairness: {model_name} does not appear in",
-                  f"the models. Available models include {list(self.models.keys())}")
+                  "the models. Available models include ",
+                  f"{list(self.models.keys())}")
             return pd.DataFrame()
         m = self.models[model_name]
-        # Cannot measure fairness without predictions
+        # Verify that predictions can be generated from the test data
         try:
             y_pred = m.predict(self.X)
-        except:
-            try:
-                y_pred = m.predict(self.X.to_numpy())
-            except:
-                raise ValidationError(
-                            f"Error generating predictions for {model_name}" +
-                            " Check that it is a trained, scikit-like model" +
-                            " that can generate predictions using the test data")
+        except BaseException as e:
+            raise ValidationError("Failure generating predictions for " +
+                                  f"{model_name}. Verify that data are " +
+                                  f"correctly formatted for this model. {e}")
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
         try:
             y_prob = m.predict_proba(self.X)[:, 1]
-        except:
-            print(f"Failure predicting probabilities for {model_name}." +
-                  " Related metrics will be skipped.")
+        except BaseException as e:
+            warnings.warn(f"Failure predicting probabilities for {model_name}."
+                          + f" Related metrics will be skipped. {e}")
             y_prob = None
         finally:
             res = reports.classification_fairness(self.X, self.protected_attr,
