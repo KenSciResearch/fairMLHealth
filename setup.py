@@ -6,7 +6,6 @@ import pathlib
 
 
 # Set strings that should be defined elsewhere. ToDo: define elsewhere
-version = '0.1.1'
 long_description = ("A library facilitating fairness measurement" +
                     " and deployment of fairness-aware ML algorithms")
 
