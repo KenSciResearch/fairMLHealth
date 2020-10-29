@@ -7,7 +7,7 @@ dist/
 __pycache__/
 *.so
 *~
-*.vscode/
+.vscode/
 
 # IPython checkpoints
 .ipynb_checkpoint/
