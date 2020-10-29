@@ -6,14 +6,24 @@ import pathlib
 
 
 # Set strings that should be defined elsewhere. ToDo: define elsewhere
-version = '0.1.1'
 long_description = ("A library facilitating fairness measurement" +
                     " and deployment of fairness-aware ML algorithms")
 
 
+def _get_version():
+    import json
+    import os
+
+    version_file = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        'version.json'
+    )
+    return json.load(open(version_file))['version']
+
+
 setup(
     name='fairMLHealth',
-    version=version,
+    version=_get_version(),
     description='Health-centered fairness measurement and management',
     long_description=long_description,
     long_description_content_type='text/markdown',
