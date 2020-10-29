@@ -5,9 +5,11 @@ from setuptools import setup, find_packages
 import pathlib
 
 
-# Get the long description from the README file
-here = pathlib.Path(__file__).parent.resolve()
-long_description = (here / 'README.md').read_text(encoding='utf-8')
+# Set strings that should be defined elsewhere. ToDo: define elsewhere
+version = '0.1.1'
+long_description = ("A library facilitating fairness measurement" +
+                    " and deployment of fairness-aware ML algorithms")
+
 
 def _get_version():
     import json
@@ -52,4 +54,3 @@ setup(
     ],
     packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
 )
-

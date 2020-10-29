@@ -10,7 +10,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.1] - 2020-10-27
 ### Hotfix
-- Corrected critical bug: typo in test for number of protected attributes was rejecting all datasets
+- Corrected critical bug: typo in test for number of protected attributes was rejecting all inputs
 - Notebook typos corrected
 
 ## [0.1.0] - 2020-10-23
