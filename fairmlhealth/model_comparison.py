@@ -13,11 +13,12 @@ import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
 from joblib import dump, load
-import pandas as pd
+import logging
 import numpy as np
+import pandas as pd
 import os
 
-from . import reports
+from fairmlhealth import reports
 
 
 # Temporarily hide pandas SettingWithCopy warning
@@ -101,28 +102,30 @@ class FairCompare(ABC):
                                       + " array or similar pandas object")
             data_shape = self.protected_attr.shape
             if len(data_shape) > 1 and data_shape[1] > 1:
-                raise ValidationError("This library is not yet compatible with"
-                                      + " multiple protected attributes."
-                                    )
+                msg = "This library is not yet compatible with multiple" + \
+                      " protected attributes."
+                raise ValidationError(msg)
         # Ensure models appear as dict
         if not isinstance(self.models, (dict)) and self.models is not None:
             if not isinstance(self.models, (list, tuple, set)):
                 raise ValidationError("Models must be dict or list-like group"
                                       + " of trained, skikit-like models")
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
-            print("Since no model names were passed, the following names have",
-                  "been assigned to the models per their indexes:",
-                  f"{list(self.models.keys())}")
+            msg = "Since no model names were passed, the following names," + \
+                  f"have been assigned to the models per their indexes:" + \
+                  f"{list(self.models.keys())}"
+            print(msg)
         # Ensure that models are present and have a predict function
         if self.models is not None:
             if not len(self.models) > 0:
-                raise ValidationError("The set of models is empty")
+                msg = "Cannot generate comparison with an empty set of models."
+                logging.info(msg)
             else:
                 for _, m in self.models.items():
                     pred_func = getattr(m, "predict", None)
                     if not callable(pred_func):
-                        raise ValidationError(
-                                    f"{m} model does not have predict function")
+                        msg = f"{m} model does not have predict function"
+                        raise ValidationError(msg)
         return None
 
     def __validation_paused(self):
@@ -145,25 +148,27 @@ class FairCompare(ABC):
         """
         self.__validate()
         if model_name not in self.models.keys():
-            print(f"Error measuring fairness: {model_name} does not appear in",
-                  "the models. Available models include ",
-                  f"{list(self.models.keys())}")
+            msg = f"Error measuring fairness: {model_name} does not appear" + \
+                  " in the models. Available models include" + \
+                  f"{list(self.models.keys())}"
+            logging.warning(msg)
             return pd.DataFrame()
         m = self.models[model_name]
         # Verify that predictions can be generated from the test data
         try:
             y_pred = m.predict(self.X)
         except BaseException as e:
-            raise ValidationError("Failure generating predictions for " +
-                                  f"{model_name}. Verify that data are " +
-                                  f"correctly formatted for this model. {e}")
+            msg = f"Failure generating predictions for {model_name}. Verify" + \
+                  f" that data are correctly formatted for this model. {e}"
+            raise ValidationError(msg)
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
         try:
             y_prob = m.predict_proba(self.X)[:, 1]
         except BaseException as e:
-            warnings.warn(f"Failure predicting probabilities for {model_name}."
-                          + f" Related metrics will be skipped. {e}")
+            msg = f"Failure predicting probabilities for {model_name}." + \
+                  f" Related metrics will be skipped. {e}"
+            warnings.warn(msg)
             y_prob = None
         finally:
             res = reports.classification_fairness(self.X, self.protected_attr,
@@ -225,31 +230,3 @@ class ValidationError(Exception):
     pass
 
 
-'''
-Test Functions
-'''
-
-
-def test_compare_func():
-    # Synthesize data
-    X = pd.DataFrame({'col1': [1, 2, 50, 3, 45, 32],
-                      'col2': [34, 26, 44, 2, 1, 1],
-                      'col3': [32, 23, 34, 22, 65, 27],
-                      'gender': [0, 1, 0, 1, 1, 0]})
-    y = pd.DataFrame({'y': [1, 0, 0, 1, 0, 1]})
-    splits = train_test_split(X, y, test_size=0.75, random_state=36)
-    X_train, X_test, y_train, y_test = splits
-
-    # Train models
-    model_1 = BernoulliNB().fit(X_train, y_train)
-    model_2 = DecisionTreeClassifier().fit(X_train, y_train)
-
-    # Deterimine your set of protected attributes
-    prtc_attr = X_test['gender']
-
-    # Specify either a dict or a list of trained models to compare
-    model_dict = {'model_1': model_1, 'model_2': model_2}
-
-    # Pass the above to the compare models function
-    comparison = fhmc.compare_measures(X_test, y_test, prtc_attr, model_dict)
-    assert comparison is not None
