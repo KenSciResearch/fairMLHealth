@@ -230,12 +230,26 @@ Test Functions
 '''
 
 
-def test_compare():
-    rng36 = np.random.default_rng(seed=36)
-    rng42 = np.random.default_rng(seed=42)
-    X = pd.DataFrame(rng36.integers(0, 1000, size=(100, 4)))
-    y = rng36.integers(0, 2, size=(100, 1))
-    protected_attr = rng42.integers(0, 2, size=(100, 1))
-    models = None
-    comparison = compare_measures(X, y, protected_attr, models)
+def test_compare_func():
+    # Synthesize data
+    X = pd.DataFrame({'col1': [1, 2, 50, 3, 45, 32],
+                      'col2': [34, 26, 44, 2, 1, 1],
+                      'col3': [32, 23, 34, 22, 65, 27],
+                      'gender': [0, 1, 0, 1, 1, 0]})
+    y = pd.DataFrame({'y': [1, 0, 0, 1, 0, 1]})
+    splits = train_test_split(X, y, test_size=0.75, random_state=36)
+    X_train, X_test, y_train, y_test = splits
+
+    # Train models
+    model_1 = BernoulliNB().fit(X_train, y_train)
+    model_2 = DecisionTreeClassifier().fit(X_train, y_train)
+
+    # Deterimine your set of protected attributes
+    prtc_attr = X_test['gender']
+
+    # Specify either a dict or a list of trained models to compare
+    model_dict = {'model_1': model_1, 'model_2': model_2}
+
+    # Pass the above to the compare models function
+    comparison = fhmc.compare_measures(X_test, y_test, prtc_attr, model_dict)
     assert comparison is not None
