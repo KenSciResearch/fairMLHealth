@@ -11,6 +11,7 @@ from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
+import logging
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
@@ -62,8 +63,8 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if isinstance(y_prob, np.ndarray):
         y_prob = pd.DataFrame(y_prob)
     for data in [y_true, y_pred, y_prob]:
-        if data is not None and data.shape[1] > 1:
-            raise TypeError("targets and predictions must be 1-Dimensional")
+        if data is not None and (len(data.shape) > 1 and data.shape[1] > 1):
+            raise TypeError("Targets and predictions must be 1-Dimensional")
 
     # Format and set sensitive attributes as index for y dataframes
     pa_name = prtc_attr.columns.tolist()
@@ -76,7 +77,7 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if y_prob is not None:
         y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)],
                            axis=1
-                  ).set_index(pa_name)
+                           ).set_index(pa_name)
         y_prob.columns = y_true.columns
 
     # Ensure that protected attributes are integer-valued
@@ -84,10 +85,10 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     for c in pa_cols:
         binary = (set(prtc_attr[c].astype(int)) == set(prtc_attr[c]))
         boolean = (prtc_attr[c].dtype == bool)
-        two_valued = (set(prtc_attr[c].astype(int)) == {0,1})
+        two_valued = (set(prtc_attr[c].astype(int)) == {0, 1})
         if not two_valued and (binary or boolean):
-            raise ValueError(
-                        "prtc_attr must be binary or boolean and heterogeneous")
+            msg = "prtc_attr must be binary or boolean and heterogeneous"
+            raise ValueError(msg)
         prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
         if isinstance(c, int):
             prtc_attr.rename(columns={c: f"prtc_attribute_{c}"}, inplace=True)
@@ -184,8 +185,14 @@ def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
     # Generate dict of Individual Fairness measures
     if_vals = {}
     if_key = 'Individual Fairness'
-    if_vals['Consistency Score'] = \
-        aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
+    # consistency_score raises error if null values are present in X
+    if X.notnull().all().all():
+        if_vals['Consistency Score'] = \
+            aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
+    else:
+        msg = "Cannot calculate consistency score. Null values present in data."
+        logging.info(msg)
+    # Other aif360 metrics (not consistency) can handle null values
     if_vals['Between-Group Generalized Entropy Error'] = \
         aif_mtrc.between_group_generalized_entropy_error(y_true, y_pred,
                                                          prot_attr=pa_names)
@@ -330,13 +337,13 @@ def flag_suspicious(df, caption="", as_styler=False):
                  for c in measures]], :].index
 
     styled = df.style.set_caption(caption
-              ).apply(lambda x: ['color:magenta'
-                      if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
-                      else '' for i in x], axis=1
-              ).apply(lambda x: ['color:magenta'
-                      if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
-                      axis=1
-              )
+                    ).apply(lambda x: ['color:magenta'
+                            if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
+                            else '' for i in x], axis=1
+                    ).apply(lambda x: ['color:magenta'
+                            if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
+                            axis=1
+                    )
     # Correct management of metric difference has yet to be determined for
     #   regression functions. Add style to o.o.r. difference for binary
     #   classification only
@@ -370,7 +377,8 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
         __format_fairtest_input(X, prtc_attr, y_true, y_pred)
     #
     gf_key, gf_vals = \
-        __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=priv_grp)
+        __regres_group_fairness_measures(prtc_attr, y_true, y_pred,
+                                         priv_grp=priv_grp)
     #
     if_key, if_vals = \
         __individual_fairness_measures(X, prtc_attr, y_true, y_pred)
