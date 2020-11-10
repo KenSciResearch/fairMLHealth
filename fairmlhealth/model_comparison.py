@@ -18,6 +18,7 @@ import logging
 import numpy as np
 import pandas as pd
 import os
+from fairmlhealth.utils import *
 
 from fairmlhealth import reports
 
@@ -179,10 +180,12 @@ class FairCompare(ABC):
         array_types = (list, tuple, set, dict, OrderedDict)
         dataobj = [self.X, self.y, self.protected_attr]
         validobj = dataobj + [self.models]
+
         # Do nothing any required objects are missing
         if any(p is None for p in dataobj):
             msg = "Invalid instance: NoneType data arguments are prohibited."
             raise ValidationError(msg)
+
         # Type and length of X, y, protected_attr must match models if passed
         #   as array-like
         if any(isinstance(p, array_types) for p in dataobj):
@@ -197,6 +200,7 @@ class FairCompare(ABC):
             elif not all(len(p) == len(self.models) for p in dataobj):
                 err = "If the data arguments are in list-like object, they" + \
                       " must be of same length as the models argument"
+
             # Comparison function will use keys to iterate in comparisons
             if all(is_dictlike(p) for p in validobj):
                 if not all(p.keys() == self.models.keys() for p in dataobj):
@@ -206,6 +210,7 @@ class FairCompare(ABC):
                 elif not all(len(p) == len(self.models) for p in dataobj):
                     err = "If the data arguments are passed in list/dict," + \
                           " they must be of same length as the models argument"
+
             # convert to dict if not already dict. models will be converted
             #    Note: list-like model arguments will be converted in model
             #          validation
@@ -216,18 +221,20 @@ class FairCompare(ABC):
                     {f'model_{i}': m for i, m in enumerate(self.protected_attr)}
             if err is not None:
                 raise ValidationError(err)
+
         # Validate Test Data
-        X = {0: self.X} if not is_dictlike(self.X) else self.X
-        y = {0: self.y} if not is_dictlike(self.y) else self.y
-        for data in [X, y]:
+        Xd = {0: self.X} if not is_dictlike(self.X) else self.X
+        yd = {0: self.y} if not is_dictlike(self.y) else self.y
+        for data in [Xd, yd]:
             for d in data.values():
                 if not isinstance(d, valid_data_types):
                     msg = "Input data must be numpy array or pandas object," + \
                           " or a list/dict of such objects"
                     raise ValidationError(msg)
-        for k in self.X.keys():
-            if not self.X[k].shape[0] == self.y[k].shape[0]:
+        for k in Xd.keys():
+            if not Xd[k].shape[0] == yd[k].shape[0]:
                 raise ValidationError("Test and target data mismatch.")
+
         # Ensure that every column of the protected attributes is boolean
         # ToDo: enable prtc_attr as a single multi col array; iterate cols
         if not is_dictlike(self.protected_attr):
@@ -245,6 +252,7 @@ class FairCompare(ABC):
                     msg = "This library is not yet compatible with" + \
                         " multiple protected attributes."
                     raise ValidationError(msg)
+
         # Ensure models appear as dict
         if not is_dictlike(self.models):
             if not isinstance(self.models, array_types):
@@ -255,6 +263,7 @@ class FairCompare(ABC):
             print("Since no model names were passed, the following names have",
                   " been assigned to the models per their indexes:",
                   f" {list(self.models.keys())}")
+
         # Ensure that models are present and have a predict function
         if self.models is not None:
             if not len(self.models) > 0:
@@ -274,10 +283,6 @@ class FairCompare(ABC):
         return self.__pause_validation
 
 
-def is_dictlike(obj):
-    return callable(getattr(obj, "keys", None))
-
-
 def load_comparison(filepath):
     """ Loads a file directly into a FairCompare object
 
@@ -292,8 +297,5 @@ def load_comparison(filepath):
                             )
     return fair_comp
 
-
-class ValidationError(Exception):
-    pass
 
 
