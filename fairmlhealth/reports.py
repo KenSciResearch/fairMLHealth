@@ -10,8 +10,7 @@ Contributors:
 from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
-from IPython.display import HTML
-import logging
+from IPython.display import import logging
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
