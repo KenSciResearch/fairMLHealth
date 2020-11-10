@@ -63,8 +63,8 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if isinstance(y_prob, np.ndarray):
         y_prob = pd.DataFrame(y_prob)
     for data in [y_true, y_pred, y_prob]:
-        if data is not None and data.shape[1] > 1:
-            raise TypeError("targets and predictions must be 1-Dimensional")
+        if data is not None and (len(data.shape) > 1 and data.shape[1] > 1):
+            raise TypeError("Targets and predictions must be 1-Dimensional")
 
     # Format and set sensitive attributes as index for y dataframes
     pa_name = prtc_attr.columns.tolist()
