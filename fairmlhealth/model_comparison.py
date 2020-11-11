@@ -137,8 +137,9 @@ class FairCompare(ABC):
         try:
             y_pred = mdl.predict(X)
         except BaseException as e:
-            msg = f"Failure generating {model_name} predictions. Verify" + \
-                  f" that data are correctly formatted for this model. {e}"
+            msg = f"Failure generating predictions for {model_name} model." + \
+                  " Verify that data are correctly formatted for this model." +\
+                  f"{e}"
             raise ValidationError(msg)
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
@@ -212,13 +213,11 @@ class FairCompare(ABC):
                           " they must be of same length as the models argument"
 
             # convert to dict if not already dict. models will be converted
-            #    Note: list-like model arguments will be converted in model
-            #          validation
+            #    Note: list-like protected_attr and model arguments will be
+            #           converted later
             else:
                 self.X = {f'model_{i}': m for i, m in enumerate(self.X)}
                 self.y = {f'model_{i}': m for i, m in enumerate(self.y)}
-                self.protected_attr = \
-                    {f'model_{i}': m for i, m in enumerate(self.protected_attr)}
             if err is not None:
                 raise ValidationError(err)
 
@@ -229,30 +228,33 @@ class FairCompare(ABC):
             for d in data.values():
                 if not isinstance(d, valid_data_types):
                     msg = "Input data must be numpy array or pandas object," + \
-                          " or a list/dict of such objects"
+                        " or a list/dict of such objects"
                     raise ValidationError(msg)
         for k in Xd.keys():
             if not Xd[k].shape[0] == yd[k].shape[0]:
                 raise ValidationError("Test and target data mismatch.")
-
+        ## Validate Protected Attributes
         # Ensure that every column of the protected attributes is boolean
         # ToDo: enable prtc_attr as a single multi col array; iterate cols
-        if not is_dictlike(self.protected_attr):
-            prtc_attr = {0: self.protected_attr}
-        else:
+        if is_dictlike(self.protected_attr):
             prtc_attr = self.protected_attr
+        elif isinstance(self.protected_attr, array_types):
+            prtc_attr = {f'model_{i}': m for i, m in
+                         enumerate(self.protected_attr)}
+        else:
+            prtc_attr = {0: self.protected_attr}
+        #
         for prt_at in prtc_attr.values():
-            if prt_at is not None:
-                if not isinstance(prt_at, valid_data_types):
-                    msg = "Protected attribute(s) must be numpy array or" + \
-                        " similar pandas object"
-                    raise ValidationError(msg)
-                data_shape = prt_at.shape
-                if len(data_shape) > 1 and data_shape[1] > 1:
-                    msg = "This library is not yet compatible with" + \
-                        " multiple protected attributes."
-                    raise ValidationError(msg)
-
+            if not isinstance(prt_at, valid_data_types):
+                msg = "Protected attribute(s) must be numpy array or" + \
+                    " similar pandas object"
+                raise ValidationError(msg)
+            data_shape = prt_at.shape
+            if len(data_shape) > 1 and data_shape[1] > 1:
+                msg = "This library is not yet compatible with" + \
+                    " multiple protected attributes."
+                raise ValidationError(msg)
+        ## Validate Models
         # Ensure models appear as dict
         if not is_dictlike(self.models):
             if not isinstance(self.models, array_types):
