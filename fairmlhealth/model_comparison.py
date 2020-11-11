@@ -14,17 +14,14 @@ from collections import *
 import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
 from joblib import dump, load
+import logging
 import pandas as pd
 import numpy as np
 import os
+import warnings
 
 from . import reports
 
-
-# Temporarily hide pandas SettingWithCopy warning
-import warnings
-warnings.filterwarnings('ignore', module='pandas')
-warnings.filterwarnings('ignore', module='sklearn')
 
 
 """
