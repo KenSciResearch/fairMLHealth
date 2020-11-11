@@ -40,21 +40,21 @@ def compare_measures(test_data, target_data, protected_attr_data=None,
                 dict-like set of such objects): data to be passed to the model
                 to generate predictions. It's recommended that these be separate
                 data from those used to train the model(s). If passed as
-                list-like or dict-like set, must be of same type as models
-                argument.
+                list-like or dict-like set, list/dict must be of same type as
+                the models argument.
             target_data (numpy array or pandas object, or a list-like or
                 dict-like set of such objects):  target data
                 array corresponding to the test data. It is recommended
                 that the target is not present in the test_data. If passed as
-                list-like or dict-like set, must be of same type as models
-                argument.
+                list-like or dict-like set, list/dict must be of same type as
+                the models argument.
             protected_attr_data (numpy array or pandas object, or a list-like
                 or dict-like set of such objects):
                 data for the protected attributes. These data do not need
                 to be present in test_data, but the rows must correspond
                 with test_data.  Note that values must currently be
                 binary or boolean type. If passed as list-like or dict-like set,
-                must be of same type as models argument.
+                list/dict must be of same type as the models argument.
             models (dict or list-like): the set of trained models to be
                 evaluated. Models can be any object with a scikit-like
                 predict() method. Dict keys assumed as model names. If a
