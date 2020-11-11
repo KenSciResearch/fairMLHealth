@@ -20,9 +20,6 @@ import warnings
 # Tutorial Libraries
 from . import tutorial_helpers as helper
 
-# Temporarily hide pandas SettingWithCopy warning
-warnings.filterwarnings('ignore', module='pandas')
-warnings.filterwarnings('ignore', module='sklearn')
 
 __all__ = ["classification_fairness",
            "classification_performance",
@@ -336,22 +333,20 @@ def flag_suspicious(df, caption="", as_styler=False):
                 [c.lower().replace(" ", "_") == "consistency_score"
                  for c in measures]], :].index
 
-    styled = df.style.set_caption(caption
-                    ).apply(lambda x: ['color:magenta'
-                            if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
-                            else '' for i in x], axis=1
-                    ).apply(lambda x: ['color:magenta'
-                            if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
-                            axis=1
-                    )
+    styled = df.style.set_caption(caption)
+    styled.apply(lambda x: ['color:magenta' if (x.name in ratios
+                                                and not 0.8 < i < 1.2)
+                            else '' for i in x], axis=1)
+    styled.apply(lambda x: ['color:magenta'
+                            if (x.name in cs and i < 0.5)
+                            else '' for i in x], axis=1)
     # Correct management of metric difference has yet to be determined for
     #   regression functions. Add style to o.o.r. difference for binary
     #   classification only
     if "MSE Ratio" not in measures:
         styled.apply(lambda x: ['color:magenta'
-                     if (x.name in difference and not -0.1 < x.iloc[0] < 0.1)
-                     else '' for i in x], axis=1
-                     )
+                     if (x.name in difference and not -0.1 < i < 0.1)
+                     else '' for i in x], axis=1)
     if as_styler:
         return(styled)
     else:
