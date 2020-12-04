@@ -56,8 +56,7 @@ class TestCompareFunc(unittest.TestCase):
         '''
         self.load_data()
         X, y, prtc_attr = self.X, self.y, self.prtc_attr
-        model_dict = self.model_dict
-        model_1, model_2 = model_dict.values()
+        model_1, model_2 = self.model_dict.values()
 
         # Generate comparison
         test1 = fhmc.compare_measures(X, y, prtc_attr, model_dict)
@@ -84,7 +83,7 @@ class TestCompareFunc(unittest.TestCase):
                                   {0: prtc_attr}, {0: model_1, 1: model_1})
         with self.assertRaises(ValidationError):
             fhmc.compare_measures({0: X, 1: X}, {0: y, 1: y},
-                                  {0: prtc_attr}, model_dict) # different keys
+                                  {0: prtc_attr}, {99: y, 50: y})
         with self.assertRaises(ValidationError):
             fhmc.compare_measures([X, X], [y, y],
                                   [prtc_attr, prtc_attr],
