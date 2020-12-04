@@ -4,6 +4,7 @@ trigger:
   branches:
     include:
     - master
+    - integration
 
 variables:
   # You don't need to change anything here, unless you want to
