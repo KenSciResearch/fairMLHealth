@@ -2,6 +2,7 @@
 Validation tests forfairMLHealth
 '''
 from fairmlhealth import model_comparison as fhmc
+import logging
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -11,11 +12,12 @@ from fairmlhealth.utils import ValidationError
 
 
 def synth_dataset():
-    df = pd.DataFrame({'A': [1, 2, 50, 3, 45, 32],
-                       'B': [34, 26, 44, 2, 1, 1],
-                       'C': [32, 23, 34, 22, 65, 27],
-                       'gender': [0, 1, 0, 1, 1, 0],
-                       'target': [1, 0, 0, 1, 0, 1]
+    df = pd.DataFrame({'A': [1, 2, 50, 3, 45, 32, 23],
+                       'B': [34, 26, 44, 2, 1, 1, 12],
+                       'C': [32, 23, 34, 22, 65, 27, 11],
+                       'gender': [0, 1, 0, 1, 1, 0, 0],
+                       'age': [0, 1, 1, 1, 1, 0, 1],
+                       'target': [1, 0, 0, 1, 0, 1, 0]
                        })
     return df
 
@@ -29,7 +31,7 @@ class TestCompareFunc(unittest.TestCase):
         else:
             # Synthesize data
             df = synth_dataset()
-            X = df[['A', 'B', 'C', 'gender']]
+            X = df[['A', 'B', 'C', 'gender', 'age']]
             y = df[['target']]
             splits = train_test_split(X, y, test_size=0.75, random_state=36)
             X_train, X_test, y_train, y_test = splits
@@ -49,6 +51,7 @@ class TestCompareFunc(unittest.TestCase):
         self.load_data()
         self.test_compare_func()
         self.test_validation()
+        logging.info("Passed All Tests")
 
     def test_compare_func(self):
         ''' Validates the compare_measures function on allowable inputs. All
@@ -59,11 +62,12 @@ class TestCompareFunc(unittest.TestCase):
         model_1, model_2 = self.model_dict.values()
 
         # Generate comparison
-        test1 = fhmc.compare_measures(X, y, prtc_attr, model_dict)
+        test1 = fhmc.compare_measures(X, y, prtc_attr, self.model_dict)
         test2 = fhmc.compare_measures(X, y, prtc_attr, [model_1])
         test3 = fhmc.compare_measures(X, y, prtc_attr, None)
         test4 = fhmc.compare_measures([X, X], [y, y], [prtc_attr, prtc_attr],
                                       [model_1, model_2])
+
         assert not any(t is None for t in [test1, test2, test3, test4])
 
     def test_validation(self):

@@ -134,12 +134,15 @@ class FairCompare(ABC):
         else:
             prtc_attr = self.protected_attr[model_name]
         # Verify that predictions can be generated from the test data
+        if mdl is None:
+            print("No model defined")
+            return None
         try:
             y_pred = mdl.predict(X)
         except BaseException as e:
             msg = f"Failure generating predictions for {model_name} model." + \
-                  " Verify that data are correctly formatted for this model." +\
-                  f"{e}"
+                  + " Verify if data are correctly formatted for this model." \
+                  + f"{e}"
             raise ValidationError(msg)
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
@@ -239,8 +242,9 @@ class FairCompare(ABC):
         if is_dictlike(self.protected_attr):
             prtc_attr = self.protected_attr
         elif isinstance(self.protected_attr, array_types):
-            prtc_attr = {f'model_{i}': m for i, m in
-                         enumerate(self.protected_attr)}
+            self.protected_attr = {f'model_{i}': m for i, m in
+                                   enumerate(self.protected_attr)}
+            prtc_attr = self.protected_attr
         else:
             prtc_attr = {0: self.protected_attr}
         #
