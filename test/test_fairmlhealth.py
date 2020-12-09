@@ -107,3 +107,4 @@ class TestCompareFunc(unittest.TestCase):
 if __name__ == '__main__':
     tester = TestCompareFunc()
     tester.run_all()
+    print("Passed All Tests")

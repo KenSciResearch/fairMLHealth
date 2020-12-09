@@ -255,8 +255,14 @@ class FairCompare(ABC):
                 raise ValidationError(msg)
             data_shape = prt_at.shape
             if len(data_shape) > 1 and data_shape[1] > 1:
-                msg = "This library is not yet compatible with" + \
-                    " multiple protected attributes."
+                msg = "This library is not yet compatible with groups of" +\
+                      " protected attributes."
+                raise ValidationError(msg)
+            if prt_at.nunique() < 2:
+                msg = "Single label found in protected attribute (2 expected)."
+                raise ValidationError(msg)
+            elif prt_at.nunique() > 2:
+                msg = "Multiple labels found in protected attribute (2 expected)."
                 raise ValidationError(msg)
         ## Validate Models
         # Ensure models appear as dict
