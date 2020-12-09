@@ -123,7 +123,7 @@ class FairCompare(ABC):
             msg = f"Could not measure fairness for {model_name}. Name" + \
                   f" not found in models. Available models include " + \
                   f" {list(self.models.keys())}"
-            logging.info(msg)
+            print(msg)
             return pd.DataFrame()
         #
         mdl = self.models[model_name]
@@ -150,7 +150,7 @@ class FairCompare(ABC):
             y_prob = mdl.predict_proba(X)[:, 1]
         except BaseException as e:
             warnings.warn(f"Failure predicting probabilities for {model_name}."
-                          + f" Related metrics will be skipped. {e}")
+                          + f" Related metrics will be skipped. {e}\n")
             y_prob = None
         finally:
             res = reports.classification_fairness(X, prtc_attr,
@@ -274,7 +274,7 @@ class FairCompare(ABC):
         if self.models is not None:
             if not len(self.models) > 0:
                 msg = "Cannot generate comparison with an empty set of models."
-                logging.info(msg)
+                logging.warning(msg)
             else:
                 for _, m in self.models.items():
                     pred_func = getattr(m, "predict", None)

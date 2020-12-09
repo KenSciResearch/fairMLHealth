@@ -51,7 +51,6 @@ class TestCompareFunc(unittest.TestCase):
         self.load_data()
         self.test_compare_func()
         self.test_validation()
-        logging.info("Passed All Tests")
 
     def test_compare_func(self):
         ''' Validates the compare_measures function on allowable inputs. All

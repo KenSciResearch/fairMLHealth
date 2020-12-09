@@ -191,7 +191,7 @@ def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
             aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
     else:
         msg = "Cannot calculate consistency score. Null values present in data."
-        logging.info(msg)
+        logging.warning(msg)
     # Other aif360 metrics (not consistency) can handle null values
     if_vals['Between-Group Generalized Entropy Error'] = \
         aif_mtrc.between_group_generalized_entropy_error(y_true, y_pred,
