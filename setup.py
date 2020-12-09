@@ -22,7 +22,7 @@ def _get_version():
 
 
 setup(
-    name='fairMLHealth',
+    name='fairmlhealth',
     version=_get_version(),
     description='Health-centered fairness measurement and management',
     long_description=long_description,
@@ -51,5 +51,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
     ],
-    packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
+    packages=find_packages(include=['fairmlhealth', 'fairmlhealth.*'])
 )
