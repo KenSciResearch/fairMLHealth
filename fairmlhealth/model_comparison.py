@@ -125,7 +125,7 @@ class FairCompare(ABC):
                   f" {list(self.models.keys())}"
             print(msg)
             return pd.DataFrame()
-        #
+        # Subset to objects for this specific model
         mdl = self.models[model_name]
         X = self.X if not is_dictlike(self.X) else self.X[model_name]
         y = self.y if not is_dictlike(self.y) else self.y[model_name]
