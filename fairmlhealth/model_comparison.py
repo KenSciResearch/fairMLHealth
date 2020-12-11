@@ -9,16 +9,13 @@ Contributors:
 # Licensed under the MIT License.
 
 from abc import ABC
-import aif360.sklearn.metrics as aif_mtrc
-from collections import *
-import fairlearn.metrics as fl_mtrc
-from IPython.display import HTML
-from joblib import dump, load
+from collections import OrderedDict
+from joblib import dump
 import logging
 import numpy as np
 import pandas as pd
 import os
-from fairmlhealth.utils import *
+from fairmlhealth.utils import is_dictlike
 
 from fairmlhealth import reports
 
@@ -37,15 +34,15 @@ warnings.filterwarnings('ignore', module='sklearn')
 def compare_measures(test_data, target_data, protected_attr_data=None,
                      models=None):
     """ Generates a report comparing fairness measures for the models passed.
-            Note: This is a wrapper for the FairCompare.compare_measures method.
+            Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
 
-        Returns:
-            a pandas dataframe
+    Returns:
+        pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, target_data, protected_attr_data, models)
     table = comp.compare_measures()
-    return(table)
+    return table
 
 
 class FairCompare(ABC):
@@ -53,25 +50,26 @@ class FairCompare(ABC):
     """
     def __init__(self, test_data, target_data, protected_attr_data=None,
                  models=None):
-        """
-            Args:
-                test_data (numpy array or similar pandas object): data to be
-                    passed to the models to generate predictions. It's
-                    recommended that these be separate data from those used to
-                    train the model.
-                target_data (numpy array or similar pandas object): target data
-                    array corresponding to the test data. It is recommended
-                    that the target is not present in the test_data.
-                protected_attr_data (numpy array or similar pandas object):
-                    data for the protected attributes. These data do not need
-                    to be present in test_data, but the rows must correspond
-                    with test_data.  Note that values must currently be
-                    binary or boolean type.
-                models (dict or list-like): the set of trained models to be
-                    evaluated. Models can be any object with a scikit-like
-                    predict() method. Dict keys assumed as model names. If a
-                    list-like object is passed, will set model names relative
-                    to their index
+        """ Generates fairness comparisons
+
+        Args:
+            test_data (numpy array or similar pandas object): data to be
+                passed to the models to generate predictions. It's
+                recommended that these be separate data from those used to
+                train the model.
+            target_data (numpy array or similar pandas object): target data
+                array corresponding to the test data. It is recommended that
+                the target is not present in the test_data.
+            protected_attr_data (numpy array or similar pandas object):
+                data for the protected attributes. These data do not need to
+                be present in test_data, but the rows must correspond
+                with test_data.  Note that values must currently be
+                binary or boolean type.
+            models (dict or list-like): the set of trained models to be
+                evaluated. Models can be any object with a scikit-like
+                predict() method. Dict keys assumed as model names. If a
+                list-like object is passed, will set model names relative to
+                their index
         """
         self.X = test_data
         self.protected_attr = protected_attr_data
@@ -83,11 +81,8 @@ class FairCompare(ABC):
             raise ValidationError(f"Error loading FairCompare. {ve}")
 
     def compare_measures(self):
-        """ Generates a report that compares fairness measures for all
-            entries in self.models
-
-        Returns:
-            a pandas dataframe
+        """ Returns a pandas dataframe containing fairness and performance
+            measures for all available models
         """
         self.__validate()
         if len(self.models) == 0:
@@ -112,17 +107,18 @@ class FairCompare(ABC):
                 return None
 
     def measure_model(self, model_name):
-        """ Generates a report comparing fairness measures for the model_name
-                specified
+        """ Returns a pandas dataframe containing fairness measures for the
+                model_name specified
 
-            Returns:
-                a pandas dataframe
+        Args:
+            model_name (str): a key corresponding to the model of interest,
+                as found in the object's "models" dictionary
         """
         self.__validate()
         if model_name not in self.models.keys():
-            msg = f"Could not measure fairness for {model_name}. Name" + \
-                  f" not found in models. Available models include " + \
-                  f" {list(self.models.keys())}"
+            msg = (f"Could not measure fairness for {model_name}. Name"
+                  f" not found in models. Available models include "
+                  f" {list(self.models.keys())}")
             print(msg)
             return pd.DataFrame()
         # Subset to objects for this specific model
@@ -140,9 +136,9 @@ class FairCompare(ABC):
         try:
             y_pred = mdl.predict(X)
         except BaseException as e:
-            msg = f"Failure generating predictions for {model_name} model." + \
-                  + " Verify if data are correctly formatted for this model." \
-                  + f"{e}"
+            msg = (f"Failure generating predictions for {model_name} model."
+                  + " Verify if data are correctly formatted for this model."
+                  + f"{e}")
             raise ValidationError(msg)
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
@@ -164,17 +160,14 @@ class FairCompare(ABC):
         dump(self, filepath)
 
     def __toggle_validation(self):
-        if self.__pause_validation:
-            self.__pause_validation = False
-        else:
-            self.__pause_validation = True
+        self.__pause_validation = not self.__pause_validation
 
     def __validate(self):
         """ Verifies that attributes are set appropriately and updates as
                 appropriate
 
-            Raises:
-                ValidationError
+        Raises:
+            ValidationError
         """
         # Skip validation if paused
         if self.__validation_paused():
@@ -195,25 +188,25 @@ class FairCompare(ABC):
         if any(isinstance(p, array_types) for p in dataobj):
             err = None
             if not len(set(type(p) for p in dataobj)) == 1:
-                err = "If the data arguments are passed in list/dict," + \
-                      " all three must be passed in same list/dict type."
+                err = ("If the data arguments are passed in list/dict,"
+                      " all three must be passed in same list/dict type.")
             elif not all(isinstance(p, type(self.models)) for p in dataobj):
-                err = "If the data arguments are passed in list/dict" + \
-                      " object must be passed as the same type as the" + \
-                      " models argument"
+                err = ("If the data arguments are passed in list/dict"
+                      " object must be passed as the same type as the"
+                      " models argument")
             elif not all(len(p) == len(self.models) for p in dataobj):
-                err = "If the data arguments are in list-like object, they" + \
-                      " must be of same length as the models argument"
+                err = ("If the data arguments are in list-like object, they"
+                      " must be of same length as the models argument")
 
             # Comparison function will use keys to iterate in comparisons
             if all(is_dictlike(p) for p in validobj):
                 if not all(p.keys() == self.models.keys() for p in dataobj):
-                    err = "If the data arguments are passed in dict-like" + \
-                          " object, all keys in data arguments must match" + \
-                          " the keys in the models argument"
+                    err = ("If the data arguments are passed in dict-like"
+                          " object, all keys in data arguments must match"
+                          " the keys in the models argument")
                 elif not all(len(p) == len(self.models) for p in dataobj):
-                    err = "If the data arguments are passed in list/dict," + \
-                          " they must be of same length as the models argument"
+                    err = ("If the data arguments are passed in list/dict,"
+                          " they must be of same length as the models argument")
 
             # convert to dict if not already dict. models will be converted
             #    Note: list-like protected_attr and model arguments will be
@@ -230,8 +223,8 @@ class FairCompare(ABC):
         for data in [Xd, yd]:
             for d in data.values():
                 if not isinstance(d, valid_data_types):
-                    msg = "Input data must be numpy array or pandas object," + \
-                        " or a list/dict of such objects"
+                    msg = ("Input data must be numpy array or pandas object,"
+                           " or a list/dict of such objects")
                     raise ValidationError(msg)
         for k in Xd.keys():
             if not Xd[k].shape[0] == yd[k].shape[0]:
@@ -250,26 +243,27 @@ class FairCompare(ABC):
         #
         for prt_at in prtc_attr.values():
             if not isinstance(prt_at, valid_data_types):
-                msg = "Protected attribute(s) must be numpy array or" + \
-                    " similar pandas object"
+                msg = ("Protected attribute(s) must be numpy array or"
+                       " similar pandas object")
                 raise ValidationError(msg)
             data_shape = prt_at.shape
             if len(data_shape) > 1 and data_shape[1] > 1:
-                msg = "This library is not yet compatible with groups of" +\
-                      " protected attributes."
+                msg = ("This library is not yet compatible with groups of"
+                       " protected attributes.")
                 raise ValidationError(msg)
             if prt_at.nunique() < 2:
                 msg = "Single label found in protected attribute (2 expected)."
                 raise ValidationError(msg)
             elif prt_at.nunique() > 2:
-                msg = "Multiple labels found in protected attribute (2 expected)."
+                msg = ("Multiple labels found in protected attribute"
+                       "(2 expected).")
                 raise ValidationError(msg)
         ## Validate Models
         # Ensure models appear as dict
         if not is_dictlike(self.models):
             if not isinstance(self.models, array_types):
-                msg = "Models must be dict or list-like group of trained," + \
-                      " scikit-like models"
+                msg = ("Models must be dict or list-like group of trained,"
+                       " scikit-like models")
                 raise ValidationError(msg)
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
@@ -294,20 +288,8 @@ class FairCompare(ABC):
             self.__pause_validation = False
         return self.__pause_validation
 
-
-def load_comparison(filepath):
-    """ Loads a file directly into a FairCompare object
-
-        Returns:
-            initialized FairCompare object
-    """
-    data = load(filepath)
-    fair_comp = FairCompare(test_data=data['test_data'],
-                            target_data=data['target_data'],
-                            models=data['models'],
-                            train_data=data['train_data']
-                            )
-    return fair_comp
+class ValidationError(Exception):
+    pass
 
 
 
