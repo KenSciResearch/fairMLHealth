@@ -117,8 +117,8 @@ class FairCompare(ABC):
         self.__validate()
         if model_name not in self.models.keys():
             msg = (f"Could not measure fairness for {model_name}. Name"
-                  f" not found in models. Available models include "
-                  f" {list(self.models.keys())}")
+                   f" not found in models. Available models include "
+                   f" {list(self.models.keys())}")
             print(msg)
             return pd.DataFrame()
         # Subset to objects for this specific model
@@ -137,16 +137,17 @@ class FairCompare(ABC):
             y_pred = mdl.predict(X)
         except BaseException as e:
             msg = (f"Failure generating predictions for {model_name} model."
-                  + " Verify if data are correctly formatted for this model."
-                  + f"{e}")
+                   " Verify if data are correctly formatted for this model."
+                   f"{e}")
             raise ValidationError(msg)
         # Since most fairness measures do not require probabilities, y_prob is
         #   optional
         try:
             y_prob = mdl.predict_proba(X)[:, 1]
         except BaseException as e:
-            warnings.warn(f"Failure predicting probabilities for {model_name}."
-                          + f" Related metrics will be skipped. {e}\n")
+            msg = (f"Failure predicting probabilities for {model_name}."
+                   f" Related metrics will be skipped. {e}\n")
+            warnings.warn(msg)
             y_prob = None
         finally:
             res = reports.classification_fairness(X, prtc_attr,
@@ -189,24 +190,25 @@ class FairCompare(ABC):
             err = None
             if not len(set(type(p) for p in dataobj)) == 1:
                 err = ("If the data arguments are passed in list/dict,"
-                      " all three must be passed in same list/dict type.")
+                       " all three must be passed in same list/dict type.")
             elif not all(isinstance(p, type(self.models)) for p in dataobj):
                 err = ("If the data arguments are passed in list/dict"
-                      " object must be passed as the same type as the"
-                      " models argument")
+                       " object must be passed as the same type as the"
+                       " models argument")
             elif not all(len(p) == len(self.models) for p in dataobj):
                 err = ("If the data arguments are in list-like object, they"
-                      " must be of same length as the models argument")
+                       " must be of same length as the models argument")
 
             # Comparison function will use keys to iterate in comparisons
             if all(is_dictlike(p) for p in validobj):
                 if not all(p.keys() == self.models.keys() for p in dataobj):
                     err = ("If the data arguments are passed in dict-like"
-                          " object, all keys in data arguments must match"
-                          " the keys in the models argument")
+                           " object, all keys in data arguments must match"
+                           " the keys in the models argument")
                 elif not all(len(p) == len(self.models) for p in dataobj):
                     err = ("If the data arguments are passed in list/dict,"
-                          " they must be of same length as the models argument")
+                           " the list/dict must be the same length as the"
+                           " models argument")
 
             # convert to dict if not already dict. models will be converted
             #    Note: list-like protected_attr and model arguments will be
@@ -260,11 +262,9 @@ class FairCompare(ABC):
                 raise ValidationError(msg)
         ## Validate Models
         # Ensure models appear as dict
-        if not is_dictlike(self.models):
+        if not is_dictlike(self.models) and self.models is not None:
             if not isinstance(self.models, array_types):
-                msg = ("Models must be dict or list-like group of trained,"
-                       " scikit-like models")
-                raise ValidationError(msg)
+                self.models =[self.models]
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             print("Since no model names were passed, the following names have",
                   " been assigned to the models per their indexes:",
@@ -288,8 +288,6 @@ class FairCompare(ABC):
             self.__pause_validation = False
         return self.__pause_validation
 
+
 class ValidationError(Exception):
     pass
-
-
-
