@@ -3,12 +3,8 @@ WORKDIR /kensci
 COPY . .
 # ARG PIP_EXTRA_INDEX_URL
 
-# TODO: Add unit-test and update below to run unit-test
-# # installs python build and test dependencies.
-# # ex: python3 -m pip install .[test] --extra-index-url ${PIP_EXTRA_INDEX_URL}
-# RUN <setup>
-# # unit-test. replace <unit-test> with testing command
-# RUN <unit-test>
+RUN python3 -m pip install -U .[test]
+RUN python3 -m pytest
 
 # create artifacts folder for built package.
 RUN mkdir /artifacts

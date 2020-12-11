@@ -21,6 +21,11 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
+test_deps = [
+    "pytest==5.4.2",
+]
+
+
 setup(
     name='fairmlhealth',
     version=_get_version(),
@@ -30,6 +35,10 @@ setup(
     url='https://github.com/KenSciResearch/fairMLHealth',
     author='KenSci',
     author_email='christine.allen@kensci.com',
+    tests_require=test_deps,
+    extras_require={
+        "test": test_deps,
+    },
     python_requires='>=3.5, <4',
     install_requires=['aif360>=0.3.0',
                       'fairlearn>=0.4.6',
@@ -41,7 +50,6 @@ setup(
                       'scipy>=1.3.1',
                       'scikit-learn>=0.22.1',
                       'seaborn',
-                      'tensorflow',
                       'xgboost'
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
