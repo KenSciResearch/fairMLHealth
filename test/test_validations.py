@@ -80,16 +80,17 @@ class TestCMValidations:
                                   {1: self.prtc_attr},
                                   self.model_dict)
 
-    def test_incompatible_iterables(self):
-        with pytest.raises(ValidationError):
-            with pytest.raises(Exception):
-                fhmc.compare_measures([self.X, self.X], [self.y, self.y],
-                                      [self.prtc_attr, self.prtc_attr],
-                                       self.model_dict)
-            with pytest.raises(Exception):
-                fhmc.compare_measures([self.X, self.X], {0: self.y, 1: self.y},
-                                      {0: self.prtc_attr, 1: self.prtc_attr},
-                                      self.model_dict)
+    def test_incompatible_iterables_1(self):
+        with pytest.raises(Exception):
+            fhmc.compare_measures([self.X, self.X], [self.y, self.y],
+                                  [self.prtc_attr, self.prtc_attr],
+                                  self.model_dict)
+
+    def test_incompatible_iterables_2(self):
+        with pytest.raises(Exception):
+            fhmc.compare_measures([self.X, self.X], {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
 
     def test_invalid_X_member(self):
         with pytest.raises(Exception):
@@ -146,4 +147,3 @@ class TestCMValidations:
                                   {0: self.y, 1: self.y},
                                   None,
                                   self.model_dict)
-
