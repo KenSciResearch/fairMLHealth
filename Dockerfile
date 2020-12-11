@@ -3,7 +3,7 @@ WORKDIR /kensci
 COPY . .
 # ARG PIP_EXTRA_INDEX_URL
 
-RUN python3 -m pip install -U .[test]
+RUN python3 -m pip install -U pytest
 RUN python3 -m pytest
 
 # create artifacts folder for built package.
