@@ -2,12 +2,11 @@
 Validation tests forfairMLHealth
 '''
 from fairmlhealth import model_comparison as fhmc
-import logging
 import pandas as pd
+import pytest
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
-import unittest
 from fairmlhealth.utils import ValidationError
 
 
@@ -22,7 +21,7 @@ def synth_dataset():
     return df
 
 
-class TestCompareFunc(unittest.TestCase):
+class TestValidations:
     is_loaded = False
 
     def load_data(self):
@@ -44,67 +43,133 @@ class TestCompareFunc(unittest.TestCase):
             self.X = X_test
             self.y = y_test
             self.prtc_attr = X_test['gender']
-            self.model_dict = {'model_1': model_1, 'model_2': model_2}
+            self.model_dict = {0: model_1, 1: model_2}
             self.is_loaded = True
 
-    def run_all(self):
+    ''' Validate the compare_measures function on allowable inputs. All
+        sub-tests should return non-NoneType object.
+    '''
+    def test_compare_func_1(self):
+        """ All data args as data (not iterable) with models in dict should
+            return a dataframe
+        """
         self.load_data()
-        self.test_compare_func()
-        self.test_validation()
+        test1 = fhmc.compare_measures(self.X, self.y, self.prtc_attr,
+                                      self.model_dict)
+        assert isinstance(test1, pd.DataFrame) and test1.shape[0] > 0
 
-    def test_compare_func(self):
-        ''' Validates the compare_measures function on allowable inputs. All
-                sub-tests should return non-NoneType object.
-        '''
+    def test_compare_func_2(self):
+        """ All args outside of lists should return a dataframe """
         self.load_data()
-        X, y, prtc_attr = self.X, self.y, self.prtc_attr
-        model_1, model_2 = self.model_dict.values()
+        test2 = fhmc.compare_measures(self.X, self.y, self.prtc_attr,
+                                      self.model_dict[0])
+        assert isinstance(test2, pd.DataFrame) and test2.shape[0] > 0
 
-        # Generate comparison
-        test1 = fhmc.compare_measures(X, y, prtc_attr, self.model_dict)
-        test2 = fhmc.compare_measures(X, y, prtc_attr, [model_1])
-        test3 = fhmc.compare_measures(X, y, prtc_attr, None)
-        test4 = fhmc.compare_measures([X, X], [y, y], [prtc_attr, prtc_attr],
-                                      [model_1, model_2])
-
-        assert not any(t is None for t in [test1, test2, test3, test4])
-
-    def test_validation(self):
-        ''' Tests that the FairCompare object validation method. All sub-tests
-                should raise errors.
-        '''
+    def test_compare_func_3(self):
+        """ All data args as data (not iterable) but None models should return
+            an empty data frame
+        """
         self.load_data()
-        X, y, prtc_attr = self.X, self.y, self.prtc_attr
-        model_dict = self.model_dict
-        model_1, model_2 = model_dict.values()
+        test3 = fhmc.compare_measures(self.X, self.y, self.prtc_attr, None)
+        assert isinstance(test3, pd.DataFrame) and test3.shape[0] == 0
 
-        #
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures([X, X], [y], [prtc_attr], [model_1, model_2])
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures({0: X, 1: X}, {0: y, 1: y},
-                                  {0: prtc_attr}, {0: model_1, 1: model_1})
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures({0: X, 1: X}, {0: y, 1: y},
-                                  {0: prtc_attr}, {99: y, 50: y})
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures([X, X], [y, y],
-                                  [prtc_attr, prtc_attr],
-                                  {0: model_1, 1: model_1})
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures([X, X], {0: y, 1: y},
-                                  {0: prtc_attr, 1: prtc_attr},
-                                  {0: model_1, 1: model_1})
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures([X, X], [y, y],
-                                  None, {0: model_1, 1: model_1})
-        with self.assertRaises(ValidationError):
-            fhmc.compare_measures({0: X, 1: None}, {0: y, 1: y},
-                                  {0: prtc_attr, 1: prtc_attr},
-                                  {0: model_1, 1: model_1})
+    def test_compare_func_4(self):
+        """ All args in equal length lists should return a dataframe """
+        self.load_data()
+        test4 = fhmc.compare_measures([self.X, self.X], [self.y, self.y],
+                                      [self.prtc_attr, self.prtc_attr],
+                                      [self.model_dict[0],
+                                       self.model_dict[1]])
+        assert isinstance(test4, pd.DataFrame) and test4.shape[0] > 0
 
+    ''' Tests that the FairCompare object validation method. All sub-tests
+        should raise errors.
+    '''
+    def test_validation_1(self):
+        """ Test for one data arg of long list length """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures([self.X, self.X], [self.y], [self.prtc_attr],
+                                  [self.model_dict[0], self.model_dict[1]])
 
-if __name__ == '__main__':
-    tester = TestCompareFunc()
-    tester.run_all()
-    print("Passed All Tests")
+    def test_validation_2(self):
+        """ Test for one data arg of long length """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: self.y},
+                                  {1: self.prtc_attr},
+                                  self.model_dict)
+
+    def test_validation_3(self):
+        """ Test for incompatible list/dict """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures([self.X, self.X], [self.y, self.y],
+                                  [self.prtc_attr, self.prtc_attr],
+                                  self.model_dict)
+
+        with pytest.raises(Exception):
+            fhmc.compare_measures([self.X, self.X], {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
+
+    def test_validation_4(self):
+        """ Test for one model dict without non-model data """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  {0: self.y, 1: self.y})
+
+    def test_validation_5(self):
+        """ Test for differing dict keys """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures({5: self.X, 6: self.X},
+                                  {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
+
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {5: self.y, 6: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
+
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: self.y},
+                                  {5: self.prtc_attr, 6: self.prtc_attr},
+                                  self.model_dict)
+
+    def test_validation_6(self):
+        """ Test for missing argument """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: self.y},
+                                  None,
+                                  self.model_dict)
+
+    def test_validation_7(self):
+        """ Test for missing sub-argument """
+        self.load_data()
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: None},
+                                  {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
+
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: None},
+                                  {0: self.prtc_attr, 1: self.prtc_attr},
+                                  self.model_dict)
+
+        with pytest.raises(Exception):
+            fhmc.compare_measures({0: self.X, 1: self.X},
+                                  {0: self.y, 1: self.y},
+                                  {0: self.prtc_attr, 1: None},
+                                  self.model_dict)
