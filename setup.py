@@ -41,7 +41,7 @@ setup(
                       'scipy>=1.3.1',
                       'scikit-learn>=0.22.1',
                       'seaborn',
-                      'tensorflow',
+                      'tensorflow<=1.15.4',
                       'xgboost'
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
