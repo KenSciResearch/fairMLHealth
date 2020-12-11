@@ -1,5 +1,5 @@
 '''
-Validation tests forfairMLHealth
+Validation tests for fairmlhealth
 '''
 from fairmlhealth import model_comparison as fhmc
 from fairmlhealth.utils import ValidationError
@@ -93,4 +93,3 @@ class TestValidations:
     #     fhmc.compare_measures({0: X, 1: None}, {0: y, 1: y},
     #                           {0: prtc_attr, 1: prtc_attr},
     #                           {0: model_1, 1: model_1})
-
