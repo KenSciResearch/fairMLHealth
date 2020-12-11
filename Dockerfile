@@ -1,14 +1,14 @@
 FROM kentoso.azurecr.io/kensciml/python36:latest AS setup
+RUN apt-get update && apt-get install -y libgomp1
+RUN apt-get install -y libgomp1 gcc g++
+
 WORKDIR /kensci
 COPY . .
 # ARG PIP_EXTRA_INDEX_URL
 
-# TODO: Add unit-test and update below to run unit-test
-# # installs python build and test dependencies.
-# # ex: python3 -m pip install .[test] --extra-index-url ${PIP_EXTRA_INDEX_URL}
-# RUN <setup>
-# # unit-test. replace <unit-test> with testing command
-# RUN <unit-test>
+RUN python3 setup.py install
+RUN python3 -m pip install -U pytest
+RUN python3 -m pytest
 
 # create artifacts folder for built package.
 RUN mkdir /artifacts
