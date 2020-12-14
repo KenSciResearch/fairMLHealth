@@ -15,8 +15,8 @@ import logging
 import numpy as np
 import pandas as pd
 import os
-from fairmlhealth.utils import is_dictlike
 
+from fairmlhealth.utils import is_dictlike
 from fairmlhealth import reports
 
 
