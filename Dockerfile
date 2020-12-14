@@ -1,3 +1,5 @@
+FROM kentoso.azurecr.io/kensciml/python37:latest AS setup
+
 RUN apt-get update && apt-get install -y libgomp1
 RUN apt-get install -y libgomp1 gcc g++
 
