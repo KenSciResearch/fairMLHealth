@@ -39,7 +39,7 @@ setup(
     extras_require={
         "test": test_deps,
     },
-    python_requires='>=3.5, <4',
+    python_requires='>=3.6, <4',
     install_requires=['aif360>=0.3.0',
                       'fairlearn>=0.4.6',
                       'lightgbm',
@@ -47,7 +47,7 @@ setup(
                       'numpy>=1.17.2',
                       'pandas>=0.25.1',
                       'requests',
-                      'scipy>=1.3.1',
+                      'scipy<=1.5.4',
                       'scikit-learn>=0.22.1',
                       'seaborn',
                       'xgboost'
