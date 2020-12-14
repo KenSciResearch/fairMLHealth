@@ -39,7 +39,7 @@ setup(
     extras_require={
         "test": test_deps,
     },
-    python_requires='>=3.5, <4',
+    python_requires='>=3.7, <4',
     install_requires=['aif360>=0.3.0',
                       'fairlearn>=0.4.6',
                       'lightgbm',
