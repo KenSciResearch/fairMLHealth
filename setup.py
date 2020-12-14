@@ -53,9 +53,9 @@ setup(
                       'xgboost'
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
-    keywords='healthcare, machine learning, fairness',
+    keywords='healthcare, machine learning, fairness, fair ML',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
     ],
