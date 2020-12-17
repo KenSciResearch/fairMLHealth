@@ -11,6 +11,7 @@ from abc import ABC
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
+import logging
 import pandas as pd
 import numpy as np
 import sklearn.metrics as sk_metric
@@ -30,7 +31,8 @@ __all__ = ["classification_fairness",
            "flag_suspicious"]
 
 
-def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
+def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None,
+                            priv_grp=1):
     """ Formats data for use by fairness reporting functions.
 
     Args:
@@ -41,11 +43,14 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
         y_pred (1D array-like): Sample target predictions
         y_prob (1D array-like, optional): Sample target probabilities. Defaults
             to None.
+        priv_grp (int, optional): label of the privileged group. Defaults
+            to 1.
+
     Returns:
         Tuple containing formatted versions of all passed args.
 
     """
-    __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob)
+    __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
 
     # Format inputs to required datatypes
     if isinstance(X, np.ndarray):
@@ -62,8 +67,8 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if isinstance(y_prob, np.ndarray):
         y_prob = pd.DataFrame(y_prob)
     for data in [y_true, y_pred, y_prob]:
-        if data is not None and data.shape[1] > 1:
-            raise TypeError("targets and predictions must be 1-Dimensional")
+        if data is not None and (len(data.shape) > 1 and data.shape[1] > 1):
+            raise TypeError("Targets and predictions must be 1-Dimensional")
 
     # Format and set sensitive attributes as index for y dataframes
     pa_name = prtc_attr.columns.tolist()
@@ -76,7 +81,7 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     if y_prob is not None:
         y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)],
                            axis=1
-                  ).set_index(pa_name)
+                           ).set_index(pa_name)
         y_prob.columns = y_true.columns
 
     # Ensure that protected attributes are integer-valued
@@ -84,10 +89,10 @@ def __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob=None):
     for c in pa_cols:
         binary = (set(prtc_attr[c].astype(int)) == set(prtc_attr[c]))
         boolean = (prtc_attr[c].dtype == bool)
-        two_valued = (set(prtc_attr[c].astype(int)) == {0,1})
+        two_valued = (set(prtc_attr[c].astype(int)) == {0, 1})
         if not two_valued and (binary or boolean):
-            raise ValueError(
-                        "prtc_attr must be binary or boolean and heterogeneous")
+            msg = "prtc_attr must be binary or boolean and heterogeneous"
+            raise ValueError(msg)
         prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
         if isinstance(c, int):
             prtc_attr.rename(columns={c: f"prtc_attribute_{c}"}, inplace=True)
@@ -184,8 +189,14 @@ def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
     # Generate dict of Individual Fairness measures
     if_vals = {}
     if_key = 'Individual Fairness'
-    if_vals['Consistency Score'] = \
-        aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
+    # consistency_score raises error if null values are present in X
+    if X.notnull().all().all():
+        if_vals['Consistency Score'] = \
+            aif_mtrc.consistency_score(X, y_pred.iloc[:, 0])
+    else:
+        msg = "Cannot calculate consistency score. Null values present in data."
+        logging.warning(msg)
+    # Other aif360 metrics (not consistency) can handle null values
     if_vals['Between-Group Generalized Entropy Error'] = \
         aif_mtrc.between_group_generalized_entropy_error(y_true, y_pred,
                                                          prot_attr=pa_names)
@@ -220,7 +231,18 @@ def __regression_performance_measures(y_true, y_pred):
     return (mp_key, mp_vals)
 
 
-def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob=None):
+def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob=None,
+                             priv_grp=1):
+    """ Raises error if data are of incorrect type or size
+
+    Args:
+        X (array-like): Sample features
+        prtc_attr (array-like, named): values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities
+    """
     valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
     for data in [X, prtc_attr, y_true, y_pred]:
         if not isinstance(data, valid_data_types):
@@ -230,6 +252,8 @@ def __validate_report_inputs(X, prtc_attr, y_true, y_pred, y_prob=None):
     if y_prob is not None:
         if not isinstance(y_prob, valid_data_types):
             raise TypeError("y_prob is invalid type")
+    if not isinstance(priv_grp, int):
+        raise TypeError("priv_grp must be an integer")
 
 
 def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -250,7 +274,7 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
             pandas dataframe
     """
     X, prtc_attr, y_true, y_pred, y_prob = \
-        __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob)
+        __format_fairtest_input(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
 
     # Generate dict of group fairness measures, if applicable
     n_class = y_true.append(y_pred).iloc[:, 0].nunique()
@@ -330,13 +354,13 @@ def flag_suspicious(df, caption="", as_styler=False):
                  for c in measures]], :].index
 
     styled = df.style.set_caption(caption
-              ).apply(lambda x: ['color:magenta'
-                      if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
-                      else '' for i in x], axis=1
-              ).apply(lambda x: ['color:magenta'
-                      if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
-                      axis=1
-              )
+                    ).apply(lambda x: ['color:magenta'
+                            if (x.name in ratios and not 0.8 < x.iloc[0] < 1.2)
+                            else '' for i in x], axis=1
+                    ).apply(lambda x: ['color:magenta'
+                            if (x.name in cs and x.iloc[0] < 0.5) else '' for i in x],
+                            axis=1
+                    )
     # Correct management of metric difference has yet to be determined for
     #   regression functions. Add style to o.o.r. difference for binary
     #   classification only
@@ -352,7 +376,8 @@ def flag_suspicious(df, caption="", as_styler=False):
 
 
 def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
-    """ Generates a dataframe containing fairness measures for the model results
+    """ Generates a dataframe containing fairness measures for the model
+        results
 
         Args:
             X (array-like): Sample features
@@ -367,10 +392,11 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1):
             pandas dataframe
     """
     X, prtc_attr, y_true, y_pred, _ = \
-        __format_fairtest_input(X, prtc_attr, y_true, y_pred)
+        __format_fairtest_input(X, prtc_attr, y_true, y_pred, priv_grp)
     #
     gf_key, gf_vals = \
-        __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=priv_grp)
+        __regres_group_fairness_measures(prtc_attr, y_true, y_pred,
+                                         priv_grp=priv_grp)
     #
     if_key, if_vals = \
         __individual_fairness_measures(X, prtc_attr, y_true, y_pred)

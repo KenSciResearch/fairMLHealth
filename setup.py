@@ -21,8 +21,13 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
+test_deps = [
+    "pytest==5.4.2",
+]
+
+
 setup(
-    name='fairMLHealth',
+    name='fairmlhealth',
     version=_get_version(),
     description='Health-centered fairness measurement and management',
     long_description=long_description,
@@ -30,26 +35,30 @@ setup(
     url='https://github.com/KenSciResearch/fairMLHealth',
     author='KenSci',
     author_email='christine.allen@kensci.com',
-    python_requires='>=3.5, <4',
+    tests_require=test_deps,
+    extras_require={
+        "test": test_deps,
+    },
+    python_requires='>=3.6, <4',
     install_requires=['aif360>=0.3.0',
                       'fairlearn>=0.4.6',
                       'lightgbm',
                       'matplotlib',
-                      'numpy>=1.17.2',
-                      'pandas>=0.25.1',
+                      'numpy==1.18.2',
+                      'pandas==1.0.3',
                       'requests',
-                      'scipy>=1.3.1',
-                      'scikit-learn>=0.22.1',
+                      'scipy==1.4.1',
+                      'scikit-learn==0.23.2',
                       'seaborn',
-                      'tensorflow',
-                      'xgboost'
+                      'xgboost',
+                      'ipython',
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
-    keywords='healthcare, machine learning, fairness',
+    keywords='healthcare, machine learning, fairness, fair ML',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'
     ],
-    packages=find_packages(include=['fairMLHealth', 'fairMLHealth.*'])
+    packages=find_packages(include=['fairmlhealth', 'fairmlhealth.*'])
 )

@@ -34,9 +34,12 @@ Installing from a local copy of the repo:
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
+from fairmlhealth import model_comparison as fhmc
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
-from fairmlhealth import model_comparison as fhmc
+
 
 # Load data
 X = pd.DataFrame({'col1':[1,2,50,3,45,32], 'col2':[34,26,44,2,1,1],
