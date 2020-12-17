@@ -6,7 +6,8 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.4] - 2020-12-09
 ### Added and fixed
-- Add Validations in the model comparison methods.
+- Add validations in the model comparison methods
+- Allow multiple data inputs to model comparison (one per model), in addition to previous method allowing a single dataset to be used for all models
 - Add unit tests
 - Fix installation issues (Issue #25)
 
