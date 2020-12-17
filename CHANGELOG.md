@@ -11,6 +11,10 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Add unit tests
 - Fix installation issues (Issue #25)
 
+## [0.1.3] - 2020-12-01
+### Added
+- Change from "dev" to "integration" as staging branch
+
 ## [0.1.2] - 2020-10-28
 ### Added
 - Add CI.
