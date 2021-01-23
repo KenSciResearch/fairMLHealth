@@ -31,6 +31,36 @@ warnings.filterwarnings('ignore', module='sklearn')
 """
 
 
+def measure_model(test_data, target_data, protected_attr_data, model):
+    """ Generates a report of fairness measures for the model
+
+    Args:
+        test_data ([type]): [description]
+        target_data ([type]): [description]
+        protected_attr_data ([type]): [description]
+        model ([type]): [description]
+    """
+    comp = FairCompare(test_data, target_data, protected_attr_data, [model],
+                       verboseMode=False)
+    table = comp.measure_model(comp.models.keys()[0]).transpose()
+    return table
+
+
+def compare_models(test_data, target_data, protected_attr_data, models):
+    """ Generates a report of fairness measures for the model
+
+    Args:
+        test_data ([type]): [description]
+        target_data ([type]): [description]
+        protected_attr_data ([type]): [description]
+        model ([type]): [description]
+    """
+    comp = FairCompare(test_data, target_data, protected_attr_data, models,
+                       verboseMode=False)
+    table = comp.compare_measures().transpose()
+    return table
+
+
 def compare_measures(test_data, target_data, protected_attr_data=None,
                      models=None):
     """ Generates a report comparing fairness measures for the models passed.
@@ -40,7 +70,8 @@ def compare_measures(test_data, target_data, protected_attr_data=None,
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
-    comp = FairCompare(test_data, target_data, protected_attr_data, models)
+    comp = FairCompare(test_data, target_data, protected_attr_data, models,
+                       verboseMode=False)
     table = comp.compare_measures()
     return table
 
@@ -49,7 +80,7 @@ class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
     """
     def __init__(self, test_data, target_data, protected_attr_data=None,
-                 models=None):
+                 models=None, **kwargs):
         """ Generates fairness comparisons
 
         Args:
@@ -75,6 +106,9 @@ class FairCompare(ABC):
         self.protected_attr = protected_attr_data
         self.y = target_data
         self.models = models if models is not None else {}
+        self.verboseMode = True
+        if "verboseMode" in kwargs:
+            self.verboseMode = kwargs.get("verboseMode")
         try:
             self.__validate()
         except ValidationError as ve:
@@ -243,6 +277,13 @@ class FairCompare(ABC):
         else:
             prtc_attr = {0: self.protected_attr}
         #
+        if prtc_attr.nunique() < 2:
+            msg = "Single label found in protected attribute (2 expected)."
+            raise ValidationError(msg)
+        elif prtc_attr.nunique() > 2:
+            msg = ("Multiple labels found in protected attribute"
+                    "(2 expected).")
+            raise ValidationError(msg)
         for prt_at in prtc_attr.values():
             if not isinstance(prt_at, valid_data_types):
                 msg = ("Protected attribute(s) must be numpy array or"
@@ -253,20 +294,14 @@ class FairCompare(ABC):
                 msg = ("This library is not yet compatible with groups of"
                        " protected attributes.")
                 raise ValidationError(msg)
-            if prt_at.nunique() < 2:
-                msg = "Single label found in protected attribute (2 expected)."
-                raise ValidationError(msg)
-            elif prt_at.nunique() > 2:
-                msg = ("Multiple labels found in protected attribute"
-                       "(2 expected).")
-                raise ValidationError(msg)
         ## Validate Models
         # Ensure models appear as dict
         if not is_dictlike(self.models) and self.models is not None:
             if not isinstance(self.models, array_types):
                 self.models =[self.models]
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
-            print("Since no model names were passed, the following names have",
+            if self.verboseMode:
+                print("Since no model names were passed, the following names have",
                   " been assigned to the models per their indexes:",
                   f" {list(self.models.keys())}")
 
