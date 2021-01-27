@@ -35,12 +35,11 @@
 
 
 <br><br>
-## Statistical Criteria for Evaluation of a Fair Classifier
-| Name | Definition | Description |
-|-|-|-|
-| Statistical Independence | R ⊥ G | sensitive attributes (A) are statistically independent of the prediction result (R) |
-| Statistical Separation | R ⊥ A\|Y | sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
-| Statistical Sufficiency | Y ⊥ A\|R | sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
+|Metric |Statistical Criteria |Definition |Description |
+|-|-|-|-|
+|Demographic Parity|Statistical Independence |R ⊥ G |sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds| Statistical Separation |R ⊥ A\|Y |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Predictive Parity |Statistical Sufficiency |Y ⊥ A\|R |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
 
 
 <br><br>

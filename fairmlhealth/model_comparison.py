@@ -20,6 +20,8 @@ from fairmlhealth.utils import is_dictlike
 from fairmlhealth import reports
 
 
+from datetime import datetime
+
 # Temporarily hide pandas SettingWithCopy warning
 import warnings
 warnings.filterwarnings('ignore', module='pandas')
@@ -42,27 +44,12 @@ def measure_model(test_data, target_data, protected_attr_data, model):
     """
     comp = FairCompare(test_data, target_data, protected_attr_data, [model],
                        verboseMode=False)
-    table = comp.measure_model(comp.models.keys()[0]).transpose()
+    model_name = list(comp.models.keys())[0]
+    table = comp.measure_model(model_name, skip_performance=True)
     return table
 
 
 def compare_models(test_data, target_data, protected_attr_data, models):
-    """ Generates a report of fairness measures for the model
-
-    Args:
-        test_data ([type]): [description]
-        target_data ([type]): [description]
-        protected_attr_data ([type]): [description]
-        model ([type]): [description]
-    """
-    comp = FairCompare(test_data, target_data, protected_attr_data, models,
-                       verboseMode=False)
-    table = comp.compare_measures().transpose()
-    return table
-
-
-def compare_measures(test_data, target_data, protected_attr_data=None,
-                     models=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -70,6 +57,21 @@ def compare_measures(test_data, target_data, protected_attr_data=None,
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
+    comp = FairCompare(test_data, target_data, protected_attr_data, models,
+                       verboseMode=False)
+    table = comp.compare_measures()
+    return table
+
+
+def compare_measures(test_data, target_data, protected_attr_data, models):
+    """ Generates a report comparing fairness measures for the models passed.
+            Note: This is a wrapper for the FairCompare.compare_measures method
+            See FairCompare for more information.
+
+    Returns:
+        pandas dataframe of fairness and performance measures for each model
+    """
+    #TODO: Add deprecation warning
     comp = FairCompare(test_data, target_data, protected_attr_data, models,
                        verboseMode=False)
     table = comp.compare_measures()
@@ -140,7 +142,7 @@ class FairCompare(ABC):
             else:
                 return None
 
-    def measure_model(self, model_name):
+    def measure_model(self, model_name, **kwargs):
         """ Returns a pandas dataframe containing fairness measures for the
                 model_name specified
 
@@ -185,7 +187,7 @@ class FairCompare(ABC):
             y_prob = None
         finally:
             res = reports.classification_fairness(X, prtc_attr,
-                                                  y, y_pred, y_prob)
+                                                  y, y_pred, y_prob, **kwargs)
             return res
 
     def save_comparison(self, filepath):
@@ -277,14 +279,7 @@ class FairCompare(ABC):
         else:
             prtc_attr = {0: self.protected_attr}
         #
-        if prtc_attr.nunique() < 2:
-            msg = "Single label found in protected attribute (2 expected)."
-            raise ValidationError(msg)
-        elif prtc_attr.nunique() > 2:
-            msg = ("Multiple labels found in protected attribute"
-                    "(2 expected).")
-            raise ValidationError(msg)
-        for prt_at in prtc_attr.values():
+        for _, prt_at in prtc_attr.items():
             if not isinstance(prt_at, valid_data_types):
                 msg = ("Protected attribute(s) must be numpy array or"
                        " similar pandas object")
@@ -293,6 +288,13 @@ class FairCompare(ABC):
             if len(data_shape) > 1 and data_shape[1] > 1:
                 msg = ("This library is not yet compatible with groups of"
                        " protected attributes.")
+                raise ValidationError(msg)
+            if np.unique(prt_at).shape[0] < 2:
+                msg = "Single label found in protected attribute (2 expected)."
+                raise ValidationError(msg)
+            elif np.unique(prt_at).shape[0] > 2:
+                msg = ("Multiple labels found in protected attribute"
+                        "(2 expected).")
                 raise ValidationError(msg)
         ## Validate Models
         # Ensure models appear as dict

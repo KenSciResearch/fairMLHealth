@@ -38,10 +38,10 @@ def start_tutorial():
 
 def stop_tutorial():
     global TUTORIAL_ON
-    TUTORIAL_ON = True
+    TUTORIAL_ON = False
 
 
-def is_tutorial_running():
+def is_kdd_tutorial():
     return TUTORIAL_ON
 
 

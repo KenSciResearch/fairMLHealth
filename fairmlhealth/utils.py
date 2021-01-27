@@ -1,6 +1,9 @@
 '''
 Back-end functions used throughout the library
 '''
+import numpy as np
+import pandas as pd
+
 
 
 def is_dictlike(obj):
@@ -12,3 +15,126 @@ def is_dictlike(obj):
 class ValidationError(Exception):
     pass
 
+
+def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
+    """ Formats data for use by fairness reporting functions.
+    Args:
+        X (array-like): Sample features
+        prtc_attr (named array-like): values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+            to None.
+        priv_grp (int, optional): label of the privileged group. Defaults
+            to 1.
+    Returns:
+        Tuple containing formatted versions of all passed args.
+    """
+    __validate_report_input(X, y_true, y_pred, y_prob, prtc_attr, priv_grp)
+
+    # Format inputs to required datatypes
+    if isinstance(X, np.ndarray):
+        X = pd.DataFrame(X)
+    if isinstance(y_true, (np.ndarray, pd.Series)):
+        y_true = pd.DataFrame(y_true)
+    if isinstance(y_pred, np.ndarray):
+        y_pred = pd.DataFrame(y_pred)
+    if isinstance(y_prob, np.ndarray):
+        y_prob = pd.DataFrame(y_prob)
+    for data in [y_true, y_pred, y_prob]:
+        if data is not None and (len(data.shape) > 1 and data.shape[1] > 1):
+            raise TypeError("Targets and predictions must be 1-Dimensional")
+
+    # Format protected attributes
+    if isinstance(prtc_attr, (np.ndarray, pd.Series)):
+        if isinstance(prtc_attr, pd.Series):
+            prtc_attr = pd.DataFrame(prtc_attr, columns=[prtc_attr.name])
+        else:
+            prtc_attr = pd.DataFrame(prtc_attr)
+        pa_cols = prtc_attr.columns.tolist()
+        # Ensure that protected attributes are integer-valued
+        for c in pa_cols:
+            binary_boolean = prtc_attr[c].isin([0, 1, False, True]).all()
+            two_valued = (set(prtc_attr[c].astype(int)) == {0, 1})
+            if not two_valued and binary_boolean:
+                msg = "prtc_attr must be binary or boolean and heterogeneous"
+                raise ValueError(msg)
+            prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
+            if isinstance(c, int):
+                prtc_attr.rename(columns={c: f"prtc_attr_{c}"}, inplace=True)
+        # Attach protected attributes as target data index
+        prtc_attr.reset_index(inplace=True, drop=True)
+        y_true = pd.concat([prtc_attr, y_true.reset_index(drop=True)], axis=1)
+        y_true.set_index(pa_cols, inplace=True)
+        y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop=True)], axis=1)
+        y_pred.set_index(pa_cols, inplace=True)
+        if y_prob is not None:
+            y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)],
+                            axis=1)
+            y_prob.set_index(pa_cols, inplace=True)
+            y_prob.columns = y_true.columns
+    y_pred.columns = y_true.columns
+
+    return (X, prtc_attr, y_true, y_pred, y_prob)
+
+
+def __validate_report_input(X, y_true, y_pred, y_prob=None, prtc_attr=None,
+                            priv_grp:int=1):
+    """ Raises error if data are of incorrect type or size for processing by
+        the fairness or performance reporters
+
+    Args:
+        X (array-like): Sample features
+        prtc_attr (array-like, named): values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities
+    """
+    valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
+
+    # input data
+    for data in [X, y_true, y_pred]:
+        if not isinstance(data, valid_data_types):
+            raise TypeError("input data is invalid type")
+        if not data.shape[0] > 1:
+            raise ValueError("input data is too small to measure")
+    for y in [y_true, y_pred]:
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) > 1:
+                raise ValueError("target data must contain only one column")
+            y = y.iloc[:, 0]
+        uniq_vals = np.unique(y, return_counts=True)
+        if set(uniq_vals[0]) != {0, 1}:
+            msg = f"Invalid values detected in target. Must be {0,1}."
+            raise ValueError(msg)
+        if not all(v > 1 for v in uniq_vals[1]):
+            msg = "Invalid, skewed distribution of target or predictions."
+            raise ValueError(msg)
+    if y_prob is not None:
+        if not isinstance(y_prob, valid_data_types):
+            raise TypeError("y_prob is invalid type")
+
+    # protected attribute
+    if prtc_attr is not None:
+        if not isinstance(prtc_attr, valid_data_types):
+            raise TypeError("input data is invalid type")
+        if isinstance(prtc_attr, pd.DataFrame):
+            if len(prtc_attr.columns) > 1:
+                raise ValueError("target data must contain only one column")
+            prtc_attr = prtc_attr.iloc[:, 0]
+        if set(np.unique(prtc_attr)) != {0, 1}:
+            msg = f"Invalid values detected in prtc_attr. Must be {0,1}."
+            raise ValueError(msg)
+        # if prtc_attr.mean() >= 0.995 or prtc_attr.mean() <= 0.001:
+        #    raise ValueError("Attribute is too skewed to measure")
+        # if not prtc_attr.value_counts().gt(1).all():
+        #    raise ValueError(f"Invalid, skewed distribution of protected attribute.")
+
+    # priv_grp
+    if not isinstance(priv_grp, int):
+        raise TypeError("priv_grp must be an integer")
+
+    # If all above runs, inputs pass validation
+    return True
