@@ -14,7 +14,7 @@ import sklearn.metrics as sk_metric
 import warnings
 
 # Tutorial Libraries
-from . import tutorial_helpers as helper
+from . import tutorial_helpers as helpers
 from .__classification_metrics import (sensitivity, specificity,
                                         false_alarm_rate, miss_rate)
 from .utils import __preprocess_input
@@ -32,7 +32,6 @@ __all__ = ["classification_fairness",
            "flag_suspicious"]
 
 
-# TODO: reference this function in the tutorial rather than using explicit names
 def get_report_labels(pred_type: str = "binary"):
     """ Returns a dictionary of category labels used by reporting functions
     Args:
@@ -51,14 +50,13 @@ def get_report_labels(pred_type: str = "binary"):
 
 
 
-def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
+def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
                                      priv_grp=1):
     """ Returns a dictionary containing group fairness measures specific
         to binary classification problems
     Args:
         X (pandas DataFrame): Sample features
-        prtc_attr (named array-like): values for the protected attribute
-            (note: protected attribute may also be present in X)
+        pa_name (str):
         y_true (pandas DataFrame): Sample targets
         y_pred (pandas DataFrame): Sample target predictions
         y_prob (pandas DataFrame, optional): Sample target probabilities.
@@ -67,45 +65,43 @@ def __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred, y_prob=None,
                 group. Defaults to 1.
     """
     #
-    pa_names = prtc_attr.columns.tolist()
     gf_vals = {}
-
 
     gf_vals['Statistical Parity Difference'] = \
         aif_mtrc.statistical_parity_difference(y_true, y_pred,
-                                                prot_attr=pa_names)
+                                                prot_attr=pa_name)
     gf_vals['Disparate Impact Ratio'] = \
-        aif_mtrc.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_names)
+        aif_mtrc.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_name)
     if helpers.is_kdd_tutorial():
         gf_vals['Average Odds Difference'] = \
-            aif_mtrc.average_odds_difference(y_true, y_pred, prot_attr=pa_names)
+            aif_mtrc.average_odds_difference(y_true, y_pred, prot_attr=pa_name)
         gf_vals['Equal Opportunity Difference'] = \
             aif_mtrc.equal_opportunity_difference(y_true, y_pred,
-                                                    prot_attr=pa_names)
+                                                  prot_attr=pa_name)
 
     # Fairlearn metrics cannot handle more than one protected attribute
-    if len(pa_names) == 1:
+    if len(pa_name) == 1:
         gf_vals['Equalized Odds Difference'] = \
             fl_mtrc.equalized_odds_difference(y_true, y_pred,
-                                                sensitive_features=prtc_attr)
+                                              sensitive_features=np.array(y_true.index))
         gf_vals['Equalized Odds Ratio'] = \
             fl_mtrc.equalized_odds_ratio(y_true, y_pred,
-                                            sensitive_features=prtc_attr)
+                                          sensitive_features=np.array(y_true.index))
     # Precision
     gf_vals['Positive Predictive Parity Difference'] = \
-            aif_mtrc.difference(sk_metric.precision_score, y_true,
-                                y_pred, prot_attr=pa_names, priv_group=priv_grp)
+        aif_mtrc.difference(sk_metric.precision_score, y_true,
+                            y_pred, prot_attr=pa_name, priv_group=priv_grp)
 
     gf_vals['Balanced Accuracy Difference'] = \
-            aif_mtrc.difference(sk_metric.balanced_accuracy_score, y_true,
-                                y_pred, prot_attr=pa_names, priv_group=priv_grp)
+        aif_mtrc.difference(sk_metric.balanced_accuracy_score, y_true,
+                            y_pred, prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['Balanced Accuracy Ratio'] = \
         aif_mtrc.ratio(sk_metric.balanced_accuracy_score, y_true,
-                        y_pred, prot_attr=pa_names, priv_group=priv_grp)
+                       y_pred, prot_attr=pa_name, priv_group=priv_grp)
     if y_prob is not None:
         gf_vals['AUC Difference'] = \
             aif_mtrc.difference(sk_metric.roc_auc_score, y_true, y_prob,
-                                prot_attr=pa_names, priv_group=priv_grp)
+                                prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
 
@@ -145,17 +141,15 @@ def __data_metrics(y_true, priv_grp):
     return dt_vals
 
 
-def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
+def __individual_fairness_measures(X, pa_name, y_true, y_pred):
     """ Returns a dictionary of individual fairness measures for the data that
         were passed
     Args:
         X (pandas DataFrame): Sample features
-        prtc_attr (named array-like): Values for the protected attribute
-            (note: protected attribute may also be present in X)
+        pa_name (str):
         y_true (pandas DataFrame): Sample targets
         y_pred (pandas DataFrame): Sample target predictions
     """
-    pa_names = prtc_attr.columns.tolist()
     # Generate dict of Individual Fairness measures
     if_vals = {}
     # consistency_score raises error if null values are present in X
@@ -168,35 +162,41 @@ def __individual_fairness_measures(X, prtc_attr, y_true, y_pred):
     # Other aif360 metrics (not consistency) can handle null values
     if_vals['Between-Group Gen. Entropy Error'] = \
         aif_mtrc.between_group_generalized_entropy_error(y_true, y_pred,
-                                                         prot_attr=pa_names)
+                                                         prot_attr=pa_name)
     return if_vals
 
 
-def __regres_group_fairness_measures(prtc_attr, y_true, y_pred, priv_grp=1):
+def __regres_group_fairness_measures(pa_name, y_true, y_pred, priv_grp=1):
     """ Returns a dictionary containing group fairness measures specific
         to regression problems
     Args:
-        prtc_attr (named array-like): Values for the protected attribute
+        prtc_attr_name (named array-like): Values for the protected attribute
             (note: protected attribute may also be present in X)
         y_true (pandas DataFrame): Sample targets
         y_pred (pandas DataFrame): Sample target predictions
         priv_grp (int): Specifies which label indicates the privileged
                 group. Defaults to 1.
     """
-    pa_names = prtc_attr.columns.tolist()
+    def pdmean(y_true, y_pred, *args): return y_pred.mean()
     gf_vals = {}
-    gf_vals['Statistical Parity Ratio'] = \
-        fl_mtrc.statistical_parity_ratio(y_true, y_pred,
-                                         prot_attr=prtc_attr)
-    gf_vals['R2 Ratio'] = \
-        aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
-                       prot_attr=pa_names, priv_group=priv_grp)
+    gf_vals['Mean Prediction Ratio'] = \
+        aif_mtrc.ratio(pdmean, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif_mtrc.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                       prot_attr=pa_names, priv_group=priv_grp)
+                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MSE Ratio'] = \
         aif_mtrc.ratio(sk_metric.mean_squared_error, y_true, y_pred,
-                       prot_attr=pa_names, priv_group=priv_grp)
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['R2 Ratio'] = \
+        aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Prediction Difference'] = \
+        aif_mtrc.difference(pdmean, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Difference'] = \
+        aif_mtrc.difference(sk_metric.mean_absolute_error, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
 
@@ -235,6 +235,7 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
         raise ValueError(f"{a} must be an integer value")
     X, prtc_attr, y_true, y_pred, y_prob = \
         __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
+    pa_name = prtc_attr.columns.tolist()
 
     # Temporarily prevent processing for more than 2 classes
     # ToDo: enable multiclass
@@ -250,11 +251,11 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
     # Generate a dictionary of measure values to be converted t a dataframe
     mv_dict = {}
     mv_dict[gfl] = \
-        __binary_group_fairness_measures(X, prtc_attr, y_true, y_pred,
-                                         y_prob, priv_grp)
+        __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob,
+                                         priv_grp)
     mv_dict[dtl] = __data_metrics(y_true, priv_grp)
     if not kwargs.pop('skip_if', False):
-        mv_dict[ifl] = __individual_fairness_measures(X, prtc_attr, y_true, y_pred)
+        mv_dict[ifl] = __individual_fairness_measures(X, pa_name, y_true, y_pred)
     if not kwargs.pop('skip_performance', False):
         mv_dict[mpl] = __classification_performance_measures(y_true, y_pred)
     # Convert scores to a formatted dataframe and return
@@ -359,11 +360,15 @@ def flag(df, caption="", as_styler=False):
 
 
 def flag_suspicious(df, caption="", as_styler=False):
-    #ToDo: add deprecation warning
+    warnings.warn(
+            "flag_suspicious will be deprecated in version 2." +
+            " Use flag instead.", PendingDeprecationWarning
+        )
     return flag(df, caption="", as_styler=False)
 
 
-def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4):
+def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
+                    **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
     Args:
@@ -382,12 +387,14 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4):
         raise ValueError(f"{a} must be an integer value")
     X, prtc_attr, y_true, y_pred, _ = \
         __preprocess_input(X, prtc_attr, y_true, y_pred, priv_grp)
+    pa_name = prtc_attr.columns().tolist()
     #
     gf_vals = \
-        __regres_group_fairness_measures(prtc_attr, y_true, y_pred,
+        __regres_group_fairness_measures(pa_name, y_true, y_pred,
                                          priv_grp=priv_grp)
     #
-    if_vals = __individual_fairness_measures(X, prtc_attr, y_true, y_pred)
+    if not kwargs.pop('skip_if', False):
+        if_vals = __individual_fairness_measures(X, pa_name, y_true, y_pred)
     mp_vals = __regression_performance_measures(y_true, y_pred)
     dt_vals = __data_metrics(y_true, priv_grp)
 

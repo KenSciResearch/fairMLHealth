@@ -71,7 +71,7 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
         y_pred.set_index(pa_cols, inplace=True)
         if y_prob is not None:
             y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)],
-                            axis=1)
+                                axis=1)
             y_prob.set_index(pa_cols, inplace=True)
             y_prob.columns = y_true.columns
     y_pred.columns = y_true.columns
@@ -79,7 +79,7 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def __validate_report_input(X, y_true, y_pred, y_prob=None, prtc_attr=None,
+def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
                             priv_grp:int=1):
     """ Raises error if data are of incorrect type or size for processing by
         the fairness or performance reporters
@@ -96,22 +96,21 @@ def __validate_report_input(X, y_true, y_pred, y_prob=None, prtc_attr=None,
 
     # input data
     for data in [X, y_true, y_pred]:
-        if not isinstance(data, valid_data_types):
-            raise TypeError("input data is invalid type")
+        if not isinstance(data, valid_data_types) and data is not None:
+            raise TypeError(f"input data is invalid type: {type(data)}")
         if not data.shape[0] > 1:
-            raise ValueError("input data is too small to measure")
+            raise ValueError("input data are too small to measure")
     for y in [y_true, y_pred]:
+        if y is None:
+            continue
         if isinstance(y, pd.DataFrame):
             if len(y.columns) > 1:
                 raise ValueError("target data must contain only one column")
             y = y.iloc[:, 0]
-        uniq_vals = np.unique(y, return_counts=True)
-        if set(uniq_vals[0]) != {0, 1}:
-            msg = f"Invalid values detected in target. Must be {0,1}."
-            raise ValueError(msg)
-        if not all(v > 1 for v in uniq_vals[1]):
-            msg = "Invalid, skewed distribution of target or predictions."
-            raise ValueError(msg)
+        #uniq_vals = np.unique(y, return_counts=True)
+        #if not all(v > 1 for v in uniq_vals[1]):
+        #    msg = "Invalid, skewed distribution of target or predictions."
+        #    raise ValueError(msg)
     if y_prob is not None:
         if not isinstance(y_prob, valid_data_types):
             raise TypeError("y_prob is invalid type")
