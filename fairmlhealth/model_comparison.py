@@ -15,15 +15,14 @@ import logging
 import numpy as np
 import pandas as pd
 import os
+import warnings
 
 from fairmlhealth.utils import is_dictlike
 from fairmlhealth import reports
 
 
-from datetime import datetime
 
 # Temporarily hide pandas SettingWithCopy warning
-import warnings
 warnings.filterwarnings('ignore', module='pandas')
 warnings.filterwarnings('ignore', module='sklearn')
 
@@ -58,7 +57,7 @@ def compare_models(test_data, target_data, protected_attr_data, models):
         pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, target_data, protected_attr_data, models,
-                       verboseMode=False)
+                       verboseMode=True)
     table = comp.compare_measures()
     return table
 
@@ -71,7 +70,10 @@ def compare_measures(test_data, target_data, protected_attr_data, models):
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
-    #TODO: Add deprecation warning
+    warnings.warn(
+            "compare_measures will be deprecated in version 2." +
+            " Use compare_models instead.", PendingDeprecationWarning
+        )
     comp = FairCompare(test_data, target_data, protected_attr_data, models,
                        verboseMode=False)
     table = comp.compare_measures()
@@ -225,8 +227,7 @@ class FairCompare(ABC):
         if any(isinstance(p, array_types) for p in dataobj):
             err = None
             if not len(set(type(p) for p in dataobj)) == 1:
-                err = ("If the data arguments are passed in list/dict,"
-                       " all three must be passed in same list/dict type.")
+                err = ("All data objects must be same list/dict type as models.")
             elif not all(isinstance(p, type(self.models)) for p in dataobj):
                 err = ("If the data arguments are passed in list/dict"
                        " object must be passed as the same type as the"
@@ -269,7 +270,6 @@ class FairCompare(ABC):
                 raise ValidationError("Test and target data mismatch.")
         ## Validate Protected Attributes
         # Ensure that every column of the protected attributes is boolean
-        # ToDo: enable prtc_attr as a single multi col array; iterate cols
         if is_dictlike(self.protected_attr):
             prtc_attr = self.protected_attr
         elif isinstance(self.protected_attr, array_types):
