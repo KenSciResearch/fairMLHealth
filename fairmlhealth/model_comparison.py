@@ -83,6 +83,7 @@ def compare_measures(test_data, target_data, protected_attr_data, models):
 class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
     """
+
     def __init__(self, test_data, target_data, protected_attr_data=None,
                  models=None, **kwargs):
         """ Generates fairness comparisons
@@ -110,9 +111,16 @@ class FairCompare(ABC):
         self.protected_attr = protected_attr_data
         self.y = target_data
         self.models = models if models is not None else {}
-        self.verboseMode = True
+
+        self.__data_types = (pd.DataFrame, pd.Series, np.ndarray)
+        self.__array_types = (list, tuple, set, dict, OrderedDict)
+        self.__dataobjects = lambda: [self.X, self.y, self.protected_attr]
+
         if "verboseMode" in kwargs:
             self.verboseMode = kwargs.get("verboseMode")
+        else:
+            self.verboseMode = True
+
         try:
             self.__validate()
         except ValidationError as ve:
@@ -198,6 +206,11 @@ class FairCompare(ABC):
             os.makedirs(dirpath)
         dump(self, filepath)
 
+    def __paused_validation(self):
+        if not hasattr(self, "__pause_validation"):
+            self.__pause_validation = False
+        return self.__pause_validation
+
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation
 
@@ -209,105 +222,117 @@ class FairCompare(ABC):
             ValidationError
         """
         # Skip validation if paused
-        if self.__validation_paused():
+        if self.__paused_validation():
             return None
-        #
-        valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
-        array_types = (list, tuple, set, dict, OrderedDict)
-        dataobj = [self.X, self.y, self.protected_attr]
-        validobj = dataobj + [self.models]
 
-        # Do nothing any required objects are missing
-        if any(p is None for p in dataobj):
-            msg = "Invalid instance: NoneType data arguments are prohibited."
-            raise ValidationError(msg)
+        self.__validate_models()
+        self.__validate_data()
+        return None
 
-        # Type and length of X, y, protected_attr must match models if passed
-        #   as array-like
-        if any(isinstance(p, array_types) for p in dataobj):
+    def __validate_data(self):
+        """ Verifies that data are of correct type and length; stores objects
+            in dicts if not already in them
+
+        Raises:
+            ValidationError
+        """
+        #ToDo: rename - this both validates and updates
+        # Models must be dict to run this function
+        if not is_dictlike(self.models):
+            self.__validate_models()
+
+        # Validate types
+        for p in self.__dataobjects():
             err = None
-            if not len(set(type(p) for p in dataobj)) == 1:
-                err = ("All data objects must be same list/dict type as models.")
-            elif not all(isinstance(p, type(self.models)) for p in dataobj):
-                err = ("If the data arguments are passed in list/dict"
-                       " object must be passed as the same type as the"
-                       " models argument")
-            elif not all(len(p) == len(self.models) for p in dataobj):
-                err = ("If the data arguments are in list-like object, they"
+            if p is None:
+                err = "NoneType data arguments are prohibited."
+            elif (not isinstance(p, self.__data_types) and
+                    not len(p) == len(self.models)):
+                err = ("If the data arguments are in list-like, they"
                        " must be of same length as the models argument")
-
-            # Comparison function will use keys to iterate in comparisons
-            if all(is_dictlike(p) for p in validobj):
-                if not all(p.keys() == self.models.keys() for p in dataobj):
+            elif is_dictlike(self.models):
+                if (is_dictlike(p) and
+                    not set(p.keys()) == set(self.models.keys())):
                     err = ("If the data arguments are passed in dict-like"
                            " object, all keys in data arguments must match"
                            " the keys in the models argument")
-                elif not all(len(p) == len(self.models) for p in dataobj):
-                    err = ("If the data arguments are passed in list/dict,"
-                           " the list/dict must be the same length as the"
-                           " models argument")
-
-            # convert to dict if not already dict. models will be converted
-            #    Note: list-like protected_attr and model arguments will be
-            #           converted later
-            else:
-                self.X = {f'model_{i}': m for i, m in enumerate(self.X)}
-                self.y = {f'model_{i}': m for i, m in enumerate(self.y)}
             if err is not None:
                 raise ValidationError(err)
 
-        # Validate Test Data
-        Xd = {0: self.X} if not is_dictlike(self.X) else self.X
-        yd = {0: self.y} if not is_dictlike(self.y) else self.y
-        for data in [Xd, yd]:
+        ''' Update all data to dictionary objects '''
+        # Set X as dict if not already
+        if isinstance(self.X, self.__data_types):
+            self.X = [self.X for i, m in enumerate(self.models)]
+        if not is_dictlike(self.X):
+            X = self.X
+            self.X = {k: X[i] for i, k in enumerate(self.models.keys())}
+        # Set y as dict if not already
+        if isinstance(self.y, self.__data_types):
+            self.y = [self.y for i, m in enumerate(self.models)]
+        if not is_dictlike(self.y):
+            y = self.y
+            self.y = {k: y[i] for i, k in enumerate(self.models.keys())}
+        # Set protected_attr as dict if not already
+        if isinstance(self.protected_attr, self.__data_types):
+            self.protected_attr = [self.protected_attr
+                                   for i, m in enumerate(self.models)]
+        if not is_dictlike(self.protected_attr):
+            p = self.protected_attr
+            self.protected_attr = {k: p[i]
+                                   for i, k in enumerate(self.models.keys())}
+
+        # Validate Entries
+        for data in self.__dataobjects():
             for d in data.values():
-                if not isinstance(d, valid_data_types):
-                    msg = ("Input data must be numpy array or pandas object,"
+                if not isinstance(d, self.__data_types):
+                    err = ("Input data must be numpy array or pandas object,"
                            " or a list/dict of such objects")
-                    raise ValidationError(msg)
-        for k in Xd.keys():
-            if not Xd[k].shape[0] == yd[k].shape[0]:
+                    raise ValidationError(err)
+        for k in self.X.keys():
+            if not self.X[k].shape[0] == self.y[k].shape[0]:
                 raise ValidationError("Test and target data mismatch.")
-        ## Validate Protected Attributes
-        # Ensure that every column of the protected attributes is boolean
-        if is_dictlike(self.protected_attr):
-            prtc_attr = self.protected_attr
-        elif isinstance(self.protected_attr, array_types):
-            self.protected_attr = {f'model_{i}': m for i, m in
-                                   enumerate(self.protected_attr)}
-            prtc_attr = self.protected_attr
-        else:
-            prtc_attr = {0: self.protected_attr}
-        #
-        for _, prt_at in prtc_attr.items():
-            if not isinstance(prt_at, valid_data_types):
-                msg = ("Protected attribute(s) must be numpy array or"
+            if not self.X[k].shape[0] == self.protected_attr[k].shape[0]:
+                err = "Test data and protected attribute mismatch."
+                raise ValidationError(err)
+
+        # Ensure that protected attribute is binary- or boolean-type
+        for _, prt_at in self.protected_attr.items():
+            err = None
+            if not isinstance(prt_at, self.__data_types):
+                err = ("Protected attribute(s) must be numpy array or"
                        " similar pandas object")
-                raise ValidationError(msg)
             data_shape = prt_at.shape
             if len(data_shape) > 1 and data_shape[1] > 1:
-                msg = ("This library is not yet compatible with groups of"
+                err = ("This library is not yet compatible with groups of"
                        " protected attributes.")
-                raise ValidationError(msg)
             if np.unique(prt_at).shape[0] < 2:
-                msg = "Single label found in protected attribute (2 expected)."
-                raise ValidationError(msg)
+                err = "Single label found in protected attribute (2 expected)."
             elif np.unique(prt_at).shape[0] > 2:
-                msg = ("Multiple labels found in protected attribute"
+                err = ("Multiple labels found in protected attribute"
                         "(2 expected).")
-                raise ValidationError(msg)
-        ## Validate Models
-        # Ensure models appear as dict
+            if err is not None:
+                raise ValidationError(err)
+
+    def __validate_models(self):
+        """ Verifies that models have predict function and stores them in a dict
+            if not already in one
+
+        Raises:
+            ValidationError
+        """
+        #ToDo: rename - this both validates and updates
+        # Set models as dict if not already
         if not is_dictlike(self.models) and self.models is not None:
-            if not isinstance(self.models, array_types):
-                self.models =[self.models]
+            if not isinstance(self.models, self.__array_types):
+                self.models = [self.models]
             self.models = {f'model_{i}': m for i, m in enumerate(self.models)}
             if self.verboseMode:
-                print("Since no model names were passed, the following names have",
-                  " been assigned to the models per their indexes:",
-                  f" {list(self.models.keys())}")
+                print("Since no model names were passed, the following names",
+                      "have been assigned to the models per their indexes:",
+                      f" {list(self.models.keys())}")
 
-        # Ensure that models are present and have a predict function
+        # Ensure that model dict contains model objects posessing a predict
+        #   function
         if self.models is not None:
             if not len(self.models) > 0:
                 msg = "Cannot generate comparison with an empty set of models."
@@ -319,11 +344,6 @@ class FairCompare(ABC):
                         msg = f"{m} model does not have predict function"
                         raise ValidationError(msg)
         return None
-
-    def __validation_paused(self):
-        if not hasattr(self, "__pause_validation"):
-            self.__pause_validation = False
-        return self.__pause_validation
 
 
 class ValidationError(Exception):
