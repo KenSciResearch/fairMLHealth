@@ -14,25 +14,7 @@ import io
 import os
 import pandas as pd
 import requests
-
-
-def cb_round(series, base=5, sig_dec=0):
-    """ Returns the pandas series (or column) with values rounded per the
-            custom base value
-
-        Args:
-            series (pd.Series): data to be rounded
-            base (float): base value to which data should be rounded (may be
-                decimal)
-            sig_dec (int): number of significant decimals for the
-                custom-rounded value
-    """
-    if not base >= 0.01:
-        raise ValueError(f"cannot round with base {base}."
-                         + "cb_round designed for base >= 0.01."
-                         )
-    result = series.apply(lambda x: round(base * round(float(x)/base), sig_dec))
-    return result
+from .utils import cb_round
 
 
 def load_icd_ccs_xwalk(code_type):
@@ -55,6 +37,38 @@ def load_icd_ccs_xwalk(code_type):
               inplace=True
               )
     return df
+
+
+def load_mimic3_example(mimic_dirpath):
+    """ Returns a formatted MIMIC-III data subset for use in KDD Tutorial
+
+        If formatted data file exists, loads that file. Else, generates
+        formatted data and saves in mimic_dirpath.
+
+        Args:
+            mimic_dirpath (str): valid path to downloaded MIMIC data
+
+        Returns:
+            pandas dataframe of formatted MIMIC-III data
+    """
+    data_file = os.path.join(os.path.expanduser(mimic_dirpath),
+                                "kdd_tutorial_data.csv")
+    if not os.path.exists(data_file):
+        formatter = mimic_loader(data_file)
+        success = formatter.generate_tutorial_data()
+        if not success:
+            raise RuntimeError("Error generating tutorial data.")
+    else:
+        pass
+    # Load data and restrict to only age 65+
+    df = pd.read_csv(data_file)
+    df['HADM_ID'] = df['HADM_ID'] + np.random.randint(10**6)
+    df.rename(columns={'HADM_ID': 'ADMIT_ID'}, inplace=True)
+    # Ensure that length_of_stay is at the end of the dataframe to reduce
+    #   confusion for first-time tutorial users
+    df = df.loc[:, [c for c in df.columns
+                    if c != 'length_of_stay']+['length_of_stay']]
+    return(df)
 
 
 class mimic_loader():

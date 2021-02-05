@@ -301,15 +301,14 @@ class FairCompare(ABC):
             if not isinstance(prt_at, self.__data_types):
                 err = ("Protected attribute(s) must be numpy array or"
                        " similar pandas object")
-            data_shape = prt_at.shape
-            if len(data_shape) > 1 and data_shape[1] > 1:
+            if len(prt_at.shape) > 1 and prt_at.shape[1] > 1:
                 err = ("This library is not yet compatible with groups of"
                        " protected attributes.")
-            if np.unique(prt_at).shape[0] < 2:
+            if len(np.unique(prt_at)) < 2:
                 err = "Single label found in protected attribute (2 expected)."
-            elif np.unique(prt_at).shape[0] > 2:
+            elif len(np.unique(prt_at)) > 2:
                 err = ("Multiple labels found in protected attribute"
-                        "(2 expected).")
+                        "(only 2 allowed).")
             if err is not None:
                 raise ValidationError(err)
 

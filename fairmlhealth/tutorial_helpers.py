@@ -21,7 +21,7 @@ from sklearn.metrics import (
     balanced_accuracy_score, roc_auc_score, accuracy_score, precision_score)
 
 # Tutorial Libraries
-from . import format_mimic_data
+from . import mimic_data
 
 
 '''
@@ -110,35 +110,7 @@ Loaders and Printers
 
 
 def load_mimic3_example(mimic_dirpath):
-    """ Returns a formatted MIMIC-III data subset for use in KDD Tutorial
-
-        If formatted data file exists, loads that file. Else, generates
-        formatted data and saves in mimic_dirpath.
-
-        Args:
-            mimic_dirpath (str): valid path to downloaded MIMIC data
-
-        Returns:
-            pandas dataframe of formatted MIMIC-III data
-    """
-    data_file = os.path.join(os.path.expanduser(mimic_dirpath),
-                                "kdd_tutorial_data.csv")
-    if not os.path.exists(data_file):
-        formatter = format_mimic_data.mimic_loader(data_file)
-        success = formatter.generate_tutorial_data()
-        if not success:
-            raise RuntimeError("Error generating tutorial data.")
-    else:
-        pass
-    # Load data and restrict to only age 65+
-    df = pd.read_csv(data_file)
-    df['HADM_ID'] = df['HADM_ID'] + np.random.randint(10**6)
-    df.rename(columns={'HADM_ID': 'ADMIT_ID'}, inplace=True)
-    # Ensure that length_of_stay is at the end of the dataframe to reduce
-    #   confusion for first-time tutorial users
-    df = df.loc[:, [c for c in df.columns
-                    if c != 'length_of_stay']+['length_of_stay']]
-    return(df)
+    return mimic_data.load_mimic3_example(mimic_dirpath)
 
 
 def print_feature_table(df):

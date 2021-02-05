@@ -151,3 +151,4 @@ class TestCMValidations:
                                 {0: self.y, 1: self.y},
                                 None,
                                 self.model_dict)
+

@@ -5,6 +5,24 @@ import numpy as np
 import pandas as pd
 
 
+def cb_round(series, base=5, sig_dec=0):
+    """ Returns the pandas series (or column) with values rounded per the
+            custom base value
+
+        Args:
+            series (pd.Series): data to be rounded
+            base (float): base value to which data should be rounded (may be
+                decimal)
+            sig_dec (int): number of significant decimals for the
+                custom-rounded value
+    """
+    if not base >= 0.01:
+        raise ValueError(f"cannot round with base {base}."
+                         + "cb_round designed for base >= 0.01."
+                         )
+    result = series.apply(lambda x: round(base * round(float(x)/base), sig_dec))
+    return result
+
 
 def is_dictlike(obj):
     dictlike = all([callable(getattr(obj, "keys", None)),
@@ -47,22 +65,26 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
             raise TypeError("Targets and predictions must be 1-Dimensional")
 
     # Format protected attributes
-    if isinstance(prtc_attr, (np.ndarray, pd.Series)):
-        if isinstance(prtc_attr, pd.Series):
-            prtc_attr = pd.DataFrame(prtc_attr, columns=[prtc_attr.name])
-        else:
-            prtc_attr = pd.DataFrame(prtc_attr)
+    if prtc_attr is not None:
+        if not isinstance(prtc_attr, pd.DataFrame):
+            if isinstance(prtc_attr, pd.Series):
+                prtc_attr = pd.DataFrame(prtc_attr, columns=[prtc_attr.name])
+            else:
+                pa_name = 'protected_attribute'
+                prtc_attr = pd.DataFrame(prtc_attr, columns=[pa_name])
         pa_cols = prtc_attr.columns.tolist()
+
         # Ensure that protected attributes are integer-valued
         for c in pa_cols:
             binary_boolean = prtc_attr[c].isin([0, 1, False, True]).all()
-            two_valued = (set(prtc_attr[c].astype(int)) == {0, 1})
+            two_valued = ((set(prtc_attr[c].astype(int)) == {0, 1}))
             if not two_valued and binary_boolean:
                 msg = "prtc_attr must be binary or boolean and heterogeneous"
                 raise ValueError(msg)
             prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
             if isinstance(c, int):
                 prtc_attr.rename(columns={c: f"prtc_attr_{c}"}, inplace=True)
+
         # Attach protected attributes as target data index
         prtc_attr.reset_index(inplace=True, drop=True)
         y_true = pd.concat([prtc_attr, y_true.reset_index(drop=True)], axis=1)
@@ -74,6 +96,7 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
                                 axis=1)
             y_prob.set_index(pa_cols, inplace=True)
             y_prob.columns = y_true.columns
+
     y_pred.columns = y_true.columns
 
     return (X, prtc_attr, y_true, y_pred, y_prob)
@@ -107,10 +130,6 @@ def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
             if len(y.columns) > 1:
                 raise ValueError("target data must contain only one column")
             y = y.iloc[:, 0]
-        #uniq_vals = np.unique(y, return_counts=True)
-        #if not all(v > 1 for v in uniq_vals[1]):
-        #    msg = "Invalid, skewed distribution of target or predictions."
-        #    raise ValueError(msg)
     if y_prob is not None:
         if not isinstance(y_prob, valid_data_types):
             raise TypeError("y_prob is invalid type")
@@ -119,18 +138,10 @@ def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
     if prtc_attr is not None:
         if not isinstance(prtc_attr, valid_data_types):
             raise TypeError("input data is invalid type")
-        if isinstance(prtc_attr, pd.DataFrame):
-            if len(prtc_attr.columns) > 1:
-                raise ValueError("target data must contain only one column")
-            prtc_attr = prtc_attr.iloc[:, 0]
         if set(np.unique(prtc_attr)) != {0, 1}:
-            msg = f"Invalid values detected in prtc_attr. Must be {0,1}."
+            msg = (f"Invalid values detected in protected attribute(s).",
+                    " Must be {0,1}.")
             raise ValueError(msg)
-        # if prtc_attr.mean() >= 0.995 or prtc_attr.mean() <= 0.001:
-        #    raise ValueError("Attribute is too skewed to measure")
-        # if not prtc_attr.value_counts().gt(1).all():
-        #    raise ValueError(f"Invalid, skewed distribution of protected attribute.")
-
     # priv_grp
     if not isinstance(priv_grp, int):
         raise TypeError("priv_grp must be an integer")
