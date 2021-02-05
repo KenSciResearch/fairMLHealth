@@ -1,6 +1,6 @@
 # Quick Reference for Fairness Measures
 ----
-##  Fairness Metrics <a name="metric_quickref"></a>
+##  Fairness Metrics <a id="metric_quickref"></a>
 
 ### Metrics by Category
 | Category | Metric | Definition | Weakness | References |
@@ -50,7 +50,7 @@ From: [Verma & Rubin, 2018](#vermarubin)
 
 
 <br><br>
-## Interpretations of Common Measures <a name="measure_quickref"></a>
+## Interpretations of Common Measures <a id="measure_quickref"></a>
 
 |Group Measure Type|Examples| "Fair" Range |
 |----|----|----|
@@ -76,28 +76,28 @@ From: [Verma & Rubin, 2018](#vermarubin)
 <br><br>
 ----
 ## References
-<a name="barocas2016_ref"></a>
+<a id="barocas2016_ref"></a>
 Barocas S, & Selbst AD (2016). Big data's disparate impact. California Law Review, 104, 671. Retrieved from [http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf](http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf)
 
-<a name="dwork2012_ref"></a>
+<a id="dwork2012_ref"></a>
 Dwork C, Hardt M, Pitassi T, Reingold O, & Zemel R (2012, January). Fairness through awareness. In Proceedings of the 3rd innovations in theoretical computer science conference (pp. 214-226). Retrieved from [https://arxiv.org/pdf/1104.3913.pdf](https://arxiv.org/pdf/1104.3913.pdf)
 
-<a name="hardt2016_ref"></a>
+<a id="hardt2016_ref"></a>
 Hardt M, Price E, & Srebro N (2016). Equality of opportunity in supervised learning. In Advances in neural information processing systems (pp. 3315-3323). Retrieved from [http://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning.pdf](http://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning.pdf)
 
-<a name="kim2018_ref"></a>
+<a id="kim2018_ref"></a>
 Kim M, Reingol O, & Rothblum G (2018). Fairness through computationally-bounded awareness. In Advances in Neural Information Processing Systems (pp. 4842-4852). Retrieved from [https://arxiv.org/pdf/1803.03239.pdf](https://arxiv.org/pdf/1803.03239.pdf)
 
-<a name="russell2017_ref"></a>
+<a id="russell2017_ref"></a>
 Russell C, Kusner MJ, Loftus J, & Silva R (2017). When worlds collide: integrating different counterfactual assumptions in fairness. In Advances in Neural Information Processing Systems (pp. 6414-6423). Retrieved from [https://papers.nips.cc/paper/7220-when-worlds-collide-integrating-different-counterfactual-assumptions-in-fairness.pdf](https://papers.nips.cc/paper/7220-when-worlds-collide-integrating-different-counterfactual-assumptions-in-fairness.pdf)
 
-<a name="vermarubin"></a>
+<a id="vermarubin"></a>
 Verma, S., & Rubin, J. (2018, May). Fairness definitions explained. In 2018 ieee/acm international workshop on software fairness (fairware) (pp. 1-7). IEEE.
 
-<a name="zemel2013_ref"></a>
+<a id="zemel2013_ref"></a>
 Zemel R, Wu Y, Swersky K, Pitassi T, & Dwork C (2013, February). Learning fair representations. International Conference on Machine Learning (pp. 325-333). Retrieved from [http://proceedings.mlr.press/v28/zemel13.pdf](http://proceedings.mlr.press/v28/zemel13.pdf)
 
-<a name="zafar2017_ref"></a>
+<a id="zafar2017_ref"></a>
 Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).  https://arxiv.org/pdf/1610.08452.pdf
 
 

@@ -15,8 +15,11 @@ This library is constructed in three main parts:
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
     - Examples for using the templates and tools
 
-- ### [Publications](docs/publications/README.md)
-    - Tutorial presentations, papers, press releases
+- ### [Documentation](docs/docs.md)
+    - [Publications](docs/publications/README.md)
+    - [Summary Tables](docs/docs/Summary_Tables.md)
+    - [References](docs/docs/References.md)
+
 
 
 ## Installation
@@ -29,12 +32,15 @@ Installing from a local copy of the repo:
     pip install <path_to_fairMLHealth_dir>
 
 
-## Usage
-### Model Comparison Tool
+## FairMLHealth Usage
+For a functioning notebook of the usage examples below, see [Example-ToolUsage](./tutorials_and_examples/Example-USAGE.ipynb)
+### Example Setup
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc
+from fairmlhealth import model_comparison as fhmc, stratified_reports
+from fairmlhealth.reports import flag
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -56,38 +62,104 @@ prtc_attr = X_test['gender']
 
 # Specify either a dict or a list of trained models to compare
 model_dict = {'model_1': model_1, 'model_2': model_2}
-
-# Pass the above to the compare models function
-fhmc.compare_measures(X_test, y_test, prtc_attr, model_dict)
 ```
 
-Below is an example output for a set of linear models compared to fairness-aware alternate versions of those same models. Notice that three of the models do not produce prediction probabilities, and that the tool simply adds a NaN value for any measures relying on those probabilities.
+### Measuring
+The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the measure_models and compare_models functions.
 
-<img src="docs/img/eg_comparison_table.png"
-     alt="Example of a model comparison using fairMLHealth"
+The measure_model feature shown below can be used to quickly generate a report of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
+
+``` python
+# Generate a pandas dataframe of measures
+fairness_measures = fhmc.measure_model(X_test, y_test, prtc_attr, model_1)
+# Display and color measures that are out of range
+flag(fairness_measures)
+```
+
+<img src="./docs/img/measure_model.png"
+     alt="Example of single model measurement"
     />
 
-### Reporting
-There are also several useful reporting features, for example the comparison highlighting tool shown below.
+### Evaluating
+
+FairMLHealth now also includes stratified reporting features to aid in identifying the source of unfairness or other bias: a data_report, classification_performance report, and classification_fairness report. Note that these stratified reports can evaluate multiple features at once, and that there are two options for identifying which features to assess.
+
+Note that the flag tool has not yet been updated to work with stratified reports.
+
+#### Data Reporter
+
+The data reporter is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
 
 ```python
-from fairmlhealth import model_comparison as fhmc, reports
-# Load data and generate models
+# Arguments Option 1: pass full set of data, subsetting with *features* argument
+stratified_reports.data_report(X_test, y_test, features=['gender'])
 
-## < load data and generate models as per example above >
-
-# Pass the data and models to the compare models function, as above
-lin_comp = fhmc.compare_measures(X_test, y_test, prtc_attr, linear_models)
-# Add highlights
-reports.flag_suspicious(lin_comp)
+# Arguments Option 2: pass the data subset of interest without using the *features* argument
+stratified_reports.data_report(X_test[['gender']], y_test)
 ```
 
-<img src="docs/img/eg_highlighter_table.png"
-     alt="Example of a model comparison using fairMLHealth"
+<img src="./docs/img/data_report.png"
+     alt="Data Report, Input Option 2"
      />
 
+### Performance Reporter
+
+The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
+
+```python
+stratified_reports.classification_performance(X_test[['gender']], y_test,
+                                              model_1.predict(X_test))
+```
+
+<img src="./docs/img/performance_report.png"
+     alt="Performance Report Example"
+     />
+
+#### Classification Fairness
+
+The stratified classification_fairness reporter evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
+
+To simplify the report, fairness measures have been simplified to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
+
+See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
+
+```python
+stratified_reports.classification_fairness(X_test[['gender', 'col1']],
+                                           y_test, model_1.predict(X_test))
+```
+
+<img src="./docs/img/fairness_report.png"
+     alt="Fairness Report Example"
+     />
+
+### Comparing Results
+
+The compare_models feature can be used to generate side-by-side fairness comparisons of multiple models. Below is an example output comparing the two example models defined above. Notice that one of the models does not produce prediction probabilities and that the tool simply adds a NaN value for any measures relying on those probabilities. Model performance metrics such as accuracy and precision are also provided for comparison.
+
+```python
+comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
+flag(comparison)
+```
+
+<img src="./docs/img/compare_models.png"
+     alt="Two-Model compare_models Example"
+     />
+
+The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
+
+```python
+fhmc.compare_models(X_test, y_test,
+                     [X_test['gender'], X_test['ethnicity']],
+                      {'gender':model_1, 'ethnicity':model_1})
+```
+
+<img src="./docs/img/multiple_attributes.png"
+     alt="Two-Attribute compare_models Example"
+     />
+
+
 ### Other Examples
-For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb).
+For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 ## Citations
 ### Repository
@@ -119,6 +191,9 @@ See also: [Publications](./docs/publications)
 }
 ```
 
+## Connect with Us
+- For problems with the source code or documentation, please use our [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- Additional contact information will be available in the near future.
 ## Key Contributors
 * Muhammad Aurangzeb Ahmad
 * Christine Allen
