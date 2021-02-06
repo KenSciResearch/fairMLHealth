@@ -3,7 +3,7 @@
 Tools for measuring and comparing fairness across models
 
 Contributors:
-    camagallan <christine.allen@kensci.com>
+    camagallan <ca.magallen@gmail.com>
 """
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.

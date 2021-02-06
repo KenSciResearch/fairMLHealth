@@ -20,7 +20,7 @@ def __get_ynames(df=None):
               'yp': '__fairmlhealth_y_prob'}
     if df is not None:
         for k in names.keys():
-            names[k] = None if names[k] not in list(df) else names[k]
+            names[k] = None if names[k] not in df.columns else names[k]
     return names
 
 
@@ -58,12 +58,12 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     y, yh, yp = __get_ynames().values()
     pred_cols = [y, yh, yp]
     #
-    df = deepcopy(X)
+    df = X.copy()
     df[y] = y_true.values
     df[yh] = y_pred.values
     df[yp] = y_prob.values
     if features is None:
-        features = list(X)
+        features = X.columns.tolist()
     stratified_features = [f for f in features if f not in pred_cols]
     df = df.loc[:, stratified_features + pred_cols]
     #
@@ -94,12 +94,10 @@ def data_report(X, y_true, features:list=None):
         reformat those data into quantiles
     """
     #
-    if features is None:
-        features = list(X)
     df = __preprocess_stratified(X, y_true, features=features)
     y, yh, yp = __get_ynames(df).values()
     pred_cols = [n for n in [y, yh, yp] if n is not None]
-    stratified_features = [f for f in features if f not in pred_cols]
+    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     N_missing = 0
@@ -169,12 +167,10 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
 
     """
     #
-    if features is None:
-        features = list(X)
     df = __preprocess_stratified(X, y_true, y_pred, y_prob, features=features)
     y, yh, yp = __get_ynames(df).values()
     pred_cols = [n for n in [y, yh, yp] if n is not None]
-    stratified_features = [f for f in features if f not in pred_cols]
+    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     for f in stratified_features:
@@ -241,12 +237,10 @@ def regression_performance(X, y_true, y_pred, features:list=None):
         reformat those data into quantiles
     """
     #
-    if features is None:
-        features = list(X)
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
     y, yh, yp = __get_ynames(df).values()
     pred_cols = [n for n in [y, yh, yp] if n is not None]
-    stratified_features = [f for f in features if f not in pred_cols]
+    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     for f in stratified_features:
@@ -314,12 +308,10 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
         reformat those data into quantiles
     """
     #
-    if features is None:
-        features = list(X)
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
     y, yh, yp = __get_ynames(df).values()
     pred_cols = [n for n in [y, yh, yp] if n is not None]
-    stratified_features = [f for f in features if f not in pred_cols]
+    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     pa_name = 'prtc_attr'
@@ -400,12 +392,10 @@ def regression_fairness(X, y_true, y_pred, features: list = None, **kwargs):
 
     """
     #
-    if features is None:
-        features = list(X)
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
     y, yh, yp = __get_ynames(df).values()
     pred_cols = [n for n in [y, yh, yp] if n is not None]
-    stratified_features = [f for f in features if f not in pred_cols]
+    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     for f in stratified_features:

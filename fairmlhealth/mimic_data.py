@@ -5,12 +5,13 @@ for Healthcare.
 To be called by Tutorial Notebook.
 
 Contributors:
-    camagallen <christine.allen@kensci.com>
+    camagallen <ca.magallen@gmail.com>
 """
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
 import io
+import numpy as np
 import os
 import pandas as pd
 import requests

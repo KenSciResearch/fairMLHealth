@@ -2,7 +2,7 @@
 """
 Tools producing reports of fairness, bias, or model performance measures
 Contributors:
-    camagallen <christine.allen@kensci.com>
+    camagallen <ca.magallen@gmail.com>
 """
 import aif360.sklearn.metrics as aif_mtrc
 import fairlearn.metrics as fl_mtrc
@@ -353,6 +353,7 @@ def flag(df, caption="", as_styler=False):
     #   classification only
     if "MSE Ratio" not in measures:
         styled.apply(color_diff, axis=1)
+    # return pandas styler if requested
     if as_styler:
         return styled
     else:

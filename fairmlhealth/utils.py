@@ -52,8 +52,11 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
     __validate_report_input(X, y_true, y_pred, y_prob, prtc_attr, priv_grp)
 
     # Format inputs to required datatypes
-    if isinstance(X, np.ndarray):
-        X = pd.DataFrame(X)
+    if not isinstance(X, pd.DataFrame):
+        if isinstance(X, pd.Series):
+            X = pd.DataFrame(X, columns=[X.name])
+        else:
+            X = pd.DataFrame(X, columns=['X'])
     if isinstance(y_true, (np.ndarray, pd.Series)):
         y_true = pd.DataFrame(y_true)
     if isinstance(y_pred, np.ndarray):
@@ -140,7 +143,7 @@ def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
             raise TypeError("input data is invalid type")
         if set(np.unique(prtc_attr)) != {0, 1}:
             msg = (f"Invalid values detected in protected attribute(s).",
-                    " Must be {0,1}.")
+                   " Must be {0,1}.")
             raise ValueError(msg)
     # priv_grp
     if not isinstance(priv_grp, int):
