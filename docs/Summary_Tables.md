@@ -17,7 +17,7 @@
 
 ### Statistical Definitions of Group Fairness
 |Metric |Statistical Criteria |Definition |Description |
-|-|-|-|-|
+|- |- |- |- |
 |Demographic Parity|Statistical Independence |$$R{\perp \!\!\! \perp}G$$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
 |Equalized Odds| Statistical Separation |$$R{\perp \!\!\! \perp}A\rvert{Y}$$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
 |Predictive Parity |Statistical Sufficiency |$$Y{\perp \!\!\! \perp}A\rvert{R}$$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
@@ -26,27 +26,27 @@ From: [Verma & Rubin, 2018](#vermarubin)
 <br><br>
 ## Fairness Measures
 
-|Name | Definition | Description | About |  Aliases | Criteria|
-|-|-|-|-|-|-|
-|**Demographic Parity**| $$P(\hat{y}\lvert{G=u}) = P(\hat{y}\lvert{G=p})$$ | Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. | P(y=1) may differ among groups | Statistical Parity, Equal Acceptance Rate, Benchmarking | Statistical Independence |
-|**Conditional Statistical Parity**| $$P(\hat{y}=1\lvert{L=l,G=u}) =P(\hat{y}=1\lvert{L=l,G=p})$$ | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L) | &nbsp; | &nbsp; | Statistical Separation|
-|**False positive error rate (FPR) balance**| $$P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})$$ | Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y =0,G=f}) | &nbsp; | Predictive Equality | &Statistical Separation|
-|**False negative error rate (FNR) balance**| $$P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})$$ | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: $$P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})$$. |     |  Equal Opportunity | Statistical Separation|
-|**Equalized Odds**| $$P(\hat{y}=1\lvert{Y=c, G=u})=P(\hat{y}=1\lvert{Y=c, G=p}), {c}\in{0,1}$$. | Equal TPR and equal FPR |Mathematically equivalent to the conjunction of FPR balance and FNR balance|  Disparate mistreatment, Conditional procedure accuracy equality | Statistical Separation|
-|**Predictive Parity**| $$P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})$$ | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR): $$P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})$$ | &nbsp; |  Outcome test | Statistical Sufficiency|
-|**Conditional use accuracy equality**| $$(P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})) \wedge (P(Y=0\lvert{\hat{y}=0,G=u})=P(Y=0\lvert{\hat{y}=0,G=p}))$$ | &nbsp; | &nbsp; |  &nbsp; | &nbsp; | Statistical Sufficiency|
-|**Overall Accuracy Equity**| $$P(\hat{y}=Y,G=m)=P(\hat{y}=Y,G=p)$$ | &nbsp; | Use when True Negatives are as desirable as True Positives| &nbsp; | &nbsp;|
-|**Treatment Equality**| $$FNu/FPu=FNp/FPp$$ | Groups have equal ratios of False Negative Rates to False Positive Rates | &nbsp; | &nbsp;| &nbsp; |
-|**Calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class | &nbsp; | &nbsp;| Test-fairness, matching conditional frequencies |  Statistical Sufficiency
-|**Well-calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})=s$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class, and this probability is equal to S | &nbsp; | &nbsp;| Statistical Sufficiency|
-|**Balance for positive class**| $$E(S\lvert{Y=1,G=u})=E(S\lvert{Y=1,G=p})$$ | Subjects in the positive class for all groups have equal average predicted probability score S | &nbsp;| &nbsp;| Statistical Separation|
-|**Balance for negative class**| $$E(S\lvert{Y=0,G=u})=E(S\lvert{Y=0,G=p})$$ | Subjects in the negative class for all groups have equal average predicted probability score S |     | &nbsp; | &nbsp; | Statistical Separation|
-||||||||
-|**Causal discrimination**| $$(X_p=X_u \wedge G_p != G_u) \rightarrow  \hat{y}_u=\hat{y}_p$$ | Same classification produced for any two subjects with the exact same attributes| &nbsp; | &nbsp; |&nbsp; |
-|**Fairness through unawareness**| $$X_i=X_j \rightarrow \hat{y}_i=\hat{y}_j$$ | No sensitive attributes are explicitly used in the decision-making process| &nbsp; |Unawareness| &nbsp; |
-|**Fairness through awareness (Individual Fairness)**| for a set of applicants V , a distance metric between applicants k : V Å~V → R, a mapping from a set of applicants to probability distributions over outcomes M : V → δA, and a distance D metric between distribution of outputs, fairness is achieved iff $$D(M(x),M(y)) ≤ k(x,y)$$. | Similar individuals (as defined by some distance metric) should have similar classification | &nbsp; | Individual Fairness | &nbsp; |
-|**Counterfactual fairness**| A causal graph is counterfactually fair if the predicted outcome d in the graph does not depend on a descendant of the protected attribute G. | &nbsp; |  &nbsp; |  &nbsp; |  &nbsp; |
-||||||||
+|Name |Definition |About |Aliases |
+|- |- |- |- |- |- |
+|**Demographic Parity** | $$P(\hat{y}\lvert{G=u}) = P(\hat{y}\lvert{G=p})$$ |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
+|**Conditional Statistical Parity** |$$P(\hat{y}=1\lvert{L=l,G=u}) =P(\hat{y}=1\lvert{L=l,G=p})$$ | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |
+|**False positive error rate (FPR) balance** |$$P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})$$ |Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y =0,G=f}) <br>Criteria: Statistical Separation | Predictive Equality |
+|**False negative error rate (FNR) balance**| $$P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})$$ | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: $$P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})$$. <br>Criteria: Statistical Separation | Equal Opportunity |
+|**Equalized Odds**| $$P(\hat{y}=1\lvert{Y=c, G=u})=P(\hat{y}=1\lvert{Y=c, G=p}), {c}\in{0,1}$$. | Equal TPR and equal FPR. Mathematically equivalent to the conjunction of FPR balance and FNR balance <br>Criteria: Statistical Separation|  Disparate mistreatment, Conditional procedure accuracy equality |
+|**Predictive Parity**| $$P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})$$ | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR): $$P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})$$ <br>Criteria: Statistical Sufficiency |Outcome Test |
+|**Conditional use accuracy equality**| $$(P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p}))$$ $$\wedge (P(Y=0\lvert{\hat{y}=0,G=u})=P(Y=0\lvert{\hat{y}=0,G=p}))$$ | Criteria: Statistical Sufficiency | &nbsp; |
+|**Overall Accuracy Equity**| $$P(\hat{y}=Y,G=m)=P(\hat{y}=Y,G=p)$$ |Use when True Negatives are as desirable as True Positives |&nbsp; |
+|**Treatment Equality**| $$FNu/FPu=FNp/FPp$$ | Groups have equal ratios of False Negative Rates to False Positive Rates |&nbsp; |
+|**Calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class <br>Criteria: Statistical Sufficiency |Test-fairness, matching conditional frequencies |
+|**Well-calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})=s$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class, and this probability is equal to S <br>Criteria: Statistical Sufficiency |&nbsp; |
+|**Balance for positive class**| $$E(S\lvert{Y=1,G=u})=E(S\lvert{Y=1,G=p})$$ | Subjects in the positive class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
+|**Balance for negative class**| $$E(S\lvert{Y=0,G=u})=E(S\lvert{Y=0,G=p})$$ | Subjects in the negative class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
+||||||
+|**Causal discrimination**| $$(X_p=X_u \wedge G_p != G_u) \rightarrow  \hat{y}_u=\hat{y}_p$$ | Same classification produced for any two subjects with the exact same attributes |&nbsp; |
+|**Fairness through unawareness**| $$X_i=X_j \rightarrow \hat{y}_i=\hat{y}_j$$ | No sensitive attributes are explicitly used in the decision-making process <br>Criteria: Unawareness | &nbsp; |
+|**Fairness through awareness (Individual Fairness)**| for a set of applicants V , a distance metric between applicants k : V Å~V → R, a mapping from a set of applicants to probability distributions over outcomes M : V → δA, and a distance D metric between distribution of outputs, fairness is achieved iff $$D(M(x),M(y)) ≤ k(x,y)$$. | Similar individuals (as defined by some distance metric) should have similar classification |Individual Fairness |
+|**Counterfactual fairness**| A causal graph is counterfactually fair if the predicted outcome d in the graph does not depend on a descendant of the protected attribute G. |&nbsp; |&nbsp; |
+||||||
 
 
 <br><br>

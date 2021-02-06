@@ -17,8 +17,8 @@ This library is constructed in three main parts:
 
 - ### [Documentation](docs/docs.md)
     - [Publications](docs/publications/README.md)
-    - [Summary Tables](docs/docs/Summary_Tables.md)
-    - [References](docs/docs/References.md)
+    - [Summary Tables](docs/docs/Summary_Tables.pdf)
+    - [References](docs/docs/References.pdf)
 
 
 
@@ -86,7 +86,7 @@ FairMLHealth now also includes stratified reporting features to aid in identifyi
 
 Note that the flag tool has not yet been updated to work with stratified reports.
 
-#### Data Reporter
+#### Stratified Data Reports
 
 The data reporter is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
 
@@ -102,7 +102,7 @@ stratified_reports.data_report(X_test[['gender']], y_test)
      alt="Data Report, Input Option 2"
      />
 
-### Performance Reporter
+### Stratified Performance Reports
 
 The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
@@ -115,7 +115,7 @@ stratified_reports.classification_performance(X_test[['gender']], y_test,
      alt="Performance Report Example"
      />
 
-#### Classification Fairness
+#### Stratified Fairness Reports
 
 The stratified classification_fairness reporter evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
 
@@ -191,9 +191,10 @@ See also: [Publications](./docs/publications)
 }
 ```
 
-## Connect with Us
-- For problems with the source code or documentation, please use our [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
-- Additional contact information will be available in the near future.
+## Connect with Us!
+- For problems with the source code or documentation, please use GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- Other questions, ideas, comments, and feedback are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
+
 ## Key Contributors
 * Muhammad Aurangzeb Ahmad
 * Christine Allen
