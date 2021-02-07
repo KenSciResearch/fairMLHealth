@@ -22,7 +22,7 @@ This library is constructed in three main parts:
 
 
 
-## Installation
+## Installation <a id="installation_instructions"></a>
 Installing directly from GitHub:
 
     python -m pip install git+https://https://github.com/KenSciResearch/fairMLHealth
@@ -67,7 +67,7 @@ model_dict = {'model_1': model_1, 'model_2': model_2}
 ### Measuring
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the measure_models and compare_models functions.
 
-The measure_model feature shown below can be used to quickly generate a report of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
+Measure_model is designed to generate a report of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
 
 ``` python
 # Generate a pandas dataframe of measures
@@ -132,9 +132,11 @@ stratified_reports.classification_fairness(X_test[['gender', 'col1']],
      alt="Fairness Report Example"
      />
 
-### Comparing Results
+### Comparing Results for Multiple Models
 
-The compare_models feature can be used to generate side-by-side fairness comparisons of multiple models. Below is an example output comparing the two example models defined above. Notice that one of the models does not produce prediction probabilities and that the tool simply adds a NaN value for any measures relying on those probabilities. Model performance metrics such as accuracy and precision are also provided for comparison.
+The compare_models feature can be used to generate side-by-side fairness comparisons of multiple models. Model performance metrics such as accuracy and precision are also provided to facilitate comparison.
+
+Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
 
 ```python
 comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
@@ -160,6 +162,13 @@ fhmc.compare_models(X_test, y_test,
 
 ### Other Examples
 For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+
+
+## Connect with Us!
+This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and heathcare!
+
+- For problems with the source code or documentation, please use GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- Other comments, ideas, questions, and feedback are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
 
 ## Citations
 ### Repository
@@ -190,10 +199,6 @@ See also: [Publications](./docs/publications)
     pages = {3529--3530}
 }
 ```
-
-## Connect with Us!
-- For problems with the source code or documentation, please use GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
-- Other questions, ideas, comments, and feedback are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
 
 ## Key Contributors
 * Muhammad Aurangzeb Ahmad

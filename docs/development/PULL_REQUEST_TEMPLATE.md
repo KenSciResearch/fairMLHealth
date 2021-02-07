@@ -1,4 +1,4 @@
-# PR Submission Template
+# Pull Request Submission Template
 
 ## About
 [Summary of the Pull Request, including motivation and context.]
