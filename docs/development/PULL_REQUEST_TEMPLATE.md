@@ -5,6 +5,8 @@
 
 Resolves: (issue # or AB#)
 
+### Note to Reviewers
+[Add special instructions for the reviewers. Delete if not applicable.]
 ## Integration Issues
 [Include detail about any breakages or dependencies, as needed]
 
@@ -17,12 +19,9 @@ Resolves: (issue # or AB#)
 - [ ] Tests have been added to prove that the fix is effective or that the feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] I have made note of any breakages or dependencies
+- [ ] I have made note of any breakages or dependencies (if applicable)
 - [ ] These changes generate no new warnings
 
 
 ## How was this update tested?
 Please describe the tests used to validate this update. Include clear instructions for reproducibility, and include relevant configuration details for your test environment
-
-## Other
-[Notes for reviewers, if any]
