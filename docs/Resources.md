@@ -79,6 +79,10 @@ Shorrocks AF (1980). The class of additively decomposable inequality measures. E
 <a id="speicher2018_ref"></a>
 Speicher T, Heidari H, Grgic-Hlaca N, Gummadi KP, Singla A, Weller A, & Zafar M B (2018, July). A unified approach to quantifying algorithmic unfairness: Measuring individual &group unfairness via inequality indices. In Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining (pp. 2239-2248). Retrieved from [https://arxiv.org/pdf/1807.00787.pdf](https://arxiv.org/pdf/1807.00787.pdf)
 
+
+Sylvester, J., & Raff, E. (2018). What about applied fairness?. [arXiv preprint arXiv:1806.05250](https://arxiv.org/abs/1806.05250).
+
+
 <a id="zemel2013_ref"></a>
 Zemel R, Wu Y, Swersky K, Pitassi T, & Dwork C (2013, February). Learning fair representations. International Conference on Machine Learning (pp. 325-333). Retrieved from [http://proceedings.mlr.press/v28/zemel13.pdf](http://proceedings.mlr.press/v28/zemel13.pdf)
 
