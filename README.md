@@ -38,7 +38,8 @@ For a functioning notebook of the usage examples below, see [Example-ToolUsage](
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc, stratified_reports
+from fairmlhealth import model_comparison as fhmc
+from fairmlhealth import stratified_reports
 from fairmlhealth.reports import flag
 
 import pandas as pd
