@@ -102,6 +102,3 @@ Zemel R, Wu Y, Swersky K, Pitassi T, & Dwork C (2013, February). Learning fair r
 
 <a id="zafar2017_ref"></a>
 Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).  https://arxiv.org/pdf/1610.08452.pdf
-
-
-
