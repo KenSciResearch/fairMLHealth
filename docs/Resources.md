@@ -16,6 +16,8 @@ Crawford, K. (2017, December). [The Trouble with Bias](https://youtu.be/fMym_BKW
 
 Stucchio, C. (2018, October). [AI Ethics, Impossibility Theorems and Tradeoffs](https://www.youtube.com/watch?v=Zn7oWIhFffs) \[Conference presentation\]. Crunch Data Conference 2018, Budapest, Hungary. https://www.youtube.com/watch?v=Zn7oWIhFffs
 
+Narayanan , A. (2018, March). [FAT* 2018 Translation Tutorial: 21 Definitions of Fairness and Their Politics](https://www.youtube.com/watch?v=wqamrPkF5kk)  \[Conference presentation\]. The Conference on Fairness, Accountability, and Transparency (FAT*) 2018. https://www.youtube.com/watch?v=wqamrPkF5kk
+
 ## Additional Resources and Tutorials <a id="additional_resources"></a>
 
 Zhong, Z. (2018). ["A Tutorial on Fairness in Machine Learning"](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb). Towards Data Science. https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb
