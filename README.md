@@ -25,7 +25,7 @@ This library is constructed in three main parts:
 ## Installation <a id="installation_instructions"></a>
 Installing directly from GitHub:
 
-    python -m pip install git+https://https://github.com/KenSciResearch/fairMLHealth
+    python -m pip install git+https://github.com/KenSciResearch/fairMLHealth
 
 Installing from a local copy of the repo:
 
