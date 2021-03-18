@@ -1,5 +1,6 @@
 # Pull Request Submission Template
 
+Please use this template to describe your pull request upon submission.
 ## About
 [Summary of the Pull Request, including motivation and context.]
 

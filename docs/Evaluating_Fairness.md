@@ -62,7 +62,7 @@ References:
 ----
 # Defining and Measuring Fairness <a id="part2"></a>
 
-The following section defines common fairness measures that are used elsewhere in the notebook. Skip ahead to [Part 3](#part3) for an example of how these measures are applied.
+The following section defines common fairness measures that are used elsewhere. Skip ahead to [Part 3](#part3) for an example of how these measures are applied.
 
 ### [Convenient Charts of Fairness Measures](../docs/docs/Measures_QuickReference.md.md)
 
@@ -304,12 +304,22 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Example-Template-BinaryClassificationAssessment Notebook](../tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](../docs/README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [Example-Template-BinaryClassificationAssessment Notebook](../tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](../docs/README.md).
 
 
 
 
 # References
+
+
+## Additional Resources and Tutorials <a id="additional_resources"></a>
+
+[Fairness Indicators](https://www.tensorflow.org/tfx/fairness_indicators) - A TensorFlow-enabled suite designed for simulation of long-term effects caused by the implementation of a machine learning model.
+
+["A Tutorial on Fairness in Machine Learning" by Ziyuan Zhong](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb) - A popular reference with additional background on fairness metrics.
+
+["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning" by Valeria Cortez](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text=Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D) - Another source for background on fairness metrics.
+
 ## Citations
 <a id="agniel2018biases"></a>
 Agniel D, Kohane IS, & Weber GM (2018). Biases in electronic health record data due to processes within the healthcare system: retrospective observational study. Bmj, 361. Retrieved from [https://www.bmj.com/content/361/bmj.k1479](https://www.bmj.com/content/361/bmj.k1479)
@@ -383,11 +393,3 @@ Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness bey
 * [Themis ML](https://themis-ml.readthedocs.io/en/latest/)
 
 
-
-## Additional Resources and Tutorials <a id="additional_resources"></a>
-
-[Fairness Indicators](https://www.tensorflow.org/tfx/fairness_indicators) - A TensorFlow-enabled suite designed for simulation of long-term effects caused by the implementation of a machine learning model.
-
-["A Tutorial on Fairness in Machine Learning" by Ziyuan Zhong](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb) - A popular reference with additional background on fairness metrics.
-
-["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning" by Valeria Cortez](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text=Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D) - Another source for background on fairness metrics.
