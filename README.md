@@ -14,8 +14,7 @@ This library is constructed in three main parts:
 - ### [Tutorias and Examples](tutorials_and_examples/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
     - Examples for using the templates and tools
-
-- ### [Documentation](docs/docs.md)
+- ### [Documentation](docs/README.md)
     - [Publications](docs/publications/README.md)
     - [Summary Tables](docs/docs/Summary_Tables.pdf)
     - [References](docs/docs/References.pdf)
@@ -166,7 +165,7 @@ For a more detailed example of how to use this package, please see the [Example 
 
 
 ## Connect with Us!
-This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and heathcare!
+This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and healthcare!
 
 - For problems with the source code or documentation, please use GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
 - Other comments, ideas, questions, and feedback are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
