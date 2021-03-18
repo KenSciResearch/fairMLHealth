@@ -11,7 +11,7 @@ This library is constructed in three main parts:
 - ### [Templates](templates/README.md)
     - Quickstart notebooks that serve as skeletons for your model analysis
 
-- ### [Tutorias and Examples](tutorials_and_examples/README.md)
+- ### [Tutorials and Examples](tutorials_and_examples/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
     - Examples for using the templates and tools
 - ### [Documentation](docs/README.md)
@@ -57,7 +57,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random
 model_1 = BernoulliNB().fit(X_train, y_train)
 model_2 = DecisionTreeClassifier().fit(X_train, y_train)
 
-# Deterimine your set of protected attributes
+# Determine your set of protected attributes
 prtc_attr = X_test['gender']
 
 # Specify either a dict or a list of trained models to compare

@@ -65,7 +65,7 @@ def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
         [type]: [description]
     """
     if (criteria is not None and values is not None):
-        print("Cannot process both crieteria and values.",
+        print("Cannot process both criteria and values.",
               "Defaulting to criteria entry")
     if h_type not in ['text', 'field']:
         raise ValueError("Wrong h_type sent")
@@ -127,7 +127,7 @@ Tutorial-Specific Helpers
 
 
 def simplify_tutorial_report(comparison_report_df):
-    """Updates a fainress comparison report to exlude FairLearn measures. For
+    """Updates a fairness comparison report to exclude FairLearn measures. For
         use in the KDD Tutorial, which first introduces AIF360 measures before
         introducing FairLearn
 
@@ -147,4 +147,3 @@ def simplify_tutorial_report(comparison_report_df):
     drop_meas = [ix_vals.index(v) for v in ix_vals if v in fl_measures]
     df = comparison_report_df.drop(drop_meas, axis=0)
     return(df)
-

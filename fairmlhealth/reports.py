@@ -15,8 +15,6 @@ import warnings
 
 # Tutorial Libraries
 from . import tutorial_helpers as helpers
-from .__classification_metrics import (sensitivity, specificity,
-                                        false_alarm_rate, miss_rate)
 from .utils import __preprocess_input
 
 
@@ -49,7 +47,6 @@ def get_report_labels(pred_type: str = "binary"):
     return report_labels
 
 
-
 def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
                                      priv_grp=1):
     """ Returns a dictionary containing group fairness measures specific
@@ -69,7 +66,7 @@ def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
 
     gf_vals['Statistical Parity Difference'] = \
         aif_mtrc.statistical_parity_difference(y_true, y_pred,
-                                                prot_attr=pa_name)
+                                               prot_attr=pa_name)
     gf_vals['Disparate Impact Ratio'] = \
         aif_mtrc.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_name)
     if helpers.is_kdd_tutorial():
@@ -86,7 +83,7 @@ def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
                                               sensitive_features=np.array(y_true.index))
         gf_vals['Equalized Odds Ratio'] = \
             fl_mtrc.equalized_odds_ratio(y_true, y_pred,
-                                          sensitive_features=np.array(y_true.index))
+                                         sensitive_features=np.array(y_true.index))
     # Precision
     gf_vals['Positive Predictive Parity Difference'] = \
         aif_mtrc.difference(sk_metric.precision_score, y_true,
@@ -178,15 +175,13 @@ def __regres_group_fairness_measures(pa_name, y_true, y_pred, priv_grp=1):
                 group. Defaults to 1.
     """
     def pdmean(y_true, y_pred, *args): return y_pred.mean()
+    #
     gf_vals = {}
     gf_vals['Mean Prediction Ratio'] = \
         aif_mtrc.ratio(pdmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif_mtrc.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MSE Ratio'] = \
-        aif_mtrc.ratio(sk_metric.mean_squared_error, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['R2 Ratio'] = \
         aif_mtrc.ratio(sk_metric.r2_score, y_true, y_pred,
@@ -196,6 +191,9 @@ def __regres_group_fairness_measures(pa_name, y_true, y_pred, priv_grp=1):
                             prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif_mtrc.difference(sk_metric.mean_absolute_error, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['R2 Difference'] = \
+        aif_mtrc.difference(sk_metric.r2_score, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -231,8 +229,10 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
             measure values. Defaults to 4.
     """
     # Validate and Format Arguments
-    if not all([isinstance(a, int) for a in [priv_grp, sig_dec]]):
-        raise ValueError(f"{a} must be an integer value")
+    if not isinstance(priv_grp, int):
+        raise ValueError("priv_grp must be an integer value")
+    if not isinstance(sig_dec, int):
+        raise ValueError("sig_dec must be an integer value")
     X, prtc_attr, y_true, y_pred, y_prob = \
         __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
     pa_name = prtc_attr.columns.tolist()
@@ -264,7 +264,7 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
     df.columns = ['Value']
     df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     # Fix the order in which the metrics appear
-    metric_order ={gfl: 0, ifl: 1, mpl: 2, dtl: 3}
+    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
     df.reset_index(inplace=True)
     df['sortorder'] = df['level_0'].map(metric_order)
     df = df.sort_values('sortorder').drop('sortorder', axis=1)
@@ -318,11 +318,12 @@ def flag(df, caption="", as_styler=False):
                         [c.lower().endswith("difference")
                          for c in measures]], :].index
     cs_high = df.loc[idx['Individual Fairness',
-                [c.lower().replace(" ", "_") == "consistency_score"
-                 for c in measures]], :].index
+                     [c.lower().replace(" ", "_") == "consistency_score"
+                      for c in measures]], :].index
     cs_low = df.loc[idx['Individual Fairness',
-                [c.lower().replace(" ", "_") == "generalized_entropy_error"
-                 for c in measures]], :].index
+                        [c.lower().replace(" ", "_")
+                            == "generalized_entropy_error"
+                         for c in measures]], :].index
 
     #
     def color_diff(row):
@@ -334,7 +335,7 @@ def flag(df, caption="", as_styler=False):
     def color_if(row):
         clr = ['color:magenta'
                if (row.name in cs_high and i < 0.8) or
-                   (row.name in cs_low and i > 0.2)
+                  (row.name in cs_low and i > 0.2)
                else '' for i in row]
         return clr
 
@@ -345,9 +346,9 @@ def flag(df, caption="", as_styler=False):
         return clr
 
     styled = df.style.set_caption(caption
-                    ).apply(color_diff, axis=1
-                    ).apply(color_ratios, axis=1
-                    ).apply(color_if, axis=1)
+                                  ).apply(color_diff, axis=1
+                                  ).apply(color_ratios, axis=1
+                                  ).apply(color_if, axis=1)
     # Correct management of metric difference has yet to be determined for
     #   regression functions. Add style to o.o.r. difference for binary
     #   classification only
@@ -369,7 +370,7 @@ def flag_suspicious(df, caption="", as_styler=False):
 
 
 def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
-                    **kwargs):
+                        **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
     Args:
@@ -384,8 +385,10 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
             measure values. Defaults to 4.
     """
     # Validate and Format Arguments
-    if not all([isinstance(a, int) for a in [priv_grp, sig_dec]]):
-        raise ValueError(f"{a} must be an integer value")
+    if not isinstance(priv_grp, int):
+        raise ValueError("priv_grp must be an integer value")
+    if not isinstance(sig_dec, int):
+        raise ValueError("sig_dec must be an integer value")
     X, prtc_attr, y_true, y_pred, _ = \
         __preprocess_input(X, prtc_attr, y_true, y_pred, priv_grp)
     pa_name = prtc_attr.columns().tolist()

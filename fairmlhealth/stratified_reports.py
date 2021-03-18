@@ -1,6 +1,5 @@
 import aif360.sklearn.metrics as aif_mtrc
-from copy import deepcopy
-from fairmlhealth import model_comparison as fhmc, reports
+from fairmlhealth import reports
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -8,16 +7,14 @@ import sklearn.metrics as sk_metric
 from . import __classification_metrics as clmtrc
 from .utils import __preprocess_input
 
-from .__classification_metrics import (sensitivity, specificity,
-                                        false_alarm_rate, miss_rate)
-
-
 
 ''' Utility Functions '''
+
+
 def __get_ynames(df=None):
-    names =  {'y': '__fairmlhealth_y_true',
-              'yh': '__fairmlhealth_y_pred',
-              'yp': '__fairmlhealth_y_prob'}
+    names = {'y': '__fairmlhealth_y_true',
+             'yh': '__fairmlhealth_y_pred',
+             'yp': '__fairmlhealth_y_prob'}
     if df is not None:
         for k in names.keys():
             names[k] = None if names[k] not in df.columns else names[k]
@@ -25,6 +22,7 @@ def __get_ynames(df=None):
 
 
 ''' Data Reporting '''
+
 
 def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
                             features:list=None):
@@ -71,9 +69,9 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
         # stratified analysis can only be run on discrete columns
         #
         if (df[f].nunique() > max_cats and
-            not df[f].astype(str).str.isdigit().all()):
+           not df[f].astype(str).str.isdigit().all()):
             print(f"\t{f} has more than {max_cats} values, which will",
-                      "slow processing time. Consider reducing to quantiles")
+                  "slow processing time. Consider reducing to quantiles")
         elif df[f].isnull().any():
             df[f].fillna(np.nan, inplace=True)
         df[f] = df[f].astype(str)
@@ -102,7 +100,11 @@ def data_report(X, y_true, features:list=None):
     res = []
     N_missing = 0
     N_obs = df.shape[0]
+    skipped_vars = []
     for f in stratified_features:
+        if df[f].nunique() == 1:
+            skipped_vars.append(f)
+            continue
         n_missing = df.loc[df[f].isnull() | df[f].eq('nan'), f].count()
         #
         grp = df.groupby(f)[pred_cols]
@@ -154,6 +156,7 @@ def __dt_grp(x, y):
 
 
 ''' Performance Reporting '''
+
 
 def classification_performance(X, y_true, y_pred, y_prob=None,
                                features:list=None):
@@ -214,7 +217,7 @@ def __cp_group(x, y, yh, yp):
            'FPR': clmtrc.false_alarm_rate(x[y], x[yh]),
            'FNR': clmtrc.miss_rate(x[y], x[yh]),
            'ACCURACY': clmtrc.accuracy(x[y], x[yh]),
-           'PRECISION (PPV)': clmtrc.precision(x[y], x[yh]) #PPV
+           'PRECISION (PPV)': clmtrc.precision(x[y], x[yh])  # PPV
            }
     if yp is not None:
         res['ROC_AUC'] = clmtrc.roc_auc_score(x[y], x[yp])
@@ -243,7 +246,11 @@ def regression_performance(X, y_true, y_pred, features:list=None):
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
+    skipped_vars = []
     for f in stratified_features:
+        if df[f].nunique() == 1:
+            skipped_vars.append(f)
+            continue
         # Data are expected in string format
         assert df[f].astype(str).eq(df[f]).all()
         #
@@ -331,7 +338,7 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
                 print(f"Error processing {f}. {e}\n")
                 continue
             r = pd.DataFrame(meas, index=[0])
-            r['N OBS'] =  df.loc[df[f].eq(v), pa_name].sum()
+            r['N OBS'] = df.loc[df[f].eq(v), pa_name].sum()
             r['FEATURE'] = f
             r['FEATURE VALUE'] = v
             res.append(r)
@@ -349,7 +356,8 @@ def __cf_group(pa_name, y_true, y_pred, priv_grp=1):
     """ """
     gf_vals = {}
     gf_vals['PPV Ratio'] = \
-        aif_mtrc.difference(sk_metric.precision_score, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp)
+        aif_mtrc.difference(sk_metric.precision_score, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['TPR Ratio'] = \
         aif_mtrc.ratio(clmtrc.sensitivity, y_true, y_pred, prot_attr=pa_name,
                        priv_group=priv_grp)
@@ -411,9 +419,13 @@ def regression_fairness(X, y_true, y_pred, features: list = None, **kwargs):
     res_f = []
     rprt = rprt[['FEATURE', 'FEATURE VALUE', 'N OBS']]
     pa_name = 'prtc_attr'
+    skipped_vars = []
     for i, row in rprt.iterrows():
         f = row['FEATURE']
         v = row['FEATURE VALUE']
+        if df[f].nunique() == 1:
+            skipped_vars.append(f)
+            continue
         df[pa_name] = 0
         df.loc[df[f].eq(v), pa_name] = 1
         if v != "nan":
@@ -446,4 +458,3 @@ def __rf_group(pa_name, y_true, y_pred, priv_grp=1):
     res = reports.__regres_group_fairness_measures(pa_name, y_true, y_pred,
                                                    priv_grp)
     return res
-
