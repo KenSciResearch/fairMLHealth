@@ -192,7 +192,7 @@ See also: [Publications](./docs/publications)
 ```
 @incollection{APEKT_KDD2020,
     title = {Fairness in Machine Learning for Healthcare},
-    author = {Ahmad, M. A. and Patel, A. and Eckert, C. and Kumar, V. and Teredesai, A.},
+    author = {Ahmad, MA. and Eckert, C. and Kumar, V. and Patel, A. and Teredesai, A.},
     year = 2020,
     month = {August},
     booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining},

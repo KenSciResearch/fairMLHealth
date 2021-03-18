@@ -1,4 +1,4 @@
 # Documentation
-    - [Publications](docs/publications/README.md)
-    - [Summary Tables](docs/docs/Summary_Tables.pdf)
-    - [References](docs/docs/References.pdf)
+    - [Evaluating Fairness](Evaluating_Fairness.md)
+    - [Summary Tables](Measures_QuickReference.md)
+    - [References](References_and_Resources.md)
