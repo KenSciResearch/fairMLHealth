@@ -6,8 +6,11 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.5] - 2021-02-08
 ### Documentation Update
-- Updated READMEs and resources
-- Updated tutorial and examples
+- Add "docs" folder containing background information on measuring fairness in ML, quick reference tables for the different metrics and measures, and our current list of recommended outside references and resources
+- Update tutorial and examples. Content introducing background on fairness has been moved to the docs folder
+- Add development documentation (docs folder): issue template and pull request template
+- Update READMEs and resources
+- Correct typos
 
 
 ## [0.1.4] - 2020-12-09
