@@ -1,4 +1,4 @@
 # Documentation
-    - [Evaluating Fairness](Evaluating_Fairness.md)
-    - [Summary Tables](Measures_QuickReference.md)
-    - [References](References_and_Resources.md)
+    - [Evaluating Fairness](/docs/Evaluating_Fairness.md)
+    - [Summary Tables](/docs/Measures_QuickReference.md)
+    - [References](/docs/References_and_Resources.md)
