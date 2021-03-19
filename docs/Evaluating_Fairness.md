@@ -20,7 +20,7 @@ There are abundant other publications covering the theoretical basis for fairnes
   * Individual Fairness Measures
 
 [Part 3](#part3) - Comparing Models and Mitigating Disparity
-  * Choosing the Appropriate Measure(s)
+  * Choosing Appropriate Measure(s)
   * Comparing Models
   * Fairness-Aware ML Algorithms
 
@@ -84,8 +84,8 @@ There are six common metrics for determining whether a model is considered "fair
 
 | Category | Metric | Definition | Weakness | References |
 |------|------|------|------|------|
-| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups. $\dfrac{P(\hat{y} = 1 \lvert unprivileged)}{P(\hat{y} = 1 \rvert privileged)}$ <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
-||**Equalized Odds**| Odds are equalized if $P(+)$ is approximately the same for all protected attribute groups.<br>  **Equal Opportunity** is a special case of equalized odds specifying that $$P(+ \rvert y = 1)$$ is approximately the same across groups. <br> Harms Addressed: Allocative, Representational | Historical biases present in the data  are not addressed and may still bias the model. | [Hardt *et al* (2016)](#hardt2016_ref) |
+| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups. <img src="https://render.githubusercontent.com/render/math?math=\dfrac{P(\hat{y} = 1 \lvert unprivileged)}{P(\hat{y} = 1 \rvert privileged)}"> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
+||**Equalized Odds**| Odds are equalized if <img src="https://render.githubusercontent.com/render/math?math=P(+)"> is approximately the same for all protected attribute groups.<br>  **Equal Opportunity** is a special case of equalized odds specifying that <img src="https://render.githubusercontent.com/render/math?math=P(+ \rvert y = 1)"> is approximately the same across groups. <br> Harms Addressed: Allocative, Representational | Historical biases present in the data  are not addressed and may still bias the model. | [Hardt *et al* (2016)](#hardt2016_ref) |
 ||**Predictive Parity**| This parity exists where the Positive Predictive Value is approximately the same for all protected attribute groups. <br> Harms Addressed: Allocative, Representational | Historical biases present in the data are not addressed and may still bias the model.  | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||||||
 | Similarity-Based Measures |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. <br>Harms Addressed: Representational | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
@@ -131,32 +131,32 @@ For the following explanations of specific measures, we'll use the results of a 
 A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all groups of the protected attribute. Two common measures are the Statistical Parity Difference and the Disparate Impact Ratio.
 
 The *Statistical Parity Difference* is the difference in the probability of prediction between the two groups. A difference of 0 indicates that the model is perfectly fair relative to the protected attribute (it favors neither the privileged nor the unprivileged group). Values between -0.1 and 0.1 are considered reasonably fair.
-> $statistical\_parity\_difference = P(\hat{y} = 1\ |\ unprivileged) - P(\hat{y} = 1\ |\ privileged) $
+> <img src="https://render.githubusercontent.com/render/math?math=statistical\_parity\_difference = P(\hat{y} = 1\ |\ unprivileged) - P(\hat{y} = 1\ |\ privileged)">
 
 The *Disparate Impact Ratio* is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group. A ratio of 1 indicates that the model is fair relative to the protected attribute (it favors neither the privileged nor the unprivileged group).  Values between 0.8 and 1.2 are considered reasonably fair.
-> $disparate\_impact\_ratio = \dfrac{P(\hat{y} = 1\ |\ unprivileged)}{P(\hat{y} = 1\ |\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}$
+> <img src="https://render.githubusercontent.com/render/math?math=disparate\_impact\_ratio = \dfrac{P(\hat{y} = 1\ |\ unprivileged)}{P(\hat{y} = 1\ |\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}">
 
 ### Equal Odds
 Odds are equalized if P(+) is approximately the same for all groups of the protected attribute.
 
 The *Equalized Odds Difference* is the greater between the difference in TPR and the difference in FPR. This provides a comparable measure to the Average Odds Difference found in AIF360. A value of 0 indicates that all groups have the same TPR, FPR, TNR, and FNR, and that the model is "fair" relative to the protected attribute.
-> $ equalized\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$
+> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
 
 The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in AIF360).
-> $ equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$
+> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )">
 
 *Equal Opportunity Difference (or Ratio)* compares the recall scores (TPR) between the unprivileged and privileged groups.
-> $equal\_opportunity\_difference = recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})$
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_opportunity\_difference = recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})">
 
 
 ### Measures of Disparate Performance
 These measures evaluate whether model performance is similar for all groups of the protected attribute.
 
 The *Positive Predictive Parity Difference (or Ratio)* compares the Positive Predictive Value (PPV, aka. precision), between groups.
-> $positive\_predictive\_parity\_difference = precision(\hat{y}_{unprivileged}) - precision(\hat{y}_{privileged})$
+> <img src="https://render.githubusercontent.com/render/math?math=positive\_predictive\_parity\_difference = precision(\hat{y}_{unprivileged}) - precision(\hat{y}_{privileged})">
 
 The *Balanced Accuracy Difference (or Ratio)* compares the Balanced Accuracy between groups, where balanced accuracy is the mean of the sensitivity and specificity. **Since many models are biased due to data imbalance, this can be an important measure.**
-> $balanced\_accuacy\_difference = (Sensitivity_{unprivileged} + Specificity_{unprivileged})/2 - (Sensitivity_{privileged} + Specificity_{privileged})/2$
+> <img src="https://render.githubusercontent.com/render/math?math=balanced\_accuacy\_difference = (Sensitivity_{unprivileged} + Specificity_{unprivileged})/2 - (Sensitivity_{privileged} + Specificity_{privileged})/2">
 
 ## Comparing Group Fairness (Statistical) Measures <a id="comparing_group_measures"></a>
 The highlighted rows in our example FairMLHealth Fairness Report [above](#fairness_report) indicates that the Disparate Impact ratio is out of range; but what is that range and how is it determined? In 1978, the United States Equal Employment Opportunity Commission adopted the "Four-Fifths Rule", a guideline stating that, "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact."[EOC (1978)](#fourfifths_ref) This rubric has since been adopted for measures of fairness in ML. This translates to a "fair" range of selection rate ratios that are between 0.8 and 1.2.
@@ -184,31 +184,26 @@ Measures of individual fairness determine if "similar" individuals are likely to
 
 ### Consistency Scores <a id="consistency_score"></a>
 Consistency scores measure the similarity between specific predictions and the predictions of like individuals. They are not specific to a particular attribute, but rather they evaluate the generally equal treatment of equal individuals. In AIF360, the consistency score is calculated as the compliment of the mean distance to the score of the mean nearest neighbor, using Scikit-Learn's Nearest Neighbors algorithm (default: 5 neighbors determined by the Ball Tree algorithm). For this measure, values closer to 1 indicate greater consistency, and those closer to zero indicate less consistency. More information about consistency scores is available in [[Zemel (2013)]](#zemel2013_ref).
-> $ consistency\_score = 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i = 1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j| $
+> <img src="https://render.githubusercontent.com/render/math?math=consistency\_score = 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i = 1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|">
 
 
 ### The Generalized Entropy Index and Related Measures
 The *Generalized Entropy (GE) Index* was proposed as a metric for income inequality [[Shorrocks (1980)]](#shorrocks_ref)), although it originated as a measure of redundancy in information theory. In 2018, [Speicher *et al.*](#speicher2018_ref) proposed its use for ML models. These measures are dimensionless, and therefore are most useful in comparison relative to each other. Values closer to zero indicate greater fairness, and increasing values indicating decreased fairness.
-> $ GE = \mathcal{E}(\alpha) = \begin{cases}
-            \frac{1}{n \alpha (\alpha-1)}\sum_{i = 1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1,\\
-            \frac{1}{n}\sum_{i = 1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha = 1,\\
-            -\frac{1}{n}\sum_{i = 1}^n\ln\frac{b_{i}}{\mu},& \alpha = 0.
-        \end{cases}
-        $
+> <img src="./img/generalized_entropy_equation.png">
 
 #### Special Cases
-The *Theil Index* occurs where the $GE$ alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1.
-> $ Theil Index = GE(\alpha = 1) $
+The *Theil Index* occurs where the <img src="https://render.githubusercontent.com/render/math?math=GE"> alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1.
+> <img src="https://render.githubusercontent.com/render/math?math=Theil Index = GE(\alpha = 1)">
 
-The *Coefficient  of  Variation* is two times the square root of the $GE$ where alpha is equal to 2.
-> $ Coefficient of Variation = 2*\sqrt{GE(\alpha = 2)} $
+The *Coefficient  of  Variation* is two times the square root of the <img src="https://render.githubusercontent.com/render/math?math=GE"> where alpha is equal to 2.
+> <img src="https://render.githubusercontent.com/render/math?math=Coefficient of Variation = 2*\sqrt{GE(\alpha = 2)}">
 
 #### Generalized Entropy of Error
 *Generalized Entropy Error* is the Generalized Entropy Index of the prediction error. Like the Consistency Score above, this measure is dimensionless; however, it does not provide specific information to allow discernment between groups.
-> $ GE(Error, \alpha = 2) = GE(\hat{y}_i - y_i + 1) $
+> <img src="https://render.githubusercontent.com/render/math?math=GE(Error, \alpha = 2) = GE(\hat{y}_i - y_i + 1)">
 
 *Between Group Generalized Entropy Error* is the Generalized Entropy Index for the weighted means of group-specific errors. More information is available in [Speicher (2013)](#speicher2018_ref).
-> $ GE(Error_{group}, \alpha = 2) = GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] ) $
+> <img src="https://render.githubusercontent.com/render/math?math=GE(Error_{group}, \alpha = 2) = GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] )">
 
 
 ## Comparing Similarity-Based Measures
@@ -226,7 +221,7 @@ Similarity-based measures are not without their own drawbacks. The Consistency S
 # Comparing Models and Mitigating Disparity <a class = "anchor" id = "part3"></a>
 
 
-##  Choosing the Appropriate Measure(s)
+##  Choosing Appropriate Measure(s)
 Our choice of measure is informed both by the use cases for each particular measure, and also by the problem context and by the preferences of the community(ies) affected by the model. Unfortunately this means that Unfortunately no one "correct" way to measure fairness. This also means that there is no one "correct" way to demonstrate that fairness. The burden is on the Data Scientist to transparently document their process and prove that they've taken reasonable steps to develop and to measure a model that is as fair as reasonably possible.
 
 Although no model can be perfectly fair according to all metrics per the [Impossibility Theorem (above)](#impossibility), ideally a model will be at least within the range of fairness across the measures. From there, it's a matter of optimization for the specific measure(s) that is most applicable to the problem at hand. Thus the process begins with a clear understanding of the stakeholders and how they will view the potential outcomes. For healthcare models, the stakeholders are typically the patients, care providers, and the community(ies) being served, although it is likely that the care providers will represent the interests of the other two. It can also be helpful to create a table of outcomes, similar to the one below, to clearly document the harms, benefits, and preferences involved.
@@ -238,13 +233,13 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 
 |Prediction |Outcomes | Preference |
 |-|-|-|
-|TP |Benefit: Deserving patient receives help |high importance |
-|TN |Benefit: Community resources saved |less important |
-|FP |Harm: community resources wasted on an individual without need |less important (to avoid) |
-|FN |Harm: reduced likelihood of recovery |high importance (to avoid) |
+|**TP** |Benefit: Deserving patient receives help |high importance |
+|**TN** |Benefit: Community resources saved |less important |
+|**FP** |Harm: community resources wasted on an individual without need |less important (to avoid) |
+|**FN** |Harm: reduced likelihood of recovery |high importance (to avoid) |
 
-<p style="text-align: center"> P := "long length of stay expected (refer to counseling)"  </p>
-
+<p style="text-align: center"> <b>P</b> = "long length of stay expected (refer to counseling)"  </p>
+<br>
 
 ### Useful Questions to Ask when Choosing the Appropriate Measure(s)
 **1)** What ethical frameworks are held by the stakeholders? How do they weigh the costs and benefits of different outcomes?
