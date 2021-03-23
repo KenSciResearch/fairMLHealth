@@ -34,7 +34,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/KenSciResearch/fairMLHealth',
     author='KenSci',
-    author_email='christine.allen@kensci.com',
+    author_email='ca.magallen@gmail.com',
     tests_require=test_deps,
     extras_require={
         "test": test_deps,

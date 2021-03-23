@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+## [0.1.5] - 2021-02-08
+### Documentation Update
+- Add "docs" folder containing background information on measuring fairness in ML, quick reference tables for the different metrics and measures, and our current list of recommended outside references and resources
+- Update tutorial and examples. Content introducing background on fairness has been moved to the docs folder
+- Add development documentation (docs folder): issue template and pull request template
+- Update READMEs and resources
+- Correct typos
+
+
 ## [0.1.4] - 2020-12-09
 ### Added and fixed
 - Add validations in the model comparison methods
