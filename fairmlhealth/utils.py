@@ -100,13 +100,14 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
             y_prob.set_index(pa_cols, inplace=True)
             y_prob.columns = y_true.columns
 
-    y_pred.columns = y_true.columns
+    if y_pred is not None and y_true is not None:
+        y_pred.columns = y_true.columns
 
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
-                            priv_grp:int=1):
+def __validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
+                            prtc_attr=None, priv_grp:int=1):
     """ Raises error if data are of incorrect type or size for processing by
         the fairness or performance reporters
 
@@ -121,11 +122,16 @@ def __validate_report_input(X, y_true, y_pred=None, y_prob=None, prtc_attr=None,
     valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
 
     # input data
+    if X is None:
+        raise ValueError("No input data ")
     for data in [X, y_true, y_pred]:
-        if not isinstance(data, valid_data_types) and data is not None:
-            raise TypeError(f"input data is invalid type: {type(data)}")
-        if not data.shape[0] > 1:
-            raise ValueError("input data are too small to measure")
+        if data is not None:
+            if not isinstance(data, valid_data_types):
+                msg = f"One of X, y_true, or y_pred is invalid type {type(data)}"
+                raise TypeError(msg)
+            if not data.shape[0] > 1:
+                msg = "One of X, y_true, or y_pred is too small to measure"
+                raise ValueError(msg)
     for y in [y_true, y_pred]:
         if y is None:
             continue

@@ -43,19 +43,19 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     #
     max_cats = 11
     #
+    X, _, y_true, y_pred, y_prob = \
+        __preprocess_input(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
+                           y_prob=y_prob)
+    if y_true is None:
+        y_true = pd.Series([np.nan]*X.shape[0])
     if y_pred is None:
-        X, prtc_attr, y_true, _, y_prob = \
-            __preprocess_input(X, None, y_true, y_true, y_prob)
-        y_pred = pd.Series(np.zeros(y_true.shape[0]))
-    else:
-        X, prtc_attr, y_true, y_pred, y_prob = \
-            __preprocess_input(X, None, y_true, y_pred, y_prob)
+        y_pred = pd.Series([np.nan]*X.shape[0])
     if y_prob is None:
-        y_prob = pd.Series(np.zeros(y_true.shape[0]))
+        y_prob = pd.Series([np.nan]*X.shape[0])
     #
     y, yh, yp = __get_ynames().values()
     pred_cols = [y, yh, yp]
-    #
+    # Attach y variables and subset to expected columns
     df = X.copy()
     df[y] = y_true.values
     df[yh] = y_pred.values
@@ -144,14 +144,13 @@ def data_report(X, y_true, features:list=None):
 
 
 def __dt_grp(x, y):
-    _, feat_count = np.unique(y, return_counts=True)
-    res = {'N OBS': x.shape[0],
-           'Y MEAN': x[y].mean(),
-           'Y MEDIAN': x[y].median(),
-           'Y STDV': x[y].std(),
-           'Y MIN': x[y].min(),
-           'Y MAX': x[y].max()
-           }
+    res = {'N OBS': x.shape[0]}
+    if not x[y].isna().all():
+        res[f'{y} MEAN'] = x[y].mean()
+        res[f'{y} MEDIAN'] = x[y].median()
+        res[f'{y} STDV'] = x[y].std()
+        res[f'{y} MIN'] = x[y].min()
+        res[f'{y} MAX'] = x[y].max()
     return res
 
 
