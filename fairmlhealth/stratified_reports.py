@@ -180,13 +180,21 @@ def __data_grp(x, col):
     Args:
         x (pandas DataFrame)
     """
+    # If column is a hidden variable, replace it with a user-friendly name
+    yvars = __get_yname_dict()
+    if col in yvars.values():
+        colname = list(yvars.keys())[list(yvars.values()).index(col)]
+        colname = "Y" if colname == "yt" else colname.title()
+    else:
+        colname = col
+    # Generate dictionary of statistics
     res = {'N OBS': x.shape[0]}
     if not x[col].isna().all():
-        res[f'{col} MEAN'] = x[col].mean()
-        res[f'{col} MEDIAN'] = x[col].median()
-        res[f'{col} STDV'] = x[col].std()
-        res[f'{col} MIN'] = x[col].min()
-        res[f'{col} MAX'] = x[col].max()
+        res[f'{colname} MEAN'] = x[col].mean()
+        res[f'{colname} MEDIAN'] = x[col].median()
+        res[f'{colname} STDV'] = x[col].std()
+        res[f'{colname} MIN'] = x[col].min()
+        res[f'{colname} MAX'] = x[col].max()
     return res
 
 
@@ -383,17 +391,20 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     pa_name = 'prtc_attr'
     for f in stratified_features:
         vals = sorted(df[f].unique().tolist())
+        # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
             df.loc[df[f].eq(v), pa_name] = 1
             if v != "nan":
                 df.loc[df[f].eq("nan"), pa_name] = np.nan
+            # Nothing to measure if only one value is present (other than nan)
+            if df[pa_name].nunique() == 1:
+                continue
             try:
                 subset = df.loc[df[pa_name].notnull(),
                                 [pa_name, yt, yh]].set_index(pa_name)
                 meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
             except BaseException as e:
-                # raise ValueError(f"Error processing {f}. {e}\n")
                 print(f"Error processing {f}. {e}\n")
                 continue
             r = pd.DataFrame(meas, index=[0])
@@ -486,17 +497,16 @@ def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     res_f = []
     rprt = rprt[['FEATURE', 'FEATURE VALUE', 'N OBS']]
     pa_name = 'prtc_attr'
-    skipped_vars = []
     for i, row in rprt.iterrows():
         f = row['FEATURE']
         v = row['FEATURE VALUE']
-        if df[f].nunique() == 1:
-            skipped_vars.append(f)
-            continue
         df[pa_name] = 0
         df.loc[df[f].eq(v), pa_name] = 1
         if v != "nan":
             df.loc[df[f].eq("nan"), pa_name] = np.nan
+        # Nothing to measure if only one value is present (other than nan)
+        if df[pa_name].nunique() == 1:
+            continue
         try:
             subset = df.loc[df[pa_name].notnull(),
                             [pa_name, yt, yh]].set_index(pa_name)
