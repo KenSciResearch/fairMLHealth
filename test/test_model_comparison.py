@@ -86,7 +86,6 @@ class TestCompModFunction:
                                      probabilities=[self.y, self.y])
         self.is_result_valid(result)
 
-
     def test_multiple_calls(self):
         args = (self.X, self.y, self.prtc_attr, self.model_dict[0])
         _ = fhmc.compare_models(*args)
@@ -140,28 +139,14 @@ class TestCompModValidations:
                                 {0: self.prtc_attr, 1: None},
                                 self.model_dict)
 
-    def test_differing_X_keys(self):
+    def test_differing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict)
 
-    def test_differing_y_keys(self):
-        with pytest.raises(Exception):
-            fhmc.compare_models({0: self.X, 1: self.X},
-                                {5: self.y, 6: self.y},
-                                {0: self.prtc_attr, 1: self.prtc_attr},
-                                self.model_dict)
-
-    def test_differing_prtc_keys(self):
-        with pytest.raises(Exception):
-            fhmc.compare_models({0: self.X, 1: self.X},
-                                {0: self.y, 1: self.y},
-                                {5: self.prtc_attr, 6: self.prtc_attr},
-                                self.model_dict)
-
-    def test_missing_prtc_keys(self):
+    def test_missing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
