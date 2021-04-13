@@ -21,12 +21,6 @@ from fairmlhealth.utils import is_dictlike
 from fairmlhealth.reports import classification_fairness as classfair
 
 
-
-# Temporarily hide pandas SettingWithCopy warning
-warnings.filterwarnings('ignore', module='pandas')
-warnings.filterwarnings('ignore', module='sklearn')
-
-
 """
     Model Comparison Tools
 """
@@ -37,9 +31,9 @@ def measure_model(test_data, targets, protected_attr, model=None,
     """ Generates a report of fairness measures for the model
 
     Args:
-        test_data (pandas DataFrame or compatible type): [description]
-        targets (pandas Series or compatible type): [description]
-        protected_attr (pandas Series or compatible type): [description]
+        test_data (pandas DataFrame or compatible type):
+        targets (pandas Series or compatible type):
+        protected_attr (pandas Series or compatible type):
         model (scikit model or other model object with a *.predict() function
             that accepts test_data and returns an array of predictions).
             Defaults to None. If None, must pass predictions.
@@ -61,19 +55,19 @@ def measure_model(test_data, targets, protected_attr, model=None,
 
 
 def compare_models(test_data, target_data, protected_attr, models=None,
-                   predictions=None):
+                   predictions=None, probabilities=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
 
     Args:
-        test_data (pandas DataFrame or compatible type): [description]
-        targets (pandas Series or compatible type): [description]
-        protected_attr (pandas Series or compatible type): [description]
-        model (scikit model or other model object with a *.predict() function
-            that accepts test_data and returns an array of predictions).
+        test_data (pandas DataFrame or compatible type):
+        targets (pandas Series or compatible type):
+        protected_attr (pandas Series or compatible type):
+        model (scikit models or other model objects with a *.predict() function
+            that accept test_data and return an array of predictions).
             Defaults to None. If None, must pass predictions.
-        predictions (pandas Series or compatible type): Set of predictions
+        predictions (pandas Series or compatible types): Set of predictions
             corresponding to targets. Defaults to None. Ignored
             if model argument is passed.
         probabilities (pandas Series or compatible type): Set of probabilities
@@ -84,13 +78,12 @@ def compare_models(test_data, target_data, protected_attr, models=None,
         pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, target_data, protected_attr, models,
-                       predictions, verboseMode=True)
+                       predictions, probabilities=None, verboseMode=True)
     table = comp.compare_measures()
     return table
 
 
-def compare_measures(test_data, target_data, protected_attr_data, models=None,
-                     predictions=None):
+def compare_measures(test_data, target_data, protected_attr_data, models):
     """ Deprecated in favor of compare_models. Generates a report comparing
         fairness measures for the models passed.Note: This is a wrapper for the
         FairCompare.compare_measures method See FairCompare for more
@@ -104,7 +97,7 @@ def compare_measures(test_data, target_data, protected_attr_data, models=None,
             " Use compare_models instead.", PendingDeprecationWarning
         )
     comp = FairCompare(test_data, target_data, protected_attr_data, models,
-                       predictions, verboseMode=False)
+                       verboseMode=False)
     table = comp.compare_measures()
     return table
 
@@ -150,10 +143,6 @@ class FairCompare(ABC):
         # The user is forced to pass either models or predictions as None to
         # simplify attribute management. If models are passed, they will be used
         # to produce predictions.
-        if not (models is None or preds is None):
-            err = ("FairCompare accepts either models or predictions, but not"
-                   + " both")
-            raise ValidationError(err)
         self.models = models if models not in [None, [None]] else None
         self.preds = None if self.models is not None else preds
         self.probs = None if self.models is not None else probs
@@ -168,10 +157,7 @@ class FairCompare(ABC):
         else:
             self.verboseMode = True
         #
-        try:
-            self.__validate()
-        except ValidationError as ve:
-            raise ValidationError(f"Error loading FairCompare. {ve}")
+        self.__setup()
 
     def compare_measures(self):
         """ Returns a pandas dataframe containing fairness and performance
@@ -238,36 +224,34 @@ class FairCompare(ABC):
                 - ensures that each dictionary entry is of a type that can
                 be measured by this tool
         """
+        # Until otherwise updated, expect all objects to be non-iterable and
+        # assume no keys
+        expected_len = 1 # expected len of iterable objects
+        expected_keys = []
+
         # Iterable attributes must be of same length so that keys can be
         # properly matched when they're converted to dictionaries.
-        expected_len = 1 # expected len of iterable objects
-        measure_obj = [getattr(self, m) for m in self.__meas_obj]
-        iterable_obj = [i for i in measure_obj
-                        if isinstance(i, self.__iter_types)]
+        iterable_obj = [m for m in self.__meas_obj
+                        if isinstance(getattr(self, m), self.__iter_types)]
         if any(iterable_obj):
-            lengths = [len(i) for i in iterable_obj]
+            lengths = [len(getattr(self, i)) for i in iterable_obj]
             err = "All iterable arguments must be of same length"
             if not len(set(lengths)) == 1:
                 raise ValidationError(err)
             else:
                 expected_len = lengths[0]
-        else:
-            pass
 
-        # Dictionaries will be assumed to have the same keys after validation
-        expected_keys = [f'model_{n+1}' for n in range(0, expected_len)]
-        dict_obj = [i for i in iterable_obj if is_dictlike(i)]
+        # Dictionaries will assume the same keys after validation
+        dict_obj = [getattr(self, i)
+                    for i in iterable_obj if is_dictlike(getattr(self, i))]
         if any(dict_obj):
             err = "All dict arguments must have the same keys"
             if not all([k.keys() == dict_obj[0].keys() for k in dict_obj]):
                 raise ValidationError(err)
-            else:
+            elif not any(expected_keys):
                 expected_keys = list(dict_obj[0].keys())
         else:
-            if any(iterable_obj):
-                print("Since no model names were passed, the following names",
-                      "have been assigned to the models per their indexes:",
-                      expected_keys)
+            expected_keys = [f'model {n+1}' for n in range(0, expected_len)]
 
         # All measure-related attributes will be assumed as dicts henceforth
         for name in self.__meas_obj:
@@ -278,10 +262,12 @@ class FairCompare(ABC):
                     objL = getattr(self, name)
                 objD = {k: objL[i] for i, k in enumerate(expected_keys)}
                 setattr(self, name, objD)
+            else:
+                pass
         return None
 
     def __set_predictions(self):
-        """ If models are presnt, generates predictions for each model.
+        """ If any predictions are missing, generates predictions for each model.
             Assumes that models and data have been validated.
 
         """
@@ -289,6 +275,14 @@ class FairCompare(ABC):
         if any(m is None for m in model_objs):
             return None
         #
+        pred_objs = [*self.preds.values()]
+        prob_objs = [*self.probs.values()]
+        if not any(p is None for p in pred_objs + prob_objs):
+            return None
+        else:
+            self.preds, self.probs = {}, {}
+        #
+        missing_probs = []
         for mdl_name, mdl in self.models.items():
             pred_func = getattr(mdl, "predict", None)
             if not callable(pred_func):
@@ -301,19 +295,40 @@ class FairCompare(ABC):
                        " Verify if data are correctly formatted for this model."
                        ) + e
                 raise ValidationError(msg)
-            # Since most fairness measures do not require probabilities, y_prob is
-            #   optional
+            self.preds[mdl_name] = y_pred
+            # Since most fairness measures do not require probabilities, y_prob
+            # is optional
             try:
                 y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
-            except BaseException as e:
-                msg = (f"Failure predicting probabilities for {mdl_name}."
-                       f" Related metrics will be skipped. {e}\n")
-                warnings.warn(msg)
+            except BaseException:
                 y_prob = None
-            #
-            self.preds[mdl_name] = y_pred
-            self.preds[mdl_name] = y_prob
+                missing_probs.append(mdl_name)
+            self.probs[mdl_name] = y_prob
+        if any(missing_probs):
+            print("Probabilities could not be generated for the following " +
+                  f"models{missing_probs}. Please note that dependent metrics " +
+                  "will appear as missing in the results.")
         return None
+
+    def __setup(self):
+        ''' Validates models and data necessary to generate predictions. Then,
+            generates predictions using those models as needed. To be run on
+            initialization only, or whenever model objects are updated, so that
+            predictions are not updated
+        '''
+        try:
+            if not (self.models is None or self.preds is None):
+                err = ("FairCompare accepts either models or predictions, but" +
+                       "not both")
+                raise ValidationError(err)
+            self.__set_dicts()
+            self.__validate_models()
+            self.__validate_data(subset=['X'])
+            self.__set_predictions()
+            self.__validate_data()
+        except ValidationError as ve:
+            raise ValidationError(f"Error loading FairCompare. {ve}")
+
 
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation
@@ -325,36 +340,50 @@ class FairCompare(ABC):
         Raises:
             ValidationError
         """
-        # Validation may be paused if iterated
+        # Validation may be paused during iteration to save time
         if self.__paused_validation():
             return None
-        #
-        self.__set_dicts()
-        self.__validate_models()
-        self.__validate_data()
-        self.__set_predictions()
-        return None
+        else:
+            self.__validate_models()
+            self.__validate_data()
+            return None
 
-    def __validate_data(self):
-        """ Verifies that data are of correct type and length; stores objects
-            in dicts if not already in them. Assumes that models have been
-            validated.
+    def __validate_data(self, subset=None):
+        """ Verifies that data are of correct type and length.
+
+        Args:
+            subset (list/tuple/set of strings): names of the data properties to
+                validate. If passed as None, validates all. Defaults to None.
 
         Raises:
             ValidationError
         """
+        if subset is not None:
+            err = "Subset incorrectly specified"
+            if not isinstance(subset, (list, tuple, set)) and len(subset) > 0:
+                raise ValidationError(err)
+            elif not all(d in self.__meas_obj for d in subset):
+                raise ValidationError(err)
+            else:
+                subset = [d for d in subset if d != "models"]
+        else:
+            subset = [d for d in self.__meas_obj if d != "models"]
+        data_obj = {d: getattr(self, d) for d in subset}
+
+        # Data objects are assumed to be held in a dict
+        if not all(is_dictlike(i) for i in data_obj):
+            self.__set_dicts()
+
         # Ensure data dicts contain  containing pandas-compatible arrays of
         # same length
-        data_obj = {m: getattr(self, m)
-                    for m in self.__meas_obj if m != "models"}
         data_lengths = []
         for data_name, data in data_obj.items():
             for d in data.values():
-                if data_name in ['preds', 'probs'] and d is None:
+                if data_name == "probs" and d is None:
                     continue
                 elif not isinstance(d, self.__data_types):
-                    err = ("Input data must be numpy array or pandas object,"
-                           " or a list/dict of such objects")
+                    err = (f"Input {data_name} must be numpy array or pandas " +
+                           "object, or a list/dict of such objects")
                     raise ValidationError(err)
                 else:
                     data_lengths.append(d.shape[0])
@@ -365,25 +394,26 @@ class FairCompare(ABC):
         # This class cannot yet handle grouped protected attributes or
         # multi-objective predictions
         oneD_arrays = ['prtc_attr', 'y', 'preds', 'probs']
+        oneD_arrays = [d for d in oneD_arrays if d in subset]
         for name in oneD_arrays:
             data_dict = getattr(self, name)
             for _, arr in data_dict.items():
-                err = None
-                if name in ['preds', 'probs'] and arr is None:
+                if data_name == "probs" and d is None:
                     continue
-                if len(arr.shape) > 1 and arr.shape[1] > 1:
+                elif len(arr.shape) > 1 and arr.shape[1] > 1:
                     err = ("This library is not yet compatible with groups of"
                         " protected attributes.")
+                    raise ValidationError(err)
 
         # Measuring functions cannot yet handle continuous protected attributes
         # or targets
         binVal_arrays = ['prtc_attr', 'y', 'preds']
+        binVal_arrays = [d for d in binVal_arrays if d in subset]
         for name in binVal_arrays:
             data_dict = getattr(self, name)
             for _, arr in data_dict.items():
-                if name == "preds" and arr is None:
-                        continue
-                elif not all(np.unique(arr) == [0, 1]) and name == "prtc_attr":
+                err = None
+                if not all(np.unique(arr) == [0, 1]) and name == "prtc_attr":
                     err = (f"Expected values of [0,1] in {name}." +
                             f" Received {np.unique(arr)}")
                 elif (not all(v in [0, 1] for v in np.unique(arr))
@@ -399,16 +429,12 @@ class FairCompare(ABC):
 
     def __validate_models(self):
         """ If models are present, verifies that models have a predict function
-            and generates predictions using the models. Assumes that models
-            are in dict format
-
-            Note: FairCompare should force the user to pass either models
-            or predictions as None.
+            and generates predictions using the models.
 
         Raises:
             ValidationError
         """
-        # Set models as dict if not already
+        # Model objects are assumed to be held in a dict
         if not is_dictlike(self.models):
             self.__set_dicts()
 

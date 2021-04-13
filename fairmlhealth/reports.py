@@ -96,9 +96,12 @@ def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
         aif_mtrc.ratio(sk_metric.balanced_accuracy_score, y_true,
                        y_pred, prot_attr=pa_name, priv_group=priv_grp)
     if y_prob is not None:
-        gf_vals['AUC Difference'] = \
-            aif_mtrc.difference(sk_metric.roc_auc_score, y_true, y_prob,
+        try:
+            gf_vals['AUC Difference'] = \
+                aif_mtrc.difference(sk_metric.roc_auc_score, y_true, y_prob,
                                 prot_attr=pa_name, priv_group=priv_grp)
+        except:
+            pass
     return gf_vals
 
 

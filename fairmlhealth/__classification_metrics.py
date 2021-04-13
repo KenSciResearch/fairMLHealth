@@ -90,9 +90,6 @@ def specificity(y_true, y_pred): # aka. TNR, selectivity
     return validate_result(res, "Specificity")
 
 
-
-
-
 def f1_score(y_true, y_pred):
     pre = precision(y_true, y_pred)
     rec = sensitivity(y_true, y_pred)
