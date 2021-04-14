@@ -1,7 +1,10 @@
 '''
-A quick-running script to debug that syntax issues and basic errors in model
-measurement
+A quick-running script to identify syntax issues and basic errors in model
+measurement during development (used to catch problems that are missed by the
+linter)
 '''
+
+
 from fairmlhealth import model_comparison as fhmc
 from fairmlhealth.reports import flag
 import logging
