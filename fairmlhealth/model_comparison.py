@@ -35,7 +35,6 @@ def measure_model(test_data, targets, protected_attr, model=None,
         targets (pandas Series or compatible type):
         protected_attr (pandas Series or compatible type):
         model (scikit model or other model object with a *.predict() function
-            that accepts test_data and returns an array of predictions).
             Defaults to None. If None, must pass predictions.
         predictions (pandas Series or compatible type): Set of predictions
             corresponding to targets. Defaults to None. Ignored
@@ -47,14 +46,14 @@ def measure_model(test_data, targets, protected_attr, model=None,
     Returns:
         pandas dataframe of fairness measures for the model
     """
-    comp = FairCompare(test_data, targets, protected_attr, [model],
-                       predictions, probabilities, verboseMode=False)
+    comp = FairCompare(test_data, targets, protected_attr, model,
+                       predictions, probabilities=None, verboseMode=True)
     model_name = list(comp.models.keys())[0]
     table = comp.measure_model(model_name, skip_performance=True)
     return table
 
 
-def compare_models(test_data, target_data, protected_attr, models=None,
+def compare_models(test_data, targets, protected_attr, models=None,
                    predictions=None, probabilities=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
@@ -77,7 +76,7 @@ def compare_models(test_data, target_data, protected_attr, models=None,
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
-    comp = FairCompare(test_data, target_data, protected_attr, models,
+    comp = FairCompare(test_data, targets, protected_attr, models,
                        predictions, probabilities=None, verboseMode=True)
     table = comp.compare_measures()
     return table

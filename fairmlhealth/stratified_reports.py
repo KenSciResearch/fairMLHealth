@@ -87,9 +87,8 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     over_max_vals = []
     for f in stratified_features:
         # stratified analysis can only be run on discrete columns
-        if (df[f].nunique() > max_cats and
-            not df[f].astype(str).str.isdigit().all()):
-                over_max_vals.append(f)
+        if df[f].nunique() > max_cats:
+            over_max_vals.append(f)
         elif df[f].isna().any():
             df[f].fillna(np.nan, inplace=True)
         df[f] = df[f].astype(str)
