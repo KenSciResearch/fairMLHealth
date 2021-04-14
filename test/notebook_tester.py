@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 
-def validate_notebook(path, timeout=60, ):
+def validate_notebook(path, timeout=60):
     """ Executes the notebook via nbconvert and collects the output
 
     Args:
