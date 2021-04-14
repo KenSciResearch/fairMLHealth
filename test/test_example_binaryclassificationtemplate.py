@@ -8,17 +8,19 @@ import os
 import warnings
 
 
-def test_example_toolusage():
+def test_example_binaryclassificationtemplate():
     this_dir = os.path.dirname(os.path.abspath(__file__))
-    nb = "Example-ToolUsage.ipynb"
+    nb = "Example-BinaryClassificationTemplate.ipynb"
     nb_path = os.path.join(this_dir, "..", "tutorials_and_examples", nb)
-    nb, err = validate_notebook(nb_path)
+    _, err = validate_notebook(nb_path, timeout=1800)
 
     if any(err):
         for e in err:
             for t in e['traceback']:
                 print(t)
         raise AssertionError("Notebook Broken")
+    else:
+        pass
 
     warns = list_warnings(nb)
     if any(warns):
