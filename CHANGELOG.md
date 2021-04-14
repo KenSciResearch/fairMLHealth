@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+
+## [0.1.7] - 2021-04-14
+### Testing Update
+- Add integrated notebook testing
+- Enhahnce contribution documentation
+
 ## [0.1.6] - 2021-04-14
 ### Flexibility Update
 - Add method to model comparison allowing comparison of either predictions or models
