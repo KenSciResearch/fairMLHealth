@@ -193,15 +193,20 @@ class FairCompare(ABC):
                 as found in the object's "models" dictionary
         """
         self.__validate()
-        if model_name not in self.models.keys():
-            msg = (f"Could not measure fairness for {model_name}. Name"
-                   f" not found in models. Available models include "
-                   f" {list(self.models.keys())}")
+        msg = f"Could not measure fairness for {model_name}"
+        if model_name not in self.preds.keys():
+            msg += (" Name not found Available options include "
+                   f"{list(self.preds.keys())}")
+            print(err)
+            return pd.DataFrame()
+        elif self.preds[model_name] is None:
+            msg += (" No predictions present.")
             print(msg)
             return pd.DataFrame()
-        res = classfair(self.X[model_name], self.prtc_attr[model_name],
-                        self.y[model_name], self.preds[model_name],
-                        self.probs[model_name], **kwargs)
+        else:
+            res = classfair(self.X[model_name], self.prtc_attr[model_name],
+                            self.y[model_name], self.preds[model_name],
+                            self.probs[model_name], **kwargs)
         return res
 
     def save_comparison(self, filepath):
@@ -271,7 +276,8 @@ class FairCompare(ABC):
 
         """
         model_objs = [*self.models.values()]
-        if any(m is None for m in model_objs):
+
+        if all(m is None for m in model_objs):
             return None
         #
         pred_objs = [*self.preds.values()]
@@ -440,19 +446,20 @@ class FairCompare(ABC):
         # No validation is necessaryIf there are no models (and only
         # predictions)
         model_objs = [*self.models.values()]
-        if any(m is None for m in model_objs):
-            pred_objs = [*self.preds.values()]
+        pred_objs = [*self.preds.values()]
+
+        if (all(m is None for m in model_objs) and
+            all(p is None for p in pred_objs) ):
+                warnings.warn("No models or predictions defined")
+        elif any(m is None for m in model_objs):
             if any(p is None for p in pred_objs):
-                if len(model_objs) == 1:
-                    err = "No models or predictions defined"
-                else:
-                    err = ("Ether models or predictions must have a full set of"
-                           + "nonmissing objects")
+                err = ("Ether models or predictions must have a full set "
+                           + "of nonmissing objects")
                 raise ValidationError(err)
             # If all predictions are defined and some models are present, either
-            # there is a bug or the user has changed this object's models. This
-            # is only an issue if some models are missing, since their presence
-            # means that all predictions will be replaced.
+            # there is a bug or the user has changed this object's models. The
+            # reverse is not an issue, since models will automatically be used
+            # to generate predictions.
             elif not all(m is None for m in model_objs):
                 err = "Some models are missing"
                 raise ValidationError(err)

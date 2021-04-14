@@ -49,7 +49,8 @@ class TestCompModFunction:
         should be a pandas dataframe
     """
     def is_result_valid(self, result):
-        assert isinstance(result, pd.DataFrame) and result.shape[0] > 0
+        if not isinstance(result, pd.DataFrame) and result.shape[0] > 0:
+            raise AssertionError("Invalid Result")
 
     def test_valid_inputs(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
