@@ -1,12 +1,12 @@
 '''
 Validation tests for fairmlhealth
 '''
-from fairmlhealth import model_comparison as fhmc
 
+
+from fairmlhealth import model_comparison as fhmc
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
-
 import pytest
 import pandas as pd
 
