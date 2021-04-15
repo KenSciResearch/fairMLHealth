@@ -9,6 +9,7 @@ COPY . .
 RUN python3 -m pip install --upgrade wheel setuptools pip
 RUN python3 setup.py install
 RUN python3 -m pip install -U pytest
+RUN python3 -m pip install -U nbformat
 RUN python3 -m pytest
 
 # create artifacts folder for built package.
