@@ -5,7 +5,6 @@ Contributors:
     camagallen <ca.magallen@gmail.com>
 """
 import aif360.sklearn.metrics as aif_mtrc
-import fairlearn.metrics as fl_mtrc
 from IPython.display import HTML
 import logging
 import pandas as pd
@@ -15,6 +14,7 @@ import warnings
 
 # Tutorial Libraries
 from . import tutorial_helpers as helpers
+from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .utils import __preprocess_input
 
 
@@ -69,6 +69,12 @@ def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
                                                prot_attr=pa_name)
     gf_vals['Disparate Impact Ratio'] = \
         aif_mtrc.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_name)
+
+    gf_vals['Equalized Odds Difference'] = eq_odds_diff(y_true, y_pred,
+                                                        prtc_attr=pa_name)
+    gf_vals['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
+                                                            prtc_attr=pa_name)
+
     if helpers.is_kdd_tutorial():
         gf_vals['Average Odds Difference'] = \
             aif_mtrc.average_odds_difference(y_true, y_pred, prot_attr=pa_name)
@@ -76,14 +82,6 @@ def __binary_group_fairness_measures(X, pa_name, y_true, y_pred, y_prob=None,
             aif_mtrc.equal_opportunity_difference(y_true, y_pred,
                                                   prot_attr=pa_name)
 
-    # Fairlearn metrics cannot handle more than one protected attribute
-    if len(pa_name) == 1:
-        gf_vals['Equalized Odds Difference'] = \
-            fl_mtrc.equalized_odds_difference(y_true, y_pred,
-                                              sensitive_features=np.array(y_true.index))
-        gf_vals['Equalized Odds Ratio'] = \
-            fl_mtrc.equalized_odds_ratio(y_true, y_pred,
-                                         sensitive_features=np.array(y_true.index))
     # Precision
     gf_vals['Positive Predictive Parity Difference'] = \
         aif_mtrc.difference(sk_metric.precision_score, y_true,
