@@ -22,7 +22,7 @@ def _get_version():
 
 
 test_deps = [
-    "pytest==5.4.2", "nbformat",
+    "pytest==5.4.2", "nbformat", "nbconvert"
 ]
 
 

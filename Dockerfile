@@ -9,7 +9,8 @@ COPY . .
 RUN python3 -m pip install --upgrade wheel setuptools pip
 RUN python3 setup.py install
 RUN python3 -m pip install -U pytest
-RUN python3 -m pip install -U jupyter nbformat nbconvert
+RUN python3 -m pip install -U nbformat nbconvert
+ENV IS_CICD=true
 RUN python3 -m pytest
 
 # create artifacts folder for built package.
