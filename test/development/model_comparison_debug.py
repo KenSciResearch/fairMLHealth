@@ -1,7 +1,7 @@
 '''
-A quick-running script to identify syntax issues and basic errors in model
-measurement during development (used to catch problems that are missed by the
-linter)
+This is a quick-running script to identify syntax issues and basic errors in
+the model_comparison during development. It can be used to catch problems that
+are missed by the linter before running the full set of unit tests.
 '''
 
 

@@ -10,9 +10,9 @@ import warnings
 
 def test_tutorial_evaluatingbinaryclassification():
     this_dir = os.path.dirname(os.path.abspath(__file__))
-    nb = "Tutorial-EvaluatingFairnessInBinaryClassification.ipynb"
-    nb_path = os.path.join(this_dir, "..", "tutorials_and_examples", nb)
-    _, err = validate_notebook(nb_path, timeout=1800)
+    nb_name = "Tutorial-EvaluatingFairnessInBinaryClassification.ipynb"
+    nb_path = os.path.join(this_dir, "..", "tutorials_and_examples", nb_name)
+    nb, err = validate_notebook(nb_path, timeout=1800)
 
     if any(err):
         for e in err:

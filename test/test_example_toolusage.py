@@ -10,8 +10,8 @@ import warnings
 
 def test_example_toolusage():
     this_dir = os.path.dirname(os.path.abspath(__file__))
-    nb = "Example-ToolUsage.ipynb"
-    nb_path = os.path.join(this_dir, "..", "tutorials_and_examples", nb)
+    nb_name = "Example-ToolUsage.ipynb"
+    nb_path = os.path.join(this_dir, "..", "tutorials_and_examples", nb_name)
     nb, err = validate_notebook(nb_path)
 
     if any(err):
