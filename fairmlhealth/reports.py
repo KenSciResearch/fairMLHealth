@@ -18,7 +18,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .utils import __preprocess_input
 
 
-# Temporarily hide pandas SettingWithCopy warning
+# ToDo: find better solution for warnings
 warnings.filterwarnings('ignore', module='pandas')
 warnings.filterwarnings('ignore', module='sklearn')
 

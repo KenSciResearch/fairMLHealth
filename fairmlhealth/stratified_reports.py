@@ -2,10 +2,16 @@ import aif360.sklearn.metrics as aif_mtrc
 from fairmlhealth import reports
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_string_dtype
+from pandas.api.types import is_numeric_dtype
 from scipy import stats
 import sklearn.metrics as sk_metric
+import warnings
+
+
 from . import __classification_metrics as clmtrc
 from .utils import __preprocess_input
+
 
 
 ''' Utility Functions '''
@@ -86,11 +92,11 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     #
     over_max_vals = []
     for f in stratified_features:
-        # stratified analysis can only be run on discrete columns
         if df[f].nunique() > max_cats:
             over_max_vals.append(f)
-        elif df[f].isna().any():
-            df[f].fillna(np.nan, inplace=True)
+        else:
+            pass
+        df[f].fillna(np.nan, inplace=True)
         df[f] = df[f].astype(str)
     if any(over_max_vals):
         print(f"USER ALERT! The following features have more than {max_cats}",
@@ -264,10 +270,10 @@ def __cp_group(x, y, yh, yp):
     res = {'N OBS': x.shape[0],
            'TRUE MEAN': x[y].mean(),
            'PRED MEAN': x[yh].mean(),
-           'TPR': clmtrc.sensitivity(x[y], x[yh]),
-           'TNR': clmtrc.specificity(x[y], x[yh]),
-           'FPR': clmtrc.false_alarm_rate(x[y], x[yh]),
-           'FNR': clmtrc.miss_rate(x[y], x[yh]),
+           'TPR': clmtrc.true_positive_rate(x[y], x[yh]),
+           'TNR': clmtrc.true_negative_rate(x[y], x[yh]),
+           'FPR': clmtrc.false_positive_rate(x[y], x[yh]),
+           'FNR': clmtrc.false_negative_rate(x[y], x[yh]),
            'ACCURACY': clmtrc.accuracy(x[y], x[yh]),
            'PRECISION (PPV)': clmtrc.precision(x[y], x[yh])  # PPV
            }
@@ -431,32 +437,32 @@ def __cf_group(pa_name, y_true, y_pred, priv_grp=1):
         aif_mtrc.difference(sk_metric.precision_score, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['TPR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.sensitivity, y_true, y_pred, prot_attr=pa_name,
-                       priv_group=priv_grp)
+        aif_mtrc.ratio(clmtrc.true_positive_rate, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['FPR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.false_alarm_rate, y_true, y_pred,
+        aif_mtrc.ratio(clmtrc.false_positive_rate, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['TNR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.specificity, y_true, y_pred, prot_attr=pa_name,
-                       priv_group=priv_grp)
+        aif_mtrc.ratio(clmtrc.true_negative_rate, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['FNR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.miss_rate, y_true, y_pred, prot_attr=pa_name,
-                       priv_group=priv_grp)
+        aif_mtrc.ratio(clmtrc.false_negative_rate, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
     #
     gf_vals['PPV Diff'] = \
         aif_mtrc.difference(sk_metric.precision_score, y_true,
                             y_pred, prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['TPR Diff'] = \
-        aif_mtrc.difference(clmtrc.sensitivity, y_true, y_pred,
+        aif_mtrc.difference(clmtrc.true_positive_rate, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['FPR Diff'] = \
-        aif_mtrc.difference(clmtrc.false_alarm_rate, y_true, y_pred,
+        aif_mtrc.difference(clmtrc.false_positive_rate, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['TNR Diff'] = \
-        aif_mtrc.difference(clmtrc.specificity, y_true, y_pred,
+        aif_mtrc.difference(clmtrc.true_negative_rate, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['FNR Diff'] = \
-        aif_mtrc.difference(clmtrc.miss_rate, y_true, y_pred,
+        aif_mtrc.difference(clmtrc.false_negative_rate, y_true, y_pred,
                             prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -496,7 +502,7 @@ def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     res_f = []
     rprt = rprt[['FEATURE', 'FEATURE VALUE', 'N OBS']]
     pa_name = 'prtc_attr'
-    for i, row in rprt.iterrows():
+    for _, row in rprt.iterrows():
         f = row['FEATURE']
         v = row['FEATURE VALUE']
         df[pa_name] = 0

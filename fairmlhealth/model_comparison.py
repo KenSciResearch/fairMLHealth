@@ -32,14 +32,14 @@ def measure_model(test_data, targets, protected_attr, model=None,
 
     Args:
         test_data (pandas DataFrame or compatible type):
-        targets (pandas Series or compatible type):
-        protected_attr (pandas Series or compatible type):
+        targets (1D array-like):
+        protected_attr (1D array-like):
         model (scikit model or other model object with a *.predict() function
             Defaults to None. If None, must pass predictions.
-        predictions (pandas Series or compatible type): Set of predictions
+        predictions (1D array-like): Set of predictions
             corresponding to targets. Defaults to None. Ignored
             if model argument is passed.
-        probabilities (pandas Series or compatible type): Set of probabilities
+        probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
 
@@ -61,15 +61,15 @@ def compare_models(test_data, targets, protected_attr, models=None,
 
     Args:
         test_data (pandas DataFrame or compatible type):
-        targets (pandas Series or compatible type):
-        protected_attr (pandas Series or compatible type):
+        targets (1D array-like):
+        protected_attr (1D array-like):
         model (scikit models or other model objects with a *.predict() function
             that accept test_data and return an array of predictions).
             Defaults to None. If None, must pass predictions.
-        predictions (pandas Series or compatible types): Set of predictions
+        predictions (1D array-likes): Set of predictions
             corresponding to targets. Defaults to None. Ignored
             if model argument is passed.
-        probabilities (pandas Series or compatible type): Set of probabilities
+        probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
 
@@ -127,10 +127,10 @@ class FairCompare(ABC):
                 predict() method. Dict keys assumed as model names. If a
                 list-like object is passed, will set model names relative to
                 their index
-            preds (pandas Series or compatible type): Set of predictions
+            preds (1D array-like): Set of predictions
                 corresponding to targets. Defaults to None. Ignored
                 if model argument is passed.
-            probs (pandas Series or compatible type): Set of probabilities
+            probs (1D array-like): Set of probabilities
                 corresponding to predictions. Defaults to None. Ignored
                 if models argument is passed.
         """

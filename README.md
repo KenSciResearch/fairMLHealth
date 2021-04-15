@@ -50,7 +50,7 @@ from sklearn.tree import DecisionTreeClassifier
 # Load data
 X = pd.DataFrame({'col1':[1,2,50,3,45,32], 'col2':[34,26,44,2,1,1],
                   'col3':[32,23,34,22,65,27], 'gender':[0,1,0,1,1,0]})
-y = pd.DataFrame({'y':[1,0,0,1,0,1]})
+y = pd.Series([1,1,0,1,0,1], name='y')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random_state=36)
 
 #Train models
@@ -161,7 +161,7 @@ fhmc.compare_models(X_test, y_test,
 
 
 ### Other Examples
-For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 
 ## Connect with Us!

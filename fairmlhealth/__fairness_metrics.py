@@ -1,11 +1,13 @@
 
 from aif360.sklearn.metrics import difference, ratio
-from .__classification_metrics import false_positive_rate, true_positive_rate
-import fairlearn.metrics as fl_mtrc
-import numpy as np
+import warnings
+
+from .__classification_metrics import (
+    epsilon, false_positive_rate, true_positive_rate )
 
 
-__all__ = ["eq_odds_diff", "eq_odds_ratio"]
+# ToDo: find better solution for warnings
+warnings.filterwarnings('ignore', module='aif360')
 
 
 def eq_odds_diff(y_true, y_pred, prtc_attr=None, priv_grp=1):
@@ -22,10 +24,6 @@ def eq_odds_diff(y_true, y_pred, prtc_attr=None, priv_grp=1):
                           prot_attr=prtc_attr, priv_group=priv_grp)
     tpr_diff = difference(true_positive_rate, y_true, y_pred,
                           prot_attr=prtc_attr, priv_group=priv_grp)
-
-    fl = fl_mtrc.equalized_odds_difference(y_true, y_pred,
-                                       sensitive_features=np.array(y_true.index))
-    import pdb; pdb.set_trace()
     if abs(fpr_diff) > abs(tpr_diff):
         return fpr_diff
     else:
@@ -41,13 +39,10 @@ def eq_odds_ratio(y_true, y_pred, prtc_attr=None, priv_grp=1):
         y_pred (1D array-like):
         priv_grp (int, optional):  . Defaults to 1.
     """
-    fpr_ratio = ratio(false_positive_rate, y_true, y_pred, prot_attr=prtc_attr,
-                      priv_group=priv_grp)
-    tpr_ratio = ratio(true_positive_rate, y_true, y_pred, prot_attr=prtc_attr,
-                      priv_group=priv_grp)
-    fl = fl_mtrc.equalized_odds_ratio(y_true, y_pred,
-                                         sensitive_features=np.array(y_true.index))
-    import pdb; pdb.set_trace()
+    fpr_ratio = ratio(false_positive_rate, y_true, y_pred,
+                        prot_attr=prtc_attr, priv_group=priv_grp)
+    tpr_ratio = ratio(true_positive_rate, y_true, y_pred,
+                        prot_attr=prtc_attr, priv_group=priv_grp)
     if round(abs(fpr_ratio - 1), 6) > abs(tpr_ratio - 1):
         return fpr_ratio
     else:

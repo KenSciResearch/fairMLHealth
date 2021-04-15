@@ -41,7 +41,6 @@ setup(
     },
     python_requires='>=3.6, <4',
     install_requires=['aif360>=0.3.0',
-                      'fairlearn>=0.4.6',
                       'lightgbm',
                       'matplotlib',
                       'numpy==1.18.2',

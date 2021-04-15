@@ -22,7 +22,7 @@ X = pd.DataFrame({'col1':[1,2,50,3,45,32,44,35],
                   'gender':[0,1,0,1,1,0,1,0],
                   'ethnicity':[0,0,0,1,1,1,1,1]
                  })
-y = pd.DataFrame({'y':[1,0,0,1,0,1,1,1]})
+y = pd.Series([1,1,0,1,0,1], name='y')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75,
                                                     random_state=36)
 
