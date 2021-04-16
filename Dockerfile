@@ -9,7 +9,7 @@ COPY . .
 RUN python3 -m pip install --upgrade wheel setuptools pip
 RUN python3 setup.py install
 RUN python3 -m pip install -U pytest
-RUN python3 -m pip install -U nbformat nbconvert
+RUN python3 -m pip install -U nbformat nbconvert ipython
 
 # ensure that python3 kernel is avialble
 RUN python3 -m ipython kernel install
