@@ -9,7 +9,9 @@ Before you begin:
 
 ### Don't see your issue? Open one
 
-If you spot something new, [open an issue](https://github.com/KenSciResearch/fairMLHealth/issues). We'll use the issue to have a conversation about the problem you want to fix.
+If you spot something new, use an [issue template](https://github.com/KenSciResearch/fairMLHealth/blob/integration/docs/development/ISSUE_TEMPLATE.md) to [open an issue](https://github.com/KenSciResearch/fairMLHealth/issues). We'll use the issue to have a conversation about the problem you want to fix.
+
+
 
 ### Ready to make a change? Fork the repo
 
@@ -54,7 +56,9 @@ If you'd like help troubleshooting a docs PR you're working on, have a great new
 ### :beetle: Issues
 [Issues](https://docs.github.com/en/github/managing-your-work-on-github/about-issues) are used to track tasks that contributors can help with. If an issue has a triage label, we haven't reviewed it yet and you shouldn't begin work on it.
 
-If you've found something in the content or the website that should be updated, search open issues to see if someone else has reported the same thing.
+If you've found something in the content or the website that should be updated, search open issues to see if someone else has reported the same thing. If it's something new, open an issue using a [template](https://github.com/KenSciResearch/fairMLHealth/blob/integration/docs/development/ISSUE_TEMPLATE.md). We'll use the issue to have a conversation about the problem you want to fix.
+
+
 
 ### :hammer_and_wrench: Pull requests
 A [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) is a way to suggest changes in our repository.
