@@ -25,8 +25,8 @@ test_deps = [
     "pytest==5.4.2", "nbformat", "nbconvert", "ipython"
 ]
 
- tutorial_deps = ['ipython', 'fairlearn>=0.4.6', 'jupyter', 'lightgbm',
-                 'matplotlib', 'seaborn', 'xgboost']
+tutorial_deps = ['ipython', 'fairlearn>=0.4.6', 'jupyter', 'lightgbm',
+                 'matplotlib', 'seaborn', 'xgboost',]
 
 
 setup(
