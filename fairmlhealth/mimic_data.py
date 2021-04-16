@@ -100,7 +100,7 @@ class mimic_loader():
         df = adm_data.merge(dx_data, on='HADM_ID', how='inner'
                     ).merge(px_data, on='HADM_ID', how='inner')
         # Test dataset before saving
-        if df['HADM_ID'].isnull().any():
+        if df['HADM_ID'].isna().any():
             raise ValueError("Missing admission information in MIMIC data")
         if df['HADM_ID'].duplicated().any():
             raise ValueError("Duplicates found in MIMIC data")
@@ -188,7 +188,7 @@ class mimic_loader():
                                 prefix_sep='_')
         id_df = adm_data[['HADM_ID', 'AGE', 'length_of_stay']]
         output = id_df.join(ohe_df)
-        if output[f'HADM_ID'].isnull().any():
+        if output[f'HADM_ID'].isna().any():
             raise ValueError(
                 "Missing hospital admission information in output")
         if output[f'HADM_ID'].duplicated().any():
@@ -216,7 +216,7 @@ class mimic_loader():
                 ).drop_duplicates(
                 ).rename(columns={'ICD9_CODE': f'{feature_type}_ICD9_CODE'})
         # Test result before proceeding
-        if df[f'{feature_type}_CCS'].isnull().any():
+        if df[f'{feature_type}_CCS'].isna().any():
             raise ValueError("Missing CCS information")
         if df.duplicated().any().any():
             raise ValueError("Duplicate CCS Information found")
@@ -231,7 +231,7 @@ class mimic_loader():
         #
         fm_err = (f"Error loading {feature_type}."
                   " Missing admissions found in formatting")
-        if output[f'HADM_ID'].isnull().any():
+        if output[f'HADM_ID'].isna().any():
             raise ValueError(fm_err)
         if output[f'HADM_ID'].duplicated().any():
             raise ValueError(fm_err)

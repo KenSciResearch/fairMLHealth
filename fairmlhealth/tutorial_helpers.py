@@ -56,13 +56,10 @@ def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
             to None.
         criteria (str): query criteria. may not . Defaults to None.
         color (str): css color name. Defaults to 'aquamarine'.
-        h_type (str, optional): [description]. Defaults to 'field'.
+        h_type (str, optional):  . Defaults to 'field'.
 
     Raises:
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
+        ValueError
     """
     if (criteria is not None and values is not None):
         print("Cannot process both criteria and values.",
