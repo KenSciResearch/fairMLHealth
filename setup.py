@@ -49,7 +49,7 @@ setup(
                       'numpy>=1.18.2',
                       'pandas>=1.0.3',
                       'requests',
-                      'scipy>=1.4.1',
+                      'scipy<1.6.0,>=1.4.1',
                       'scikit-learn>=0.23.2'
                     ] + tutorial_deps,
     project_urls={'KenSci': 'https://www.kensci.com'},
