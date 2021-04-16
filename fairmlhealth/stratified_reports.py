@@ -17,8 +17,8 @@ from .utils import __preprocess_input
 ''' Utility Functions '''
 
 
-def __get_yname_dict(df=None):
-    ''' Returns a dictionary containing the expected column names for each
+def __y_cols(df=None):
+    ''' Returns a dict of hidden column names for each
         of the y values used in stratified reporting functions, the keys for
         which are as follows: "yt"="y true"; "yh"="y predicted";
         "yp"="y probabilities". This allows for consistent references that are
@@ -32,15 +32,19 @@ def __get_yname_dict(df=None):
                 of known names; names that are not found will be dropped from
                 the results. Defaults to None.
     '''
-    names = {'yt': '__fairmlhealth_y_true',
-             'yh': '__fairmlhealth_y_pred',
-             'yp': '__fairmlhealth_y_prob'}
+    y_names = {'col_names': {'yt': '__fairmlhealth_y_true',
+                            'yh': '__fairmlhealth_y_pred',
+                            'yp': '__fairmlhealth_y_prob'},
+              'disp_names': {'yt': 'Target',
+                             'yh': 'Prediction',
+                             'yp': 'Probability'}
+            }
     #
     if df is not None:
-        for k in names.keys():
-            if names[k] not in df.columns:
-                names[k] = None
-    return names
+        for k in y_names['col_names'].keys():
+            if y_names['col_names'][k] not in df.columns:
+                y_names['col_names'][k] = None
+    return y_names
 
 
 ''' Data Reporting '''
@@ -72,7 +76,7 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     X, _, y_true, y_pred, y_prob = \
         __preprocess_input(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                            y_prob=y_prob)
-    yt, yh, yp = __get_yname_dict().values()
+    yt, yh, yp = __y_cols().values()
     # Attach y variables and subset to expected columns
     df = X.copy()
     pred_cols = []
@@ -122,7 +126,7 @@ def data_report(X, y_true, features:list=None):
     """
     #
     df = __preprocess_stratified(X, y_true, features=features)
-    yt, yh, yp = __get_yname_dict(df).values()
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     # For the data report it does not matter if y_true is defined. Other metrics
@@ -186,20 +190,21 @@ def __data_grp(x, col):
         x (pandas DataFrame)
     """
     # If column is a hidden variable, replace it with a user-friendly name
-    yvars = __get_yname_dict()
-    if col in yvars.values():
-        colname = list(yvars.keys())[list(yvars.values()).index(col)]
-        colname = "Y" if colname == "yt" else colname.title()
+    yvars = __y_cols()
+    if col in yvars['col_names'].values():
+        idx = list(yvars.values()).index(col)
+        key = list(yvars.keys())[idx]
+        display_name = yvars['disp_names'][key]
     else:
-        colname = col
+        display_name = col
     # Generate dictionary of statistics
     res = {'N OBS': x.shape[0]}
     if not x[col].isna().all():
-        res[f'{colname} MEAN'] = x[col].mean()
-        res[f'{colname} MEDIAN'] = x[col].median()
-        res[f'{colname} STDV'] = x[col].std()
-        res[f'{colname} MIN'] = x[col].min()
-        res[f'{colname} MAX'] = x[col].max()
+        res[f'{display_name} MEAN'] = x[col].mean()
+        res[f'{display_name} MEDIAN'] = x[col].median()
+        res[f'{display_name} STDV'] = x[col].std()
+        res[f'{display_name} MIN'] = x[col].min()
+        res[f'{display_name} MAX'] = x[col].max()
     return res
 
 
@@ -226,7 +231,7 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
         raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, y_prob, features=features)
-    yt, yh, yp = __get_yname_dict(df).values()
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
@@ -305,7 +310,7 @@ def regression_performance(X, y_true, y_pred, features:list=None):
         raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    yt, yh, yp = __get_yname_dict(df).values()
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
@@ -388,7 +393,7 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    yt, yh, yp = __get_yname_dict(df).values()
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
@@ -485,7 +490,7 @@ def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    yt, yh, yp = __get_yname_dict(df).values()
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
