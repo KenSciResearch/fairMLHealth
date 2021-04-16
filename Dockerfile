@@ -12,7 +12,6 @@ RUN python3 -m pip install -U pytest
 RUN python3 -m pip install -U nbformat nbconvert ipython
 
 # ensure that python3 kernel is avialble
-RUN python3 -m ipython kernel install
 ENV IS_CICD=true
 RUN python3 -m pytest
 
