@@ -5,7 +5,7 @@ import pandas as pd
 from scipy import stats
 import sklearn.metrics as sk_metric
 from . import __classification_metrics as clmtrc
-from .utils import __preprocess_input
+from .utils import __preprocess_input, ValidationError
 
 
 ''' Utility Functions '''
@@ -100,6 +100,8 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
         print(f"USER ALERT! The following features have more than {max_cats}",
               "values, which will slow processing time. Consider reducing to",
               f"bins or quantiles: {over_max_vals}")
+    elif len(df.columns) == 0:
+        raise ValidationError("Error during preprocessing")
     return df
 
 
@@ -186,8 +188,8 @@ def __data_grp(x, col):
     # If column is a hidden variable, replace it with a user-friendly name
     yvars = __y_cols()
     if col in yvars['col_names'].values():
-        idx = list(yvars.values()).index(col)
-        key = list(yvars.keys())[idx]
+        idx = list(yvars['col_names'].values()).index(col)
+        key = list(yvars['col_names'].keys())[idx]
         display_name = yvars['disp_names'][key]
     else:
         display_name = col
@@ -394,7 +396,11 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     res = []
     pa_name = 'prtc_attr'
     for f in stratified_features:
-        vals = sorted(df[f].unique().tolist())
+        try:
+            vals = sorted(df[f].unique().tolist())
+        except:
+            print(f)
+            import pdb; pdb.set_trace()
         # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
