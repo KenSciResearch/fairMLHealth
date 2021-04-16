@@ -70,7 +70,7 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     X, _, y_true, y_pred, y_prob = \
         __preprocess_input(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                            y_prob=y_prob)
-    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    yt, yh, yp = (__y_cols())['col_names'].values()
     # Attach y variables and subset to expected columns
     df = X.copy()
     pred_cols = []
