@@ -22,7 +22,7 @@ def _get_version():
 
 
 test_deps = [
-    "pytest==5.4.2", "nbformat", "nbconvert"
+    "pytest==5.4.2", "nbformat", "nbconvert", "ipython"
 ]
 
 
@@ -41,6 +41,8 @@ setup(
     },
     python_requires='>=3.6, <4',
     install_requires=['aif360>=0.3.0',
+                      'fairlearn>=0.4.6',
+                      'ipython',
                       'lightgbm',
                       'matplotlib',
                       'numpy==1.18.2',
@@ -49,8 +51,7 @@ setup(
                       'scipy==1.4.1',
                       'scikit-learn==0.23.2',
                       'seaborn',
-                      'xgboost',
-                      'ipython',
+                      'xgboost'
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness, fair ML',
