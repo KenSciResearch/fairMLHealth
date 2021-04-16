@@ -9,7 +9,7 @@ Before you begin:
 
 ### Don't see your issue? Open one
 
-If you spot something new, use an [issue template](https://github.com/KenSciResearch/fairMLHealth/blob/integration/docs/development/ISSUE_TEMPLATE.md) to [open an issue](https://github.com/KenSciResearch/fairMLHealth/issues). We'll use the issue to have a conversation about the problem you want to fix.
+If you spot something new, use an [issue template](ISSUE_TEMPLATE.md) to [open an issue](https://github.com/KenSciResearch/fairMLHealth/issues). We'll use the issue to have a conversation about the problem you want to fix.
 
 
 
@@ -31,10 +31,10 @@ Fork with [GitHub Codespaces](https://github.com/features/codespaces):
 ### Make your update:
 Make your changes to the file(s) you'd like to update.
   - Are you making changes to the application code? You'll need **pytest** to test the repo locally before submitting your changes.
-  - Are you contributing to markdown? We use [GitHub Markdown](contributing/content-markup-reference.md).
+  - Are you contributing to markdown? We use [GitHub Markdown](https://guides.github.com/features/mastering-markdown).
 
 ### Open a pull request
-When you're done making changes and you'd like to propose them for review, use the [pull request template](#pull-request-template) to open your PR (pull request).
+When you're done making changes and you'd like to propose them for review, use the [pull request template](PULL_REQUEST_TEMPLATE.md) to open your PR (pull request).
 
 ### Submit your PR & get it reviewed
 - Once you submit your PR, others from the Docs community will review it with you. The first thing you're going to want to do is a [self review](#self-review).
@@ -56,14 +56,14 @@ If you'd like help troubleshooting a docs PR you're working on, have a great new
 ### :beetle: Issues
 [Issues](https://docs.github.com/en/github/managing-your-work-on-github/about-issues) are used to track tasks that contributors can help with. If an issue has a triage label, we haven't reviewed it yet and you shouldn't begin work on it.
 
-If you've found something in the content or the website that should be updated, search open issues to see if someone else has reported the same thing. If it's something new, open an issue using a [template](https://github.com/KenSciResearch/fairMLHealth/blob/integration/docs/development/ISSUE_TEMPLATE.md). We'll use the issue to have a conversation about the problem you want to fix.
+If you've found something in the content or the website that should be updated, search open issues to see if someone else has reported the same thing. If it's something new, open an issue using a [template](ISSUE_TEMPLATE.md). We'll use the issue to have a conversation about the problem you want to fix.
 
 
 
 ### :hammer_and_wrench: Pull requests
 A [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) is a way to suggest changes in our repository.
 
-When we merge those changes, they should be deployed to the live site within 24 hours. :earth_africa: To learn more about opening a pull request in this repo, see [Opening a pull request](#opening-a-pull-request) below.
+When we merge those changes, they should be deployed to the live site within 24 hours. :earth_africa: To learn more about opening a pull request in this repo, see [Opening a pull request](#pull-requests) below.
 
 
 ## Pull Requests
@@ -72,9 +72,9 @@ You can use the GitHub user interface :pencil2: for some small changes, like fix
 ### Working in the repository
 Here's some information that might be helpful while working on a PR:
 
-- [Content markup reference](/contributing/content-markup-reference.md) - All of our content is written in GitHub-flavored Markdown, with some additional enhancements.
+-  All of our content is written in GitHub-flavored Markdown, with some additional enhancements.
 
-- [Tests](/tests/README.md) - We use unit testing via pytest to ensure that updates will not cause unforseen breakages. Tests run automatically in your PR, however we strongly suggest running them locally prior to your submission.
+- We use unit testing via pytest to ensure that updates will not cause unforseen breakages. Tests run automatically in your PR, however we strongly suggest running them locally prior to your submission.
 
 ### Reviewing
 We review every single PR. The purpose of reviews is to create the best content we can for people who use GitHub.
@@ -84,9 +84,7 @@ We review every single PR. The purpose of reviews is to create the best content 
 :yellow_heart: Reviews are constructive and start conversation around feedback.
 
 #### Self review
-You should always review your own PR first.
-
-For content changes, make sure that you:
+You should always review your own PR first. For content changes, make sure that you:
 - [ ] Confirm that the changes address every part of the content design plan from your issue (if there are differences, explain them).
 - [ ] Review the content for technical accuracy.
 - [ ] Copy-edit the changes for grammar, spelling, and adherence to the style guide.
