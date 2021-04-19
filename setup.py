@@ -40,7 +40,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/KenSciResearch/fairMLHealth',
-    author='KenSci',
+    author='christine allen',
     author_email='ca.magallen@gmail.com',
     tests_require=test_deps+tutorial_deps,
     extras_require={
@@ -52,7 +52,7 @@ setup(
                       'aif360>=0.3.0',
                       'ipython',
                       'jupyter',
-                      'numpy>=1.16',
+                      'numpy>=1.16,<1.19.0',
                       'pandas>=1.0.3',
                       'requests',
                       'scipy>=1.4.1,<1.6.0',
