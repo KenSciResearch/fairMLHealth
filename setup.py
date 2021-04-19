@@ -56,7 +56,7 @@ setup(
                       'pandas>=1.0.3',
                       'requests',
                       'scipy>=1.4.1,<1.6.0',
-                      'scikit-learn>=0.21',
+                      'scikit-learn>=0.21'
                     ],
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness, fair ML',
