@@ -1,6 +1,9 @@
 '''
-Method adapted from:
+Method Adapted from:
 http://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
+
+Upon recommendation from the AIF360 development team
+(http://aif360.mybluemix.net/)
 '''
 
 from .notebook_tester import validate_notebook, list_warnings
