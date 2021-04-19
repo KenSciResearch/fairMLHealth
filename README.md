@@ -30,6 +30,8 @@ Installing from a local copy of the repo:
 
     pip install <path_to_fairMLHealth_dir>
 
+### Troubleshooting
+For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
 
 ## FairMLHealth Usage
 For a functioning notebook of the usage examples below, see [Example-ToolUsage](./tutorials_and_examples/Example-USAGE.ipynb)
