@@ -18,6 +18,10 @@ def test_tutorial_evaluatingbinaryclassification():
     # the cloud, skip this test if running in the azure CI/CD pipeline
     if is_test_environment():
         return None
+    elif not os.path.exists(os.path.abspath(os.path.expanduser("~/data/MIMIC"))):
+        # ToDo: use readily downloadable data for notebooks that require
+        # integrated testing. Less reliance on MIMIC in general is preferred.
+        return None
     else:
         this_dir = os.path.dirname(os.path.abspath(__file__))
         nb_name = "Tutorial-EvaluatingFairnessInBinaryClassification.ipynb"
