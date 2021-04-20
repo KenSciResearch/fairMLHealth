@@ -29,10 +29,6 @@ tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',
                  'xgboost'
                  ]
 
-tutorial_deps = ['ipython', 'fairlearn>=0.4.6', 'jupyter', 'lightgbm',
-                 'matplotlib', 'seaborn', 'xgboost']
-
-
 setup(
     name='fairmlhealth',
     version=_get_version(),
@@ -42,22 +38,22 @@ setup(
     url='https://github.com/KenSciResearch/fairMLHealth',
     author='christine allen',
     author_email='ca.magallen@gmail.com',
-    tests_require=test_deps+tutorial_deps,
+    tests_require=test_deps,
     extras_require={
                     "test": test_deps,
-                    "tutorial": tutorial_deps,
+                    "tutorial": tutorial_deps
                     },
-    python_requires='>=3.6',
+    python_requires='>=3.6,<4',
     install_requires=[
                       'aif360>=0.3.0',
                       'ipython',
                       'jupyter',
-                      'numpy>=1.16,<1.19.0',
+                      'numpy>=1.16',
                       'pandas>=1.0.3',
                       'requests',
                       'scipy>=1.4.1,<1.6.0',
                       'scikit-learn>=0.21'
-                    ],
+                    ] + tutorial_deps,
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness, fair ML',
     classifiers=[

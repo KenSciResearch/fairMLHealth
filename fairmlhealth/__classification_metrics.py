@@ -20,9 +20,12 @@ __all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
 
 
 def binary_prediction_results(y_true, y_pred):
-    """ Returns a dictionary with counts of TP, TN, FP, and FN. Note that
-        y_true and y_pred are assumed to be numpy-compatible 1D array-like,
-        binary-valued objects on which validation has already been run.
+    """ Returns a dictionary with counts of TP, TN, FP, and FN.
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
     """
     counts = {}
     # Using numpy here instead of scikit since validaton is assumed to have
