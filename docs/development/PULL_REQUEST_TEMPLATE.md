@@ -1,5 +1,6 @@
 # Pull Request Submission
 
+Please use this format as a template for submitting your pull request [through our GitHub Pull Requests page](https://github.com/KenSciResearch/fairMLHealth/pulls).
 ## About
 [Summary of the Pull Request, including motivation and context.]
 

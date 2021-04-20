@@ -33,6 +33,8 @@ Installing from a local copy of the repo:
 ### Troubleshooting
 For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
 
+If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using our [Issue Template](docs/development/ISSUE_TEMPLATE.md).
+
 ## FairMLHealth Usage
 For a functioning notebook of the usage examples below, see [Example-ToolUsage](./tutorials_and_examples/Example-USAGE.ipynb)
 ### Example Setup

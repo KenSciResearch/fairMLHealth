@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.8] - 2021-04-19
+### Installation Improvements
+- Some dependencies removed, others updated to reduce conflicts
+- Troubleshooting documentation added
+- Some warnings removed
+
 
 ## [0.1.7] - 2021-04-14
 ### Testing Update
