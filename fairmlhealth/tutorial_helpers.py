@@ -10,7 +10,7 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import mimic_data
+from . import mimic_data, utils
 import pandas as pd
 
 
@@ -22,6 +22,8 @@ TUTORIAL_ON = False
 
 
 def start_tutorial():
+    # Don't start the tutorial unless required packages are present
+    utils.validate_notebook_requirements()
     global TUTORIAL_ON
     TUTORIAL_ON = True
 

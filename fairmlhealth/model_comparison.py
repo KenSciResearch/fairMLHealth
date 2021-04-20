@@ -310,9 +310,9 @@ class FairCompare(ABC):
                 missing_probs.append(mdl_name)
             self.probs[mdl_name] = y_prob
         if any(missing_probs):
-            print("Probabilities could not be generated for the following " +
-                  f"models{missing_probs}. Please note that dependent " +
-                  "metrics will appear as missing in the results.")
+            warnings.warn("Please note that probabilities could not be " +
+                   f"generated for the following models: {missing_probs}. " +
+                   "Dependent metrics will be skipped.")
         return None
 
     def __setup(self):

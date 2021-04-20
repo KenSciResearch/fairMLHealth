@@ -1,6 +1,7 @@
 '''
 Back-end functions used throughout the library
 '''
+from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 from six import string_types
@@ -158,3 +159,17 @@ def __validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
 
     # If all above runs, inputs pass validation
     return True
+
+
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
+    else:
+        pass
+
