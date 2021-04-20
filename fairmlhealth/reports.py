@@ -18,7 +18,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .utils import __preprocess_input
 
 
-# ToDo: find better solution for warnings
+# ToDo: find better solution for these warnings
 warnings.filterwarnings('ignore', module='pandas')
 warnings.filterwarnings('ignore', module='sklearn')
 

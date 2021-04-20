@@ -7,7 +7,7 @@ from .__classification_metrics import (
     epsilon, false_positive_rate, true_positive_rate )
 
 
-# ToDo: find better solution for warnings
+# ToDo: find better solution for these warnings
 warnings.filterwarnings('ignore', module='aif360')
 
 
