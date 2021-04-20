@@ -9,7 +9,7 @@ import sklearn.metrics as sk_metric
 import warnings
 
 
-from . import __classification_metrics as clmtrc
+from . import __classification_metrics as clmtrc, __fairness_metrics as fcmtrc
 from .utils import __preprocess_input, ValidationError
 
 
@@ -238,6 +238,7 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
+    errs = {}
     for f in stratified_features:
         if not df[f].astype(str).eq(df[f]).all():
             assert TypeError(f, "data are expected in string format")
@@ -246,12 +247,14 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
         try:
             r = grp.apply(lambda x: pd.Series(__cp_group(x, yt, yh, yp)))
         except BaseException as e:
-            # raise ValueError(f"Error processing {f}. {e}\n")
-            print(f"Error processing {f}. {e}\n")
+            errs[f] = e
             continue
         r = r.reset_index().rename(columns={f: 'FEATURE VALUE'})
         r.insert(0, 'FEATURE', f)
         res.append(r)
+    if any(errs):
+        for k, v in errs.items():
+            print(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     #
     overview = {'FEATURE': "ALL_FEATURES",
@@ -318,6 +321,7 @@ def regression_performance(X, y_true, y_pred, features:list=None):
     #
     res = []
     skipped_vars = []
+    errs = {}
     for f in stratified_features:
         if df[f].nunique() == 1:
             skipped_vars.append(f)
@@ -329,11 +333,14 @@ def regression_performance(X, y_true, y_pred, features:list=None):
         try:
             r = grp.apply(lambda x: pd.Series(__rp_grp(x, yt, yh)))
         except BaseException as e:
-            print(f"Error processing {f}. {e}\n")
+            errs[f] = e
             continue
         r = r.reset_index().rename(columns={f: 'FEATURE VALUE'})
         r.insert(0, 'FEATURE', f)
         res.append(r)
+    if any(errs):
+        for k, v in errs.items():
+            print(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     #
     overview = {'FEATURE': "ALL_FEATURES",
@@ -401,12 +408,9 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     #
     res = []
     pa_name = 'prtc_attr'
+    errs = {}
     for f in stratified_features:
-        try:
-            vals = sorted(df[f].unique().tolist())
-        except:
-            print(f)
-            import pdb; pdb.set_trace()
+        vals = sorted(df[f].unique().tolist())
         # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
@@ -416,18 +420,21 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
             # Nothing to measure if only one value is present (other than nan)
             if df[pa_name].nunique() == 1:
                 continue
-            try:
-                subset = df.loc[df[pa_name].notnull(),
-                                [pa_name, yt, yh]].set_index(pa_name)
-                meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
-            except BaseException as e:
-                print(f"Error processing {f}. {e}\n")
-                continue
+            #try:
+            subset = df.loc[df[pa_name].notnull(),
+                            [pa_name, yt, yh]].set_index(pa_name)
+            meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
+            #except BaseException as e:
+            #    errs[f] = e
+            #    continue
             r = pd.DataFrame(meas, index=[0])
             r['N OBS'] = df.loc[df[f].eq(v), pa_name].sum()
             r['FEATURE'] = f
             r['FEATURE VALUE'] = v
             res.append(r)
+    if any(errs):
+        for k, v in errs.items():
+            print(f"Error processing column(s) {k}. {v}\n")
     # Combine and format
     full_res = pd.concat(res, ignore_index=True)
     head_cols = ['FEATURE', 'FEATURE VALUE', 'N OBS']
@@ -444,37 +451,17 @@ def __cf_group(pa_name, y_true, y_pred, priv_grp=1):
     for use with pandas .apply() function.
     """
     gf_vals = {}
-    gf_vals['PPV Ratio'] = \
-        aif_mtrc.difference(sk_metric.precision_score, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['TPR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.true_positive_rate, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['FPR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.false_positive_rate, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['TNR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.true_negative_rate, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['FNR Ratio'] = \
-        aif_mtrc.ratio(clmtrc.false_negative_rate, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['PPV Ratio'] = fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['TPR Ratio'] = fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['FPR Ratio'] = fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['TNR Ratio'] = fcmtrc.tnr_ratio(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['FNR Ratio'] = fcmtrc.fnr_ratio(y_true, y_pred, pa_name, priv_grp)
     #
-    gf_vals['PPV Diff'] = \
-        aif_mtrc.difference(sk_metric.precision_score, y_true,
-                            y_pred, prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['TPR Diff'] = \
-        aif_mtrc.difference(clmtrc.true_positive_rate, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['FPR Diff'] = \
-        aif_mtrc.difference(clmtrc.false_positive_rate, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['TNR Diff'] = \
-        aif_mtrc.difference(clmtrc.true_negative_rate, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['FNR Diff'] = \
-        aif_mtrc.difference(clmtrc.false_negative_rate, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['TNR Diff'] = fcmtrc.tnr_diff(y_true, y_pred, pa_name, priv_grp)
+    gf_vals['FNR Diff'] = fcmtrc.fnr_diff(y_true, y_pred, pa_name, priv_grp)
     return gf_vals
 
 
@@ -513,6 +500,7 @@ def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     res_f = []
     rprt = rprt[['FEATURE', 'FEATURE VALUE', 'N OBS']]
     pa_name = 'prtc_attr'
+    errs = {}
     for _, row in rprt.iterrows():
         f = row['FEATURE']
         v = row['FEATURE VALUE']
@@ -528,13 +516,15 @@ def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
                             [pa_name, yt, yh]].set_index(pa_name)
             meas = __rf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
         except BaseException as e:
-            # raise ValueError(f"Error processing {f}. {e}\n")
-            print(f"Error processing {f}. {e}\n")
+            errs[f] = e
             continue
         r = pd.DataFrame(meas, index=[0])
         r['FEATURE'] = f
         r['FEATURE VALUE'] = v
         res_f.append(r)
+    if any(errs):
+        for k, v in errs.items():
+            print(f"Error processing column(s) {k}. {v}\n")
     # Combine and format
     rprt_update = pd.concat(res_f, ignore_index=True)
     rprt_update = rprt_update[sorted(rprt_update.columns, key=lambda x: x[-5:])]

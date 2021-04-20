@@ -20,7 +20,9 @@ __all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
 
 
 def binary_prediction_results(y_true, y_pred):
-    """ Returns a dictionary with counts of TP, TN, FP, and FN.
+    """ Returns a dictionary with counts of TP, TN, FP, and FN. Since validaton
+        is assumed to have already been run, this should be faster than using
+        scikit
 
         Args:
             y_true, y_pred (numpy-compatible, 1D array-like): binary valued
@@ -28,9 +30,11 @@ def binary_prediction_results(y_true, y_pred):
             on which validation has already been run.
     """
     counts = {}
-    # Using numpy here instead of scikit since validaton is assumed to have
-    # already been run
-    arr = np.array((y_true, y_pred))
+    # Workaround d.t. bug in some versions of numpy causing error when
+    # concatenating dataframes
+    arr = np.empty(2, dtype=object)
+    arr[:]= [y_true, y_pred]
+    #
     t_sum = np.sum(arr, axis=0)
     counts['TP'] = np.count_nonzero(t_sum == 2)
     counts['TN'] = np.count_nonzero(t_sum == 0)
