@@ -16,12 +16,12 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 # Load data
-X = pd.DataFrame({'col1':[1,2,50,3,45,32,44,35],
-                  'col2':[34,26,44,2,1,1,2,4],
-                  'col3':[32,23,34,22,65,27,44,27],
-                  'gender':[0,1,0,1,1,0,1,0],
-                  'ethnicity':[0,0,0,1,1,1,1,1]
-                 })
+X = pd.DataFrame({'col1':[1,2,50,3,45,32],
+                  'col2':[34,26,44,2,1,1],
+                  'col3':[32,23,34,22,65,27],
+                  'gender':[0,1,0,1,1,0],
+                  'ethnicity':[0,0,0,1,1,1]
+                  })
 y = pd.Series([1,1,0,1,0,1], name='y')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75,
                                                     random_state=36)
