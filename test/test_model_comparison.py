@@ -44,38 +44,46 @@ def load_data(synth_dataset, request):
 
 
 @pytest.mark.usefixtures("load_data")
-class TestCMFunction:
+class TestCompModFunction:
     """ Test proper functioning of the compare_models function. Result
         should be a pandas dataframe
     """
     def is_result_valid(self, result):
         assert isinstance(result, pd.DataFrame) and result.shape[0] > 0
 
-    def test_compare_valid_inputs(self):
+    def test_valid_inputs(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
                                      self.model_dict)
         self.is_result_valid(result)
 
-    def test_compare_with_model_as_array(self):
+    def test_model_as_array(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
                                      [self.model_dict[0]])
         self.is_result_valid(result)
 
-    def test_compare_with_model_as_none(self):
-        # If models is passed as None, compare_models returns an empty df
-        result = fhmc.compare_models(self.X, self.y, self.prtc_attr, None)
-        assert isinstance(result, pd.DataFrame) and result.shape[0] == 0
-
-    def test_compare_mixed_groupings(self):
+    def test_mixed_groupings(self):
         result = fhmc.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      [self.model_dict[0], self.model_dict[1]])
         self.is_result_valid(result)
 
-    def test_compare_with_protected_attributes(self):
+    def test_with_protected_attributes(self):
         result = fhmc.compare_models([self.X, self.X], [self.y, self.y],
                                      [self.prtc_attr, self.prtc_attr],
                                      [self.model_dict[0], self.model_dict[1]])
+        self.is_result_valid(result)
+
+    def test_preds_not_models(self):
+        result = fhmc.compare_models([self.X, self.X],
+                                     self.y, self.prtc_attr,
+                                     predictions=[self.y, self.y])
+        self.is_result_valid(result)
+
+    def test_preds_and_probs(self):
+        result = fhmc.compare_models([self.X, self.X],
+                                     self.y, self.prtc_attr,
+                                     predictions=[self.y, self.y],
+                                     probabilities=[self.y, self.y])
         self.is_result_valid(result)
 
     def test_multiple_calls(self):
@@ -86,7 +94,7 @@ class TestCMFunction:
 
 
 @pytest.mark.usefixtures("load_data")
-class TestCMValidations:
+class TestCompModValidations:
     """ Validations for the compare_models function
     """
     def test_mismatch_input_numbers(self):
@@ -95,6 +103,13 @@ class TestCMValidations:
                                 {0: self.y, 1: self.y},
                                 {1: self.prtc_attr},
                                 self.model_dict)
+
+    def test_missing_models(self):
+        with pytest.raises(Exception):
+            fhmc.compare_models({0: self.X, 1: self.X},
+                                {0: self.y, 1: self.y},
+                                {0: self.prtc_attr, 1: self.prtc_attr},
+                                {0: None, 1: None})
 
     def test_invalid_X_member(self):
         with pytest.raises(Exception):
@@ -124,31 +139,16 @@ class TestCMValidations:
                                 {0: self.prtc_attr, 1: None},
                                 self.model_dict)
 
-    def test_differing_X_keys(self):
+    def test_differing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict)
 
-    def test_differing_y_keys(self):
-        with pytest.raises(Exception):
-            fhmc.compare_models({0: self.X, 1: self.X},
-                                {5: self.y, 6: self.y},
-                                {0: self.prtc_attr, 1: self.prtc_attr},
-                                self.model_dict)
-
-    def test_differing_prtc_keys(self):
-        with pytest.raises(Exception):
-            fhmc.compare_models({0: self.X, 1: self.X},
-                                {0: self.y, 1: self.y},
-                                {5: self.prtc_attr, 6: self.prtc_attr},
-                                self.model_dict)
-
-    def test_missing_prtc_keys(self):
+    def test_missing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 None,
                                 self.model_dict)
-

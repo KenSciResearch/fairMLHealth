@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+
+## [0.1.6] - 2021-04-14
+### Flexibility Update
+- Add method to model comparison allowing comparison of either predictions or models
+- Improved validation and exception handling
+
 ## [0.1.5] - 2021-02-08
 ### Documentation Update
 - Add "docs" folder containing background information on measuring fairness in ML, quick reference tables for the different metrics and measures, and our current list of recommended outside references and resources

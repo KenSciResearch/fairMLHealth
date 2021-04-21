@@ -5,20 +5,40 @@ import pandas as pd
 from scipy import stats
 import sklearn.metrics as sk_metric
 from . import __classification_metrics as clmtrc
-from .utils import __preprocess_input
+from .utils import __preprocess_input, ValidationError
 
 
 ''' Utility Functions '''
 
 
-def __get_ynames(df=None):
-    names = {'y': '__fairmlhealth_y_true',
-             'yh': '__fairmlhealth_y_pred',
-             'yp': '__fairmlhealth_y_prob'}
+def __y_cols(df=None):
+    ''' Returns a dict of hidden column names for each
+        of the y values used in stratified reporting functions, the keys for
+        which are as follows: "yt"="y true"; "yh"="y predicted";
+        "yp"="y probabilities". This allows for consistent references that are
+        not likely to be found among the actual columns of the data (e.g., so
+        that columns can be added without error).
+
+        Optionally drops name values that are missing from the df argument.
+
+        Args:
+            df (pandas DataFrame, optional): dataframe to check for the presence
+                of known names; names that are not found will be dropped from
+                the results. Defaults to None.
+    '''
+    y_names = {'col_names': {'yt': '__fairmlhealth_y_true',
+                            'yh': '__fairmlhealth_y_pred',
+                            'yp': '__fairmlhealth_y_prob'},
+              'disp_names': {'yt': 'Target',
+                             'yh': 'Prediction',
+                             'yp': 'Probability'}
+            }
+    #
     if df is not None:
-        for k in names.keys():
-            names[k] = None if names[k] not in df.columns else names[k]
-    return names
+        for k in y_names['col_names'].keys():
+            if y_names['col_names'][k] not in df.columns:
+                y_names['col_names'][k] = None
+    return y_names
 
 
 ''' Data Reporting '''
@@ -27,13 +47,17 @@ def __get_ynames(df=None):
 def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
                             features:list=None):
     """
-    Formats data for use in stratified reporting
+    Runs validation and formats data for use in stratified reports
 
     Args:
-        df:
-        y (string or array):
-        yh (string or array):
-        yp (string or array):
+        df (pandas dataframe or compatible object): sample data to be assessed
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+            to None.
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
+
     Requirements:
         - Each feature must be discrete to run stratified analysis, and must be
         binary to run the assessment. If any data are not discrete and there
@@ -43,38 +67,41 @@ def __preprocess_stratified(X, y_true, y_pred=None, y_prob=None,
     #
     max_cats = 11
     #
-    if y_pred is None:
-        X, prtc_attr, y_true, _, y_prob = \
-            __preprocess_input(X, None, y_true, y_true, y_prob)
-        y_pred = pd.Series(np.zeros(y_true.shape[0]))
-    else:
-        X, prtc_attr, y_true, y_pred, y_prob = \
-            __preprocess_input(X, None, y_true, y_pred, y_prob)
-    if y_prob is None:
-        y_prob = pd.Series(np.zeros(y_true.shape[0]))
-    #
-    y, yh, yp = __get_ynames().values()
-    pred_cols = [y, yh, yp]
-    #
+    X, _, y_true, y_pred, y_prob = \
+        __preprocess_input(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
+                           y_prob=y_prob)
+    yt, yh, yp = (__y_cols())['col_names'].values()
+    # Attach y variables and subset to expected columns
     df = X.copy()
-    df[y] = y_true.values
-    df[yh] = y_pred.values
-    df[yp] = y_prob.values
+    pred_cols = []
+    if y_true is not None:
+        df[yt] = y_true.values
+        pred_cols.append(yt)
+    if y_pred is not None:
+        df[yh] = y_pred.values
+        pred_cols.append(yh)
+    if y_prob is not None:
+        df[yp] = y_prob.values
+        pred_cols.append(yp)
     if features is None:
         features = X.columns.tolist()
     stratified_features = [f for f in features if f not in pred_cols]
     df = df.loc[:, stratified_features + pred_cols]
     #
+    over_max_vals = []
     for f in stratified_features:
         # stratified analysis can only be run on discrete columns
-        #
-        if (df[f].nunique() > max_cats and
-           not df[f].astype(str).str.isdigit().all()):
-            print(f"\t{f} has more than {max_cats} values, which will",
-                  "slow processing time. Consider reducing to quantiles")
-        elif df[f].isnull().any():
+        if df[f].nunique() > max_cats:
+            over_max_vals.append(f)
+        elif df[f].isna().any():
             df[f].fillna(np.nan, inplace=True)
         df[f] = df[f].astype(str)
+    if any(over_max_vals):
+        print(f"USER ALERT! The following features have more than {max_cats}",
+              "values, which will slow processing time. Consider reducing to",
+              f"bins or quantiles: {over_max_vals}")
+    elif len(df.columns) == 0:
+        raise ValidationError("Error during preprocessing")
     return df
 
 
@@ -83,8 +110,10 @@ def data_report(X, y_true, features:list=None):
     Generates a table of stratified data metrics
 
     Args:
-        df:
-        y_true: and must be binary
+        df (pandas dataframe or compatible object): sample data to be assessed
+        y_true (1D array-like): Sample target true values
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -93,9 +122,14 @@ def data_report(X, y_true, features:list=None):
     """
     #
     df = __preprocess_stratified(X, y_true, features=features)
-    y, yh, yp = __get_ynames(df).values()
-    pred_cols = [n for n in [y, yh, yp] if n is not None]
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    # For the data report it does not matter if y_true is defined. Other metrics
+    #   can still be generated
+    if yt is None:
+        df["__fairmlhealth_standin"] = 1
+        yt = ["__fairmlhealth_standin"]
     #
     res = []
     N_missing = 0
@@ -105,15 +139,15 @@ def data_report(X, y_true, features:list=None):
         if df[f].nunique() == 1:
             skipped_vars.append(f)
             continue
-        n_missing = df.loc[df[f].isnull() | df[f].eq('nan'), f].count()
-        #
+        n_missing = df.loc[df[f].isna() | df[f].eq('nan'), f].count()
+        # Add feature-specific statistics for each group in the feature
         grp = df.groupby(f)[pred_cols]
-        # Note that the sub-functions use a cached version of
         try:
-            r = grp.apply(lambda x: pd.Series(__dt_grp(x, y)))
+            r = grp.apply(lambda x: pd.Series(__data_grp(x, yt)))
         except BaseException as e:
             raise ValueError(f"Error processing {f}. {e}\n")
         r = r.reset_index().rename(columns={f: 'FEATURE VALUE'})
+        #
         r.insert(0, 'FEATURE', f)
         r['N MISSING'] = n_missing
         N_missing += n_missing
@@ -130,7 +164,7 @@ def data_report(X, y_true, features:list=None):
                 'N MISSING': N_missing,
                 'VALUE PREVALENCE': (N_obs*N_feat - N_missing)/(N_obs*N_feat)
                 }
-    ov_dict = __dt_grp(df, y)
+    ov_dict = __data_grp(df, yt)
     for k, v in ov_dict.items():
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
@@ -143,15 +177,30 @@ def data_report(X, y_true, features:list=None):
     return rprt
 
 
-def __dt_grp(x, y):
-    _, feat_count = np.unique(y, return_counts=True)
-    res = {'N OBS': x.shape[0],
-           'Y MEAN': x[y].mean(),
-           'Y MEDIAN': x[y].median(),
-           'Y STDV': x[y].std(),
-           'Y MIN': x[y].min(),
-           'Y MAX': x[y].max()
-           }
+def __data_grp(x, col):
+    """
+    Returns a dict of statistics. Intended for use with pandas .apply()
+    function.
+
+    Args:
+        x (pandas DataFrame)
+    """
+    # If column is a hidden variable, replace it with a user-friendly name
+    yvars = __y_cols()
+    if col in yvars['col_names'].values():
+        idx = list(yvars['col_names'].values()).index(col)
+        key = list(yvars['col_names'].keys())[idx]
+        display_name = yvars['disp_names'][key]
+    else:
+        display_name = col
+    # Generate dictionary of statistics
+    res = {'N OBS': x.shape[0]}
+    if not x[col].isna().all():
+        res[f'{display_name} MEAN'] = x[col].mean()
+        res[f'{display_name} MEDIAN'] = x[col].median()
+        res[f'{display_name} STDV'] = x[col].std()
+        res[f'{display_name} MIN'] = x[col].min()
+        res[f'{display_name} MAX'] = x[col].max()
     return res
 
 
@@ -165,25 +214,31 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
     feature
 
     Args:
-        df:
-        y_true: and must be binary
-
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values; must be binary values
+        y_pred (1D array-like): Sample target predictions; must be binary values
+        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+            to None.
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
     """
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess performance without both y_true and y_pred"
+        raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, y_prob, features=features)
-    y, yh, yp = __get_ynames(df).values()
-    pred_cols = [n for n in [y, yh, yp] if n is not None]
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     for f in stratified_features:
-        # Data are expected in string format
-        assert df[f].astype(str).eq(df[f]).all()
-        #
+        if not df[f].astype(str).eq(df[f]).all():
+            assert TypeError(f, "data are expected in string format")
+        # Add feature-specific performance values for each group in the feature
         grp = df.groupby(f)[pred_cols]
-        # Note that the sub-functions use a cached version of
         try:
-            r = grp.apply(lambda x: pd.Series(__cp_group(x, y, yh, yp)))
+            r = grp.apply(lambda x: pd.Series(__cp_group(x, yt, yh, yp)))
         except BaseException as e:
             # raise ValueError(f"Error processing {f}. {e}\n")
             print(f"Error processing {f}. {e}\n")
@@ -195,7 +250,7 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
     #
     overview = {'FEATURE': "ALL_FEATURES",
                 'FEATURE VALUE': "ALL_VALUES"}
-    ov_dict = __cp_group(df, y, yh, yp)
+    ov_dict = __cp_group(df, yt, yh, yp)
     for k, v in ov_dict.items():
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
@@ -209,6 +264,10 @@ def classification_performance(X, y_true, y_pred, y_prob=None,
 
 
 def __cp_group(x, y, yh, yp):
+    """
+    Returns a dict containing classification performance values. Intended for
+    use with pandas .apply() function.
+    """
     res = {'N OBS': x.shape[0],
            'TRUE MEAN': x[y].mean(),
            'PRED MEAN': x[yh].mean(),
@@ -231,18 +290,24 @@ def regression_performance(X, y_true, y_pred, features:list=None):
     feature
 
     Args:
-        df:
-        y_true: and must be binary
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values
+        y_pred (1D array-like): Sample target predictions
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
         are not discrete and there are more than 11 values, the reporter will
         reformat those data into quantiles
     """
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess performance without both y_true and y_pred"
+        raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    y, yh, yp = __get_ynames(df).values()
-    pred_cols = [n for n in [y, yh, yp] if n is not None]
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
@@ -253,11 +318,10 @@ def regression_performance(X, y_true, y_pred, features:list=None):
             continue
         # Data are expected in string format
         assert df[f].astype(str).eq(df[f]).all()
-        #
+        # Add feature-specific performance values for each group in the feature
         grp = df.groupby(f)[pred_cols]
-        # Note that the sub-functions use a cached version of
         try:
-            r = grp.apply(lambda x: pd.Series(__rp_grp(x, y, yh)))
+            r = grp.apply(lambda x: pd.Series(__rp_grp(x, yt, yh)))
         except BaseException as e:
             print(f"Error processing {f}. {e}\n")
             continue
@@ -268,7 +332,7 @@ def regression_performance(X, y_true, y_pred, features:list=None):
     #
     overview = {'FEATURE': "ALL_FEATURES",
                 'FEATURE VALUE': "ALL_VALUES"}
-    ov_dict = __rp_grp(df, y, yh)
+    ov_dict = __rp_grp(df, yt, yh)
     for k, v in ov_dict.items():
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
@@ -282,7 +346,10 @@ def regression_performance(X, y_true, y_pred, features:list=None):
 
 
 def __rp_grp(x, y, yh):
-    """ """
+    """
+    Returns a dict containing regression performance values. Intended for use
+    with pandas .apply() function
+    """
     res = {'N OBS': x.shape[0],
            'TRUE MEAN': x[y].mean(),
            'PRED MEAN': x[yh].mean(),
@@ -306,35 +373,48 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     feature
 
     Args:
-        df:
-        y_true: and must be binary
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values; must be binary values
+        y_pred (1D array-like): Sample target predictions; must be binary values
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
         are not discrete and there are more than 11 values, the reporter will
         reformat those data into quantiles
     """
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess fairness without both y_true and y_pred"
+        raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    y, yh, yp = __get_ynames(df).values()
-    pred_cols = [n for n in [y, yh, yp] if n is not None]
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     pa_name = 'prtc_attr'
     for f in stratified_features:
-        vals = sorted(df[f].unique().tolist())
+        try:
+            vals = sorted(df[f].unique().tolist())
+        except:
+            print(f)
+            import pdb; pdb.set_trace()
+        # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
             df.loc[df[f].eq(v), pa_name] = 1
             if v != "nan":
                 df.loc[df[f].eq("nan"), pa_name] = np.nan
+            # Nothing to measure if only one value is present (other than nan)
+            if df[pa_name].nunique() == 1:
+                continue
             try:
                 subset = df.loc[df[pa_name].notnull(),
-                                [pa_name, y, yh]].set_index(pa_name)
-                meas = __cf_group(pa_name, subset[y], subset[yh], priv_grp=1)
+                                [pa_name, yt, yh]].set_index(pa_name)
+                meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
             except BaseException as e:
-                # raise ValueError(f"Error processing {f}. {e}\n")
                 print(f"Error processing {f}. {e}\n")
                 continue
             r = pd.DataFrame(meas, index=[0])
@@ -353,7 +433,10 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
 
 
 def __cf_group(pa_name, y_true, y_pred, priv_grp=1):
-    """ """
+    """
+    Returns a dict containing classification fairness measure values. Intended
+    for use with pandas .apply() function.
+    """
     gf_vals = {}
     gf_vals['PPV Ratio'] = \
         aif_mtrc.difference(sk_metric.precision_score, y_true, y_pred,
@@ -389,29 +472,34 @@ def __cf_group(pa_name, y_true, y_pred, priv_grp=1):
     return gf_vals
 
 
-def regression_fairness(X, y_true, y_pred, features: list = None, **kwargs):
+def regression_fairness(X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
 
     Args:
-        df:
-        y_true: and must be binary
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values
+        y_pred (1D array-like): Sample target predictions
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
 
     """
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess fairness without both y_true and y_pred"
+        raise ValueError(msg)
     #
     df = __preprocess_stratified(X, y_true, y_pred, features=features)
-    y, yh, yp = __get_ynames(df).values()
-    pred_cols = [n for n in [y, yh, yp] if n is not None]
+    yt, yh, yp = (__y_cols(df))['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     #
     res = []
     for f in stratified_features:
         # Data are expected in string format
         assert df[f].astype(str).eq(df[f]).all()
-        #
-        grp = df.groupby(f, as_index=False)[y].count()
-        grp.rename(columns={f: 'FEATURE VALUE', y: 'N OBS'}, inplace=True)
+        grp = df.groupby(f, as_index=False)[yt].count()
+        grp.rename(columns={f: 'FEATURE VALUE', yt: 'N OBS'}, inplace=True)
         grp['FEATURE'] = f
         res.append(grp)
     rprt = pd.concat(res, axis=0, ignore_index=True)
@@ -419,21 +507,20 @@ def regression_fairness(X, y_true, y_pred, features: list = None, **kwargs):
     res_f = []
     rprt = rprt[['FEATURE', 'FEATURE VALUE', 'N OBS']]
     pa_name = 'prtc_attr'
-    skipped_vars = []
     for i, row in rprt.iterrows():
         f = row['FEATURE']
         v = row['FEATURE VALUE']
-        if df[f].nunique() == 1:
-            skipped_vars.append(f)
-            continue
         df[pa_name] = 0
         df.loc[df[f].eq(v), pa_name] = 1
         if v != "nan":
             df.loc[df[f].eq("nan"), pa_name] = np.nan
+        # Nothing to measure if only one value is present (other than nan)
+        if df[pa_name].nunique() == 1:
+            continue
         try:
             subset = df.loc[df[pa_name].notnull(),
-                            [pa_name, y, yh]].set_index(pa_name)
-            meas = __rf_group(pa_name, subset[y], subset[yh], priv_grp=1)
+                            [pa_name, yt, yh]].set_index(pa_name)
+            meas = __rf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
         except BaseException as e:
             # raise ValueError(f"Error processing {f}. {e}\n")
             print(f"Error processing {f}. {e}\n")
@@ -455,6 +542,10 @@ def regression_fairness(X, y_true, y_pred, features: list = None, **kwargs):
 
 
 def __rf_group(pa_name, y_true, y_pred, priv_grp=1):
+    """
+    Returns a dict containing regression fairness measure values. Intended for
+    use with pandas .apply() function.
+    """
     res = reports.__regres_group_fairness_measures(pa_name, y_true, y_pred,
                                                    priv_grp)
     return res
