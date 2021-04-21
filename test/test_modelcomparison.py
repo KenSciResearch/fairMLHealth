@@ -1,7 +1,5 @@
 '''
-Validation tests for fairmlhealth
 '''
-
 
 from fairmlhealth import model_comparison as fhmc
 from sklearn.model_selection import train_test_split
