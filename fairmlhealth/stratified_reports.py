@@ -420,13 +420,13 @@ def classification_fairness(X, y_true, y_pred, features:list=None, **kwargs):
             # Nothing to measure if only one value is present (other than nan)
             if df[pa_name].nunique() == 1:
                 continue
-            #try:
-            subset = df.loc[df[pa_name].notnull(),
-                            [pa_name, yt, yh]].set_index(pa_name)
-            meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
-            #except BaseException as e:
-            #    errs[f] = e
-            #    continue
+            try:
+                subset = df.loc[df[pa_name].notnull(),
+                                [pa_name, yt, yh]].set_index(pa_name)
+                meas = __cf_group(pa_name, subset[yt], subset[yh], priv_grp=1)
+            except BaseException as e:
+                errs[f] = e
+                continue
             r = pd.DataFrame(meas, index=[0])
             r['N OBS'] = df.loc[df[f].eq(v), pa_name].sum()
             r['FEATURE'] = f

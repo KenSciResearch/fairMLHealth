@@ -96,6 +96,7 @@ def validate_notebook(nb_path, timeout=60):
     if kname is None:
         raise OSError("No kernel found")
 
+
     with tempfile.NamedTemporaryFile(suffix=".ipynb", delete=False) as tf:
         args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
         f"--ExecutePreprocessor.timeout={timeout}",

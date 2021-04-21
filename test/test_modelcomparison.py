@@ -1,5 +1,4 @@
 '''
-Validation tests for fairmlhealth
 '''
 
 

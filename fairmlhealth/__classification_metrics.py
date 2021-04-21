@@ -18,7 +18,6 @@ __all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
 
 ''' Utilities '''
 
-
 def binary_prediction_results(y_true, y_pred):
     """ Returns a dictionary with counts of TP, TN, FP, and FN. Since validaton
         is assumed to have already been run, this should be faster than using
@@ -143,6 +142,5 @@ def true_positive_rate(y_true, y_pred): # aka. recall, sensitivity
     res = ratio(rprt['TP'],
                       rprt['FN'] + rprt['TP'])
     return check_result(res, "TPR")
-
 
 

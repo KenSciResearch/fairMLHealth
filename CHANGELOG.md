@@ -15,7 +15,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 ## [0.1.7] - 2021-04-14
 ### Testing Update
 - Add integrated notebook testing
-- Enhahnce contribution documentation
+- Enhance contribution documentation
 
 ## [0.1.6] - 2021-04-14
 ### Flexibility Update
