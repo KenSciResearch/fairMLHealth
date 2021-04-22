@@ -68,8 +68,7 @@ def ratio(num, den):
 
 def accuracy(y_true, y_pred):
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'] + rprt['TN'],
-                y_true.shape[0])
+    res = ratio(rprt['TP'] + rprt['TN'], y_true.shape[0])
     return check_result(res, "Accuracy")
 
 
@@ -82,30 +81,26 @@ def balanced_accuracy(y_true, y_pred):
 
 def false_negative_rate(y_true, y_pred): # Miss Rate
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['FN'],
-                rprt['FN'] + rprt['TP'])
+    res = ratio(rprt['FN'], rprt['FN'] + rprt['TP'])
     return check_result(res, "FNR")
 
 
 def false_positive_rate(y_true, y_pred): # False Alarm Rate
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['FP'],
-                rprt['FP'] + rprt['TN'])
+    res = ratio(rprt['FP'], rprt['FP'] + rprt['TN'])
     return check_result(res, "FPR}")
 
 
 def f1_score(y_true, y_pred):
     pre = precision(y_true, y_pred)
     rec = true_positive_rate(y_true, y_pred)
-    res = 2*ratio(pre*rec,
-                  pre+rec)
+    res = 2*ratio(pre*rec, pre+rec)
     return check_result(res, "F1 Score")
 
 
 def negative_predictive_value(y_true, y_pred):
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TN'] + rprt['FN'],
-                      rprt['TN'] + rprt['FP'])
+    res = ratio(rprt['TN'] + rprt['FN'], rprt['TN'] + rprt['FP'])
     return res
 
 
@@ -125,22 +120,19 @@ def pr_auc_score(y_true, y_pred):
 
 def precision(y_true, y_pred): # aka. PPV
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'],
-                      rprt['TP'] + rprt['FP'])
+    res = ratio(rprt['TP'], rprt['TP'] + rprt['FP'])
     return check_result(res, "Precision")
 
 
 def true_negative_rate(y_true, y_pred): # aka. selectivity, specificity
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TN'],
-                      rprt['FP'] + rprt['TN'])
+    res = ratio(rprt['TN'], rprt['FP'] + rprt['TN'])
     return check_result(res, "TNR")
 
 
 def true_positive_rate(y_true, y_pred): # aka. recall, sensitivity
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'],
-                      rprt['FN'] + rprt['TP'])
+    res = ratio(rprt['TP'], rprt['FN'] + rprt['TP'])
     return check_result(res, "TPR")
 
 

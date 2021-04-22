@@ -5,7 +5,7 @@ are missed by the linter before running the full set of unit tests.
 '''
 
 
-from fairmlhealth import model_comparison as fhmc, stratified_reports
+from fairmlhealth import model_comparison as fhmc, reports
 import logging
 import pandas as pd
 import pdb
@@ -32,14 +32,14 @@ prtc_attr = X_test['gender']
 
 
 # Arguments Option 1: pass full set of data, subsetting with *features* argument
-stratified_reports.data_report(X_test, y_test, features=['gender'])
+reports.data_report(X_test, y_test, features=['gender'])
 
 # Arguments Option 2: pass the data subset of interest without using the *features* argument
-stratified_reports.data_report(X_test[['gender']], y_test)
+reports.data_report(X_test[['gender']], y_test)
 
-stratified_reports.classification_performance(X_test[['gender']], y_test, model_1.predict(X_test))
+reports.classification_performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
 
-stratified_reports.classification_fairness(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
+reports.classification_fairness(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 
 # Report success
 logging.info("Passed Basic Model Comparison Test")
