@@ -111,7 +111,7 @@ def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
 
 
 def stratified_preprocess(X, y_true, y_pred=None, y_prob=None,
-                            features:list=None):
+                          features:list=None):
     """
     Runs validation and formats data for use in stratified reports
 
@@ -207,7 +207,7 @@ def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
             y = y.iloc[:, 0]
     if y_prob is not None:
         if not isinstance(y_prob, valid_data_types):
-            raise TypeError("y_prob is invalid type")
+            raise TypeError(f"y_prob is invalid type {type(y_prob)}")
 
     # protected attribute
     if prtc_attr is not None:
