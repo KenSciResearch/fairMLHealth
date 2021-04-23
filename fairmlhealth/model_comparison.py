@@ -209,7 +209,7 @@ class FairCompare(ABC):
                                  self.y[model_name],
                                  self.preds[model_name],
                                  self.probs[model_name],
-                                 type="classification"
+                                 type="classification",
                                  **kwargs)
             return res
 

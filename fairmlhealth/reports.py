@@ -32,7 +32,7 @@ import warnings
 # Tutorial Libraries
 from . import __classification_metrics as clmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
-from .__preprocessing import (standard_preprocess, stratified_preprocess,
+from .__report_processing import (standard_preprocess, stratified_preprocess,
                               y_cols, clean_hidden_names, report_labels)
 from . import tutorial_helpers as helpers
 from .utils import ValidationError
@@ -74,7 +74,7 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
             "regression_fairness function will be deprecated in version " +
             "2.0. Use summary_report instead.", PendingDeprecationWarning
         )
-    return ____regression_summary(X, prtc_attr, y_true, y_pred,
+    return __regression_summary(X, prtc_attr, y_true, y_pred,
                                           priv_grp=1, sig_dec=4, **kwargs)
 
 
@@ -110,8 +110,8 @@ def regression_performance(y_true, y_pred):
             model.predict().
     """
     report = {}
-    y = y_cols()['display_names']['yt']
-    yh = y_cols()['display_names']['yh']
+    y = y_cols()['disp_names']['yt']
+    yh = y_cols()['disp_names']['yh']
     report[f'{y} Mean'] = np.mean(y_true)
     report[f'{yh} Mean'] = np.mean(y_pred)
     report['Rsqrd'] = sk_metric.r2_score(y_true, y_pred)
@@ -120,6 +120,32 @@ def regression_performance(y_true, y_pred):
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
     return report
+
+
+def __m_gf_r(pa_name, y_true, y_pred, priv_grp=1):
+    def pdmean(y_true, y_pred, *args): return y_pred.mean()
+    #
+    gf_vals = {}
+    gf_vals['Mean Prediction Ratio'] = \
+        aif.ratio(pdmean, y_true, y_pred,
+                    prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Ratio'] = \
+        aif.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
+                    prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['R2 Ratio'] = \
+        aif.ratio(sk_metric.r2_score, y_true, y_pred,
+                    prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Prediction Difference'] = \
+        aif.difference(pdmean, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Difference'] = \
+        aif.difference(sk_metric.mean_absolute_error, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['R2 Difference'] = \
+        aif.difference(sk_metric.r2_score, y_true, y_pred,
+                            prot_attr=pa_name, priv_group=priv_grp)
+    return gf_vals
+
 
 
 ''' Main Reports '''
@@ -189,6 +215,35 @@ def flag(df, caption="", as_styler=False):
         return styled
     else:
         return HTML(styled.render())
+
+
+def bias_report(X, y_true, y_pred, features:list=None,
+                       type="classification", priv_grp=1, sig_dec=4, **kwargs):
+    """[summary]
+
+    Args:
+        X ([type]): [description]
+        y_true ([type]): [description]
+        y_pred ([type]): [description]
+        features (list, optional): [description]. Defaults to None.
+        type (str, optional): [description]. Defaults to "classification".
+        priv_grp (int, optional): [description]. Defaults to 1.
+        sig_dec (int, optional): [description]. Defaults to 4.
+
+    Raises:
+        ValueError: [description]
+
+    Returns:
+        [type]: [description]
+    """
+    validtypes = ["classification", "regression "]
+    if type not in validtypes:
+        raise ValueError(f"Summary report type must be one of {validtypes}")
+    if type == "classification":
+        return __classification_bias_report(X, y_true, y_pred, features,
+                                            **kwargs)
+    elif type == "regression":
+        return __regression_bias_report(X, y_true, y_pred, features, **kwargs)
 
 
 def data_report(X, y_true, features:list=None):
@@ -278,54 +333,29 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
 
     Args:
         X ([type]): [description]
-        prtc_attr ([type]): [description]
         y_true ([type]): [description]
         y_pred ([type]): [description]
         y_prob ([type], optional): [description]. Defaults to None.
+        features (list, optional): [description]. Defaults to None.
         type (str, optional): [description]. Defaults to "classification".
         priv_grp (int, optional): [description]. Defaults to 1.
         sig_dec (int, optional): [description]. Defaults to 4.
 
     Raises:
         ValueError: [description]
+
+    Returns:
+        [type]: [description]
     """
     validtypes = ["classification", "regression "]
     if type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if type == "classification":
-        __classification_performance_report(X, y_true, y_pred, y_prob=None,
-                                            features:list=None)
+        return __classification_performance_report(X, y_true, y_pred,
+                                                   y_prob, features)
     elif type == "regression":
-        __regression_performance_report(X, y_true, y_pred, features:list=None,
-                                        **kwargs)
-
-
-def performance_report(X, y_true, y_pred, features:list=None,
-                       type="classification", priv_grp=1, sig_dec=4, **kwargs):
-    """[summary]
-
-    Args:
-        X ([type]): [description]
-        prtc_attr ([type]): [description]
-        y_true ([type]): [description]
-        y_pred ([type]): [description]
-        y_prob ([type], optional): [description]. Defaults to None.
-        type (str, optional): [description]. Defaults to "classification".
-        priv_grp (int, optional): [description]. Defaults to 1.
-        sig_dec (int, optional): [description]. Defaults to 4.
-
-    Raises:
-        ValueError: [description]
-    """
-    validtypes = ["classification", "regression "]
-    if type not in validtypes:
-        raise ValueError(f"Summary report type must be one of {validtypes}")
-    if type == "classification":
-        __classification_fairness_report(X, y_true, y_pred, features:list=None,
-                                         **kwargs)
-    elif type == "regression":
-        __regression_fairness_report(X, y_true, y_pred, features:list=None,
-                                        **kwargs)
+        return __regression_performance_report(X, y_true, y_pred, features,
+                                               **kwargs)
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -344,17 +374,19 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 
     Raises:
         ValueError: [description]
+
+    Returns:
+        [type]: [description]
     """
     validtypes = ["classification", "regression "]
     if type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if type == "classification":
-        __classification_summary(X, prtc_attr, y_true, y_pred,
-                                           y_prob=None, priv_grp=1, sig_dec=4,
-                                           **kwargs)
+        return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
+                                        priv_grp, sig_dec, **kwargs)
     elif type == "regression":
-        __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
-                                       sig_dec=4, **kwargs)
+        return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp,
+                                       sig_dec, **kwargs)
 
 
 ''' Private Functions '''
@@ -391,11 +423,11 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     """
     #
     def __s_p_c(x, y, yh, yp):
-        y = y_cols()['display_names']['yt']
-        yh = y_cols()['display_names']['yh']
+        _y = y_cols()['disp_names']['yt']
+        _yh = y_cols()['disp_names']['yh']
         res = {'Observations': x.shape[0],
-            f'{y} Mean': x[y].mean(),
-            f'{yh} Mean': x[yh].mean(),
+            f'{_y} Mean': x[y].mean(),
+            f'{_yh} Mean': x[yh].mean(),
             'TPR': clmtrc.true_positive_rate(x[y], x[yh]),
             'TNR': clmtrc.true_negative_rate(x[y], x[yh]),
             'FPR': clmtrc.false_positive_rate(x[y], x[yh]),
@@ -446,16 +478,14 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     overview_df = pd.DataFrame(overview, index=[0])
     # Combine and format
     rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
-    yname = y_cols()['display_names']['yt']
-    yhname = y_cols()['display_names']['yh']
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
     head_cols = ['Feature Name', 'Feature Value', 'Observations',
                  f'{yname} Mean', f'{yhname} Mean']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
     rprt = rprt[head_cols + tail_cols]
     rprt = rprt.round(4)
     return rprt
-
-
 
 
 def __regression_performance_report(X, y_true, y_pred, features:list=None):
@@ -477,13 +507,13 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     """
     #
     def __s_p_r(x, y, yh):
-        y = y_cols()['display_names']['yt']
-        yh = y_cols()['display_names']['yh']
+        _y = y_cols()['disp_names']['yt']
+        _yh = y_cols()['disp_names']['yh']
         res = {'Observations': x.shape[0],
-            f'{y} Mean': x[y].mean(),
-            f'{yh} Mean': x[yh].mean(),
-            f'{yh} Median': x[yh].median(),
-            f'{yh} STD': x[yh].std(),
+            f'{_y} Mean': x[y].mean(),
+            f'{_yh} Mean': x[yh].mean(),
+            f'{_yh} Median': x[yh].median(),
+            f'{_yh} STD': x[yh].std(),
             'Error Mean': (x[yh] - x[y]).mean(),
             'Error STD': (x[yh] - x[y]).std(),
             'MAE': sk_metric.mean_absolute_error(x[y], x[yh]),
@@ -533,8 +563,8 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     overview_df = pd.DataFrame(overview, index=[0])
     #
     rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
-    yname = y_cols()['display_names']['yt']
-    yhname = y_cols()['display_names']['yh']
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
     head_cols = ['Feature Name', 'Feature Value', 'Observations',
                  f'{yname} Mean', f'{yhname} Mean']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
@@ -544,7 +574,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
 
 
 
-def __classification_fairness_report(X, y_true, y_pred, features:list=None,
+def __classification_bias_report(X, y_true, y_pred, features:list=None,
                                      **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
@@ -626,7 +656,7 @@ def __classification_fairness_report(X, y_true, y_pred, features:list=None,
     return rprt
 
 
-def __regression_fairness_report(X, y_true, y_pred, features:list=None,
+def __regression_bias_report(X, y_true, y_pred, features:list=None,
                                  **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
@@ -697,6 +727,23 @@ def __regression_fairness_report(X, y_true, y_pred, features:list=None,
     rprt = rprt.round(4)
     #
     return rprt
+
+
+def __similarity_measures(X, pa_name, y_true, y_pred):
+    # Generate dict of Similareity-Based Fairness measures
+    if_vals = {}
+    # consistency_score raises error if null values are present in X
+    if X.notnull().all().all():
+        if_vals['Consistency Score'] = \
+            aif.consistency_score(X, y_pred.iloc[:, 0])
+    else:
+        msg = "Cannot calculate consistency score. Null values present in data."
+        logging.warning(msg)
+    # Other aif360 metrics (not consistency) can handle null values
+    if_vals['Between-Group Gen. Entropy Error'] = \
+        aif.between_group_generalized_entropy_error(y_true, y_pred,
+                                                        prot_attr=pa_name)
+    return if_vals
 
 
 def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -812,7 +859,7 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
         __m_gf_bc(X, pa_name, y_true, y_pred, y_prob, priv_grp)
     mv_dict[dtl] = __class_prevalence(y_true, priv_grp)
     if not kwargs.pop('skip_if', False):
-        mv_dict[ifl] = __m_sf(X, pa_name, y_true, y_pred)
+        mv_dict[ifl] = __similarity_measures(X, pa_name, y_true, y_pred)
     if not kwargs.pop('skip_performance', False):
         mv_dict[mpl] = __m_p_c(y_true, y_pred)
     # Convert scores to a formatted dataframe and return
@@ -846,46 +893,6 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
             measure values. Defaults to 4.
     """
     #
-    def __m_sf(X, pa_name, y_true, y_pred):
-        # Generate dict of Individual Fairness measures
-        if_vals = {}
-        # consistency_score raises error if null values are present in X
-        if X.notnull().all().all():
-            if_vals['Consistency Score'] = \
-                aif.consistency_score(X, y_pred.iloc[:, 0])
-        else:
-            msg = "Cannot calculate consistency score. Null values present in data."
-            logging.warning(msg)
-        # Other aif360 metrics (not consistency) can handle null values
-        if_vals['Between-Group Gen. Entropy Error'] = \
-            aif.between_group_generalized_entropy_error(y_true, y_pred,
-                                                            prot_attr=pa_name)
-        return if_vals
-    #
-    def __m_gf_r(pa_name, y_true, y_pred, priv_grp=1):
-        def pdmean(y_true, y_pred, *args): return y_pred.mean()
-        #
-        gf_vals = {}
-        gf_vals['Mean Prediction Ratio'] = \
-            aif.ratio(pdmean, y_true, y_pred,
-                        prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['MAE Ratio'] = \
-            aif.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                        prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['R2 Ratio'] = \
-            aif.ratio(sk_metric.r2_score, y_true, y_pred,
-                        prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['Mean Prediction Difference'] = \
-            aif.difference(pdmean, y_true, y_pred,
-                                prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['MAE Difference'] = \
-            aif.difference(sk_metric.mean_absolute_error, y_true, y_pred,
-                                prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['R2 Difference'] = \
-            aif.difference(sk_metric.r2_score, y_true, y_pred,
-                                prot_attr=pa_name, priv_group=priv_grp)
-        return gf_vals
-    #
     # Validate and Format Arguments
     if not isinstance(priv_grp, int):
         raise ValueError("priv_grp must be an integer value")
@@ -900,7 +907,7 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
                                          priv_grp=priv_grp)
     #
     if not kwargs.pop('skip_if', False):
-        if_vals = __m_sf(X, pa_name, y_true, y_pred)
+        if_vals = __similarity_measures(X, pa_name, y_true, y_pred)
 
     dt_vals = __class_prevalence(y_true, priv_grp)
 
@@ -922,4 +929,5 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     df.columns = ['Value']
     df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     return df
+
 
