@@ -1,12 +1,41 @@
 '''
-Back-end functions used throughout the library
+
 '''
-
-
 from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 from .utils import ValidationError
+
+
+def clean_hidden_names(col):
+    ''' If the column is a hidden variable, replaces the variable with a
+        display name
+    '''
+    yvars = y_cols()
+    if col in yvars['col_names'].values():
+        idx = list(yvars['col_names'].values()).index(col)
+        key = list(yvars['col_names'].keys())[idx]
+        display_name = yvars['disp_names'][key]
+    else:
+        display_name = col
+    return display_name
+
+
+def report_labels(pred_type: str = "binary"):
+    """ Returns a dictionary of category labels used by reporting functions
+    Args:
+        pred_type (b): number of classes in the prediction problem
+    """
+    valid_pred_types = ["binary", "multiclass", "regression"]
+    if pred_type not in valid_pred_types:
+        raise ValueError(f"pred_type must be one of {valid_pred_types}")
+    c_note = "" if pred_type == "binary" else " (Weighted Avg)"
+    report_labels = {'gf_label': "Group Fairness",
+                     'if_label': "Individual Fairness",
+                     'mp_label': f"Model Performance{c_note}",
+                     'dt_label': "Data Metrics"
+                     }
+    return report_labels
 
 
 def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
@@ -81,60 +110,6 @@ def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
-                            prtc_attr=None, priv_grp:int=1):
-    """ Raises error if data are of incorrect type or size for processing by
-        the fairness or performance reporters
-
-    Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): values for the protected attribute
-            (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
-    """
-    valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
-
-    # input data
-    if X is None:
-        raise ValueError("No input data ")
-    for data in [X, y_true, y_pred]:
-        if data is not None:
-            if not isinstance(data, valid_data_types):
-                err = ("One of X, y_true, or y_pred is invalid type"
-                       + str(type(data)))
-                raise TypeError(err)
-            if not data.shape[0] > 1:
-                err = "One of X, y_true, or y_pred is too small to measure"
-                raise ValueError(err)
-    for y in [y_true, y_pred]:
-        if y is None:
-            continue
-        if isinstance(y, pd.DataFrame):
-            if len(y.columns) > 1:
-                raise ValueError("target data must contain only one column")
-            y = y.iloc[:, 0]
-    if y_prob is not None:
-        if not isinstance(y_prob, valid_data_types):
-            raise TypeError("y_prob is invalid type")
-
-    # protected attribute
-    if prtc_attr is not None:
-        if not isinstance(prtc_attr, valid_data_types):
-            raise TypeError("input data is invalid type")
-        if set(np.unique(prtc_attr)) != {0, 1}:
-            err = (f"Invalid values detected in protected attribute(s).",
-                   " Must be {0,1}.")
-            raise ValueError(err)
-    # priv_grp
-    if not isinstance(priv_grp, int):
-        raise TypeError("priv_grp must be an integer")
-
-    # If all above runs, inputs pass validation
-    return True
-
-
 def stratified_preprocess(X, y_true, y_pred=None, y_prob=None,
                             features:list=None):
     """
@@ -194,6 +169,60 @@ def stratified_preprocess(X, y_true, y_pred=None, y_prob=None,
     elif len(df.columns) == 0:
         raise ValidationError("Error during preprocessing")
     return df
+
+
+def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
+                            prtc_attr=None, priv_grp:int=1):
+    """ Raises error if data are of incorrect type or size for processing by
+        the fairness or performance reporters
+
+    Args:
+        X (array-like): Sample features
+        prtc_attr (array-like, named): values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities
+    """
+    valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
+
+    # input data
+    if X is None:
+        raise ValueError("No input data ")
+    for data in [X, y_true, y_pred]:
+        if data is not None:
+            if not isinstance(data, valid_data_types):
+                err = ("One of X, y_true, or y_pred is invalid type"
+                       + str(type(data)))
+                raise TypeError(err)
+            if not data.shape[0] > 1:
+                err = "One of X, y_true, or y_pred is too small to measure"
+                raise ValueError(err)
+    for y in [y_true, y_pred]:
+        if y is None:
+            continue
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) > 1:
+                raise ValueError("target data must contain only one column")
+            y = y.iloc[:, 0]
+    if y_prob is not None:
+        if not isinstance(y_prob, valid_data_types):
+            raise TypeError("y_prob is invalid type")
+
+    # protected attribute
+    if prtc_attr is not None:
+        if not isinstance(prtc_attr, valid_data_types):
+            raise TypeError("input data is invalid type")
+        if set(np.unique(prtc_attr)) != {0, 1}:
+            err = (f"Invalid values detected in protected attribute(s).",
+                   " Must be {0,1}.")
+            raise ValueError(err)
+    # priv_grp
+    if not isinstance(priv_grp, int):
+        raise TypeError("priv_grp must be an integer")
+
+    # If all above runs, inputs pass validation
+    return True
 
 
 def y_cols(df=None):

@@ -18,7 +18,7 @@ import os
 import warnings
 
 from fairmlhealth.utils import is_dictlike
-from fairmlhealth.reports import classification_fairness as classfair
+from fairmlhealth.reports import summary_report
 
 
 """
@@ -204,10 +204,14 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = classfair(self.X[model_name], self.prtc_attr[model_name],
-                            self.y[model_name], self.preds[model_name],
-                            self.probs[model_name], **kwargs)
-        return res
+            res = summary_report(self.X[model_name],
+                                 self.prtc_attr[model_name],
+                                 self.y[model_name],
+                                 self.preds[model_name],
+                                 self.probs[model_name],
+                                 type="classification"
+                                 **kwargs)
+            return res
 
 
     def __paused_validation(self):
