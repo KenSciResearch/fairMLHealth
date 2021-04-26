@@ -6,6 +6,11 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 
 ## [0.1.8] - 2021-04-19
+### Reporting Updates
+- Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
+
+
+## [0.1.8] - 2021-04-19
 ### Installation Improvements
 - Some dependencies removed, others updated to reduce conflicts
 - Troubleshooting documentation added
