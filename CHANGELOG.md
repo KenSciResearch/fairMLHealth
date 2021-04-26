@@ -7,9 +7,10 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.8] - 2021-04-19
 ### Installation Improvements
-- Some dependencies removed, others updated to reduce conflicts
+- Fairlearn removed as backend requirement (still required for tutorials)
+- Version ranges updated in setup.py (wider range of dependency versions now allowed)
 - Troubleshooting documentation added
-- Some warnings removed
+- Bug fixes implemented
 
 
 ## [0.1.7] - 2021-04-14
