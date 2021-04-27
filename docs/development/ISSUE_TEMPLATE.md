@@ -9,14 +9,8 @@ Before submitting your issue, please verify that the following are true.
 - [ ] I verified that this issue has not already been filed by checking the [Issues Board](https://github.com/KenSciResearch/fairMLHealth/issues)
 
 
-## Expected Behavior
-
-[Describe the expected behavior]
-
-## Current Behavior
-
-[Describe the current behavior]
-
+## Description
+[Please describe both the current behavior and the desired behavior]
 ## Context
 
 Please provide information about your setup so that the problem can be reproduced.
