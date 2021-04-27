@@ -109,26 +109,27 @@ def regression_performance(y_true, y_pred):
 
 def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
     def pdmean(y_true, y_pred, *args): return y_pred.mean()
+    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
     #
     gf_vals = {}
     gf_vals['Mean Prediction Ratio'] = \
         aif.ratio(pdmean, y_true, y_pred,
                     prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Error Ratio'] = \
+        aif.ratio(meanerr, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                    prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['R2 Ratio'] = \
-        aif.ratio(sk_metric.r2_score, y_true, y_pred,
-                    prot_attr=pa_name, priv_group=priv_grp)
+                  prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Error Difference'] = \
+        aif.difference(meanerr, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif.difference(sk_metric.mean_absolute_error, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['R2 Difference'] = \
-        aif.difference(sk_metric.r2_score, y_true, y_pred,
-                            prot_attr=pa_name, priv_group=priv_grp)
+                       prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
 
@@ -221,7 +222,7 @@ def bias_report(X, y_true, y_pred, features:list=None,
     Returns:
         [type]: [description]
     """
-    validtypes = ["classification", "regression "]
+    validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
@@ -229,8 +230,8 @@ def bias_report(X, y_true, y_pred, features:list=None,
                                             **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features, **kwargs)
+        #raise ValueError(msg)
+        return __regression_bias_report(X, y_true, y_pred, features, **kwargs)
 
 
 def data_report(X, y_true, features:list=None):
@@ -271,6 +272,7 @@ def data_report(X, y_true, features:list=None):
     res = []
     N_missing = 0
     N_obs = df.shape[0]
+    errs = {}
     for f in stratified_features:
         n_missing = df.loc[df[f].isna() | df[f].eq('nan'), f].count()
         # Add feature-specific statistics for each group in the feature
@@ -278,7 +280,8 @@ def data_report(X, y_true, features:list=None):
         try:
             r = grp.apply(lambda x: pd.Series(__data_dict(x, yt)))
         except BaseException as e:
-            raise ValueError(f"Error processing {f}. {e}\n")
+            errs[k] = e
+            continue
         r = r.reset_index().rename(columns={f: 'Feature Value'})
         #
         r.insert(0, 'Feature Name', f)
@@ -287,6 +290,9 @@ def data_report(X, y_true, features:list=None):
         _, feat_count = np.unique(df[f], return_counts=True)
         r['Feature Entropy'] = stats.entropy(feat_count, base=2)
         res.append(r)
+    if any(errs):
+        for k, v in errs.items():
+            print(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     full_res['Value Prevalence'] = full_res['Observations']/N_obs
     #
@@ -330,7 +336,7 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
     Returns:
         [type]: [description]
     """
-    validtypes = ["classification", "regression "]
+    validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
@@ -338,8 +344,8 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
                                                    y_prob, features)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_performance_report(X, y_true, y_pred, features, **kwargs)
+        #raise ValueError(msg)
+        return __regression_performance_report(X, y_true, y_pred, features, **kwargs)
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
