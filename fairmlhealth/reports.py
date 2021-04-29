@@ -13,7 +13,9 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-import sklearn.metrics as sk_metric
+from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
+                             precision_score, roc_auc_score,
+                             balanced_accuracy_score, classification_report)
 from scipy import stats
 import warnings
 
@@ -76,7 +78,7 @@ def classification_performance(y_true, y_pred, target_labels=None):
     """
     if target_labels is None:
         target_labels = [f"target = {t}" for t in set(y_true)]
-    report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
+    report = classification_report(y_true, y_pred, output_dict=True,
                                              target_names=target_labels)
     report = pd.DataFrame(report).transpose()
     # Move accuracy to separate row
@@ -99,9 +101,10 @@ def regression_performance(y_true, y_pred):
     yh = y_cols()['disp_names']['yh']
     report[f'{y} Mean'] = np.mean(y_true)
     report[f'{yh} Mean'] = np.mean(y_pred)
-    report['Rsqrd'] = sk_metric.r2_score(y_true, y_pred)
-    report['Mean Absolute Error'] = sk_metric.mean_absolute_error(y_true, y_pred)
-    report['Mean Square Error'] = sk_metric.mean_squared_error(y_true, y_pred)
+    report['scMAE'] = clmtrc.scMAE(y_true, y_pred)
+    report['MSE'] = mean_squared_error(y_true, y_pred)
+    report['MAE'] = mean_absolute_error(y_true, y_pred)
+    report['Rsqrd'] = r2_score(y_true, y_pred)
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
     return report
@@ -112,23 +115,31 @@ def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
     def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
     #
     gf_vals = {}
+    # Ratios
     gf_vals['Mean Prediction Ratio'] = \
         aif.ratio(pdmean, y_true, y_pred,
-                    prot_attr=pa_name, priv_group=priv_grp)
+                  prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['scMAE Ratio'] = \
+        aif.ratio(clmtrc.scMAE, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Ratio'] = \
+        aif.ratio(mean_absolute_error, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['Mean Error Ratio'] = \
         aif.ratio(meanerr, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Ratio'] = \
-        aif.ratio(sk_metric.mean_absolute_error, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
+    # Differences
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Difference'] = \
-        aif.difference(meanerr, y_true, y_pred,
+    gf_vals['scMAE Difference'] = \
+        aif.difference(clmtrc.scMAE, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
-        aif.difference(sk_metric.mean_absolute_error, y_true, y_pred,
+        aif.difference(mean_absolute_error, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Error Difference'] = \
+        aif.difference(meanerr, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -503,16 +514,16 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
         _y = y_cols()['disp_names']['yt']
         _yh = y_cols()['disp_names']['yh']
         res = {'Observations': x.shape[0],
-            f'{_y} Mean': x[y].mean(),
-            f'{_yh} Mean': x[yh].mean(),
-            f'{_yh} Median': x[yh].median(),
-            f'{_yh} STD': x[yh].std(),
-            'Error Mean': (x[yh] - x[y]).mean(),
-            'Error STD': (x[yh] - x[y]).std(),
-            'MAE': sk_metric.mean_absolute_error(x[y], x[yh]),
-            'MSE': sk_metric.mean_squared_error(x[y], x[yh]),
-            'Rsqrd': sk_metric.r2_score(x[y], x[yh])
-            }
+                f'{_y} Mean': x[y].mean(),
+                f'{_yh} Mean': x[yh].mean(),
+                f'{_yh} Median': x[yh].median(),
+                f'{_yh} STD': x[yh].std(),
+                'Error Mean': (x[yh] - x[y]).mean(),
+                'Error STD': (x[yh] - x[y]).std(),
+                'scMAE': clmtrc.scMAE(x[y], x[yh]),
+                'MAE': mean_absolute_error(x[y], x[yh]),
+                'MSE': mean_squared_error(x[y], x[yh])
+                }
         return res
     #
     if y_true is None or y_pred is None:
@@ -799,19 +810,18 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
 
         # Precision
         gf_vals['Positive Predictive Parity Difference'] = \
-            aif.difference(sk_metric.precision_score, y_true,
+            aif.difference(precision_score, y_true,
                                 y_pred, prot_attr=pa_name, priv_group=priv_grp)
-
         gf_vals['Balanced Accuracy Difference'] = \
-            aif.difference(sk_metric.balanced_accuracy_score, y_true,
+            aif.difference(balanced_accuracy_score, y_true,
                                 y_pred, prot_attr=pa_name, priv_group=priv_grp)
         gf_vals['Balanced Accuracy Ratio'] = \
-            aif.ratio(sk_metric.balanced_accuracy_score, y_true,
+            aif.ratio(balanced_accuracy_score, y_true,
                         y_pred, prot_attr=pa_name, priv_group=priv_grp)
         if y_prob is not None:
             try:
                 gf_vals['AUC Difference'] = \
-                    aif.difference(sk_metric.roc_auc_score, y_true, y_prob,
+                    aif.difference(roc_auc_score, y_true, y_prob,
                                     prot_attr=pa_name, priv_group=priv_grp)
             except:
                 pass

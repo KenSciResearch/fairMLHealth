@@ -51,7 +51,7 @@ def check_result(res, metric_name):
 
 def epsilon():
     """ error value used to prevent 'division by 0' errors """
-    return 0.0000000001
+    return np.finfo(np.float64).eps
 
 
 def ratio(num, den):
@@ -96,6 +96,21 @@ def f1_score(y_true, y_pred):
     rec = true_positive_rate(y_true, y_pred)
     res = 2*ratio(pre*rec, pre+rec)
     return check_result(res, "F1 Score")
+
+
+def scMAE(y_true, y_pred, y_range=None):
+    """ Scaled MAE, defined here as the MAE scaled by the range of true values.
+        Related metrics such as MAPE (Mean Absolute Percentage Error) or SMAPE
+        may be invalid for asymmetrical prediction ranges with negative values.
+    """
+    if y_range is not None:
+        if not isinstance(y_range, (int, float)):
+            err = "Invalid y_range. Must be int or float describing true range."
+            raise ValueError(err)
+    else:
+        y_range = max(epsilon(), np.max(y_true) - np.min(y_true))
+    rmae = np.mean(np.abs(y_true - y_pred))/y_range
+    return rmae
 
 
 def negative_predictive_value(y_true, y_pred):
