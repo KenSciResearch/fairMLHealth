@@ -10,7 +10,6 @@ import pandas as pd
 np.random.seed(547)
 
 
-@pytest.fixture(scope="module")
 def synth_dataset():
     df = pd.DataFrame({'A': np.random.randint(1, 4, 8),
                        'B': np.random.randint(1, 8, 8),
@@ -29,8 +28,8 @@ def load_classification_data(request):
     prfct_fair = pd.Series(targ_data, index=idx, name="prfct")
     avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=idx, name="avg")
     #
-    df = synth_dataset
-    df = pd.concat([df, pa, y, prfct_fair, avg_fair], axis=1)
+    df = synth_dataset()
+    df = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
     request.cls.df = df
     yield
 
@@ -44,8 +43,8 @@ def load_regression_data(request):
     avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=idx, name="avg")
     avg_fair[avg_fair.eq(1)] = targ_data
     #
-    df = synth_dataset
-    df = pd.concat([df, pa, y, prfct_fair, avg_fair], axis=1)
+    df = synth_dataset()
+    df = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
     request.cls.df = df
     yield
 
@@ -56,18 +55,18 @@ class TestStandardCassificationReports:
     """
     def test_classification_summary(self):
         _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
-                               self.df['avg'], pred_type="classification")
+                                   self.df['avg'], pred_type="classification")
 
     def test_classification_data_report(self):
         _ = reports.data_report(self.df, self.df['y'])
 
     def test_classification_performance_report(self):
         _ = reports.performance_report(self.df, self.df['y'], self.df['avg'],
-                                   pred_type="classification")
+                                       pred_type="classification")
 
     def test_classification_bias_report(self):
         _ = reports.bias_report(self.df, self.df['y'], self.df['avg'],
-                            pred_type="classification")
+                                pred_type="classification")
 
 
 @pytest.mark.usefixtures("load_regression_data")

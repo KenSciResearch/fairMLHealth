@@ -244,8 +244,8 @@ def y_cols(df=None):
                             'yh': '__fairmlhealth_y_pred',
                             'yp': '__fairmlhealth_y_prob'},
               'disp_names': {'yt': 'Target',
-                             'yh': 'Prediction',
-                             'yp': 'Probability'}
+                             'yh': 'Pred.',
+                             'yp': 'Prob.'}
             }
     #
     if df is not None:

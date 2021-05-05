@@ -215,7 +215,7 @@ def flag(df, caption="", as_styler=False):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", priv_grp=1, sig_dec=4, **kwargs):
+                pred_type="classification", priv_grp=1, sig_dec=4):
     """[summary]
 
     Args:
@@ -237,12 +237,11 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_bias_report(X, y_true, y_pred, features,
-                                            **kwargs)
+        return __classification_bias_report(X, y_true, y_pred, features)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         #raise ValueError(msg)
-        return __regression_bias_report(X, y_true, y_pred, features, **kwargs)
+        return __regression_bias_report(X, y_true, y_pred, features)
 
 
 def data_report(X, y_true, features:list=None):
@@ -263,7 +262,7 @@ def data_report(X, y_true, features:list=None):
     #
     def __data_dict(x, col):
         # Generate dictionary of statistics
-        res = {'Observations': x.shape[0]}
+        res = {'Obs.': x.shape[0]}
         name = clean_hidden_names(col)
         if not x[col].isna().all():
             res[f'{name} Mean'] = x[col].mean()
@@ -305,7 +304,7 @@ def data_report(X, y_true, features:list=None):
         for k, v in errs.items():
             print(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
-    full_res['Value Prevalence'] = full_res['Observations']/N_obs
+    full_res['Value Prevalence'] = full_res['Obs.']/N_obs
     #
     N_feat = len(stratified_features)
     overview = {'Feature Name': "ALL FEATURES",
@@ -320,7 +319,7 @@ def data_report(X, y_true, features:list=None):
     # Combine and format
     rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
     head_cols = ['Feature Name', 'Feature Value',
-                 'Observations', 'Missing Values']
+                 'Obs.', 'Missing Values']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
     rprt = rprt[head_cols + tail_cols]
     rprt = rprt.round(4)
@@ -328,7 +327,7 @@ def data_report(X, y_true, features:list=None):
 
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
-                      pred_type="classification", priv_grp=1, sig_dec=4, **kwargs):
+                      pred_type="classification", priv_grp=1, sig_dec=4):
     """[summary]
 
     Args:
@@ -356,7 +355,7 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         #raise ValueError(msg)
-        return __regression_performance_report(X, y_true, y_pred, features, **kwargs)
+        return __regression_performance_report(X, y_true, y_pred, features)
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -409,7 +408,7 @@ def __class_prevalence(y_true, priv_grp):
 
 
 def __classification_performance_report(X, y_true, y_pred, y_prob=None,
-                               features:list=None):
+                                        features:list=None):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -427,7 +426,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     def __perf_rep(x, y, yh, yp):
         _y = y_cols()['disp_names']['yt']
         _yh = y_cols()['disp_names']['yh']
-        res = {'Observations': x.shape[0],
+        res = {'Obs.': x.shape[0],
             f'{_y} Mean': x[y].mean(),
             f'{_yh} Mean': x[yh].mean(),
             'TPR': clmtrc.true_positive_rate(x[y], x[yh]),
@@ -484,7 +483,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
     yname = y_cols()['disp_names']['yt']
     yhname = y_cols()['disp_names']['yh']
-    head_cols = ['Feature Name', 'Feature Value', 'Observations',
+    head_cols = ['Feature Name', 'Feature Value', 'Obs.',
                  f'{yname} Mean', f'{yhname} Mean']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
     rprt = rprt[head_cols + tail_cols]
@@ -513,13 +512,13 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     def __perf_rep(x, y, yh):
         _y = y_cols()['disp_names']['yt']
         _yh = y_cols()['disp_names']['yh']
-        res = {'Observations': x.shape[0],
+        res = {'Obs.': x.shape[0],
                 f'{_y} Mean': x[y].mean(),
                 f'{_yh} Mean': x[yh].mean(),
                 f'{_yh} Median': x[yh].median(),
-                f'{_yh} STD': x[yh].std(),
+                f'{_yh} Std. Dev.': x[yh].std(),
                 'Error Mean': (x[yh] - x[y]).mean(),
-                'Error STD': (x[yh] - x[y]).std(),
+                'Error Std. Dev.': (x[yh] - x[y]).std(),
                 'scMAE': clmtrc.scMAE(x[y], x[yh]),
                 'MAE': mean_absolute_error(x[y], x[yh]),
                 'MSE': mean_squared_error(x[y], x[yh])
@@ -571,7 +570,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
     yname = y_cols()['disp_names']['yt']
     yhname = y_cols()['disp_names']['yh']
-    head_cols = ['Feature Name', 'Feature Value', 'Observations',
+    head_cols = ['Feature Name', 'Feature Value', 'Obs.',
                  f'{yname} Mean', f'{yhname} Mean']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
     rprt = rprt[head_cols + tail_cols]
@@ -580,8 +579,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
 
 
 
-def __classification_bias_report(X, y_true, y_pred, features:list=None,
-                                     **kwargs):
+def __classification_bias_report(X, y_true, y_pred, features:list=None):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -647,7 +645,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
                 errs[f] = e
                 continue
             r = pd.DataFrame(meas, index=[0])
-            r['Observations'] = df.loc[df[f].eq(v), pa_name].sum()
+            r['Obs.'] = df.loc[df[f].eq(v), pa_name].sum()
             r['Feature Name'] = f
             r['Feature Value'] = v
             res.append(r)
@@ -656,7 +654,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
             print(f"Error processing column(s) {k}. {v}\n")
     # Combine and format
     full_res = pd.concat(res, ignore_index=True)
-    head_cols = ['Feature Name', 'Feature Value', 'Observations']
+    head_cols = ['Feature Name', 'Feature Value', 'Obs.']
     tail_cols = sorted([c for c in full_res.columns if c not in head_cols])
     rprt = full_res[head_cols + tail_cols]
     rprt = rprt.round(4)
@@ -664,8 +662,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     return rprt
 
 
-def __regression_bias_report(X, y_true, y_pred, features:list=None,
-                                 **kwargs):
+def __regression_bias_report(X, y_true, y_pred, features:list=None):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -694,13 +691,13 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None,
         # Data are expected in string format
         assert df[f].astype(str).eq(df[f]).all()
         grp = df.groupby(f, as_index=False)[yt].count()
-        grp.rename(columns={f: 'Feature Value', yt: 'Observations'}, inplace=True)
+        grp.rename(columns={f: 'Feature Value', yt: 'Obs.'}, inplace=True)
         grp['Feature Name'] = f
         res.append(grp)
     rprt = pd.concat(res, axis=0, ignore_index=True)
     #
     res_f = []
-    rprt = rprt[['Feature Name', 'Feature Value', 'Observations']]
+    rprt = rprt[['Feature Name', 'Feature Value', 'Obs.']]
     pa_name = 'prtc_attr'
     errs = {}
     for _, row in rprt.iterrows():
@@ -731,7 +728,7 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None,
     rprt_update = pd.concat(res_f, ignore_index=True)
     rprt_update = rprt_update[sorted(rprt_update.columns, key=lambda x: x[-5:])]
     rprt = rprt.merge(rprt_update, on=['Feature Name', 'Feature Value'], how='left')
-    head_cols = ['Feature Name', 'Feature Value', 'Observations']
+    head_cols = ['Feature Name', 'Feature Value', 'Obs.']
     tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
     rprt = rprt[head_cols + tail_cols]
     rprt = rprt.round(4)
