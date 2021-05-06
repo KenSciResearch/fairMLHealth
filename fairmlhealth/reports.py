@@ -216,22 +216,7 @@ def flag(df, caption="", as_styler=False):
 
 def bias_report(X, y_true, y_pred, features:list=None,
                 pred_type="classification", priv_grp=1, sig_dec=4):
-    """[summary]
-
-    Args:
-        X ([type]): [description]
-        y_true ([type]): [description]
-        y_pred ([type]): [description]
-        features (list, optional): [description]. Defaults to None.
-        type (str, optional): [description]. Defaults to "classification".
-        priv_grp (int, optional): [description]. Defaults to 1.
-        sig_dec (int, optional): [description]. Defaults to 4.
-
-    Raises:
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
+    """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -328,23 +313,7 @@ def data_report(X, y_true, features:list=None):
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
                       pred_type="classification", priv_grp=1, sig_dec=4):
-    """[summary]
-
-    Args:
-        X ([type]): [description]
-        y_true ([type]): [description]
-        y_pred ([type]): [description]
-        y_prob ([type], optional): [description]. Defaults to None.
-        features (list, optional): [description]. Defaults to None.
-        type (str, optional): [description]. Defaults to "classification".
-        priv_grp (int, optional): [description]. Defaults to 1.
-        sig_dec (int, optional): [description]. Defaults to 4.
-
-    Raises:
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
+    """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -361,23 +330,7 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
                       pred_type="classification", priv_grp=1, sig_dec=4,
                       **kwargs):
-    """[summary]
-
-    Args:
-        X ([type]): [description]
-        prtc_attr ([type]): [description]
-        y_true ([type]): [description]
-        y_pred ([type]): [description]
-        y_prob ([type], optional): [description]. Defaults to None.
-        type (str, optional): [description]. Defaults to "classification".
-        priv_grp (int, optional): [description]. Defaults to 1.
-        sig_dec (int, optional): [description]. Defaults to 4.
-
-    Raises:
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
+    """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
