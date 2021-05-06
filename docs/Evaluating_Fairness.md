@@ -64,7 +64,7 @@ References:
 
 The following section defines common fairness measures that are used elsewhere. Skip ahead to [Part 3](#part3) for an example of how these measures are applied.
 
-### [Convenient Charts of Fairness Measures](../docs/docs/Measures_QuickReference.md.md)
+### [Convenient Charts of Fairness Measures](../docs/docs/Measures_QuickReference.md)
 
 ## Metrics of Fairness  <a id="metric_quickref"></a>
 
@@ -299,7 +299,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [Example-Template-BinaryClassificationAssessment Notebook](../tutorials_and_examples/Example-Template-BinaryClassificationAssessment.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](../docs/README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](../docs/README.md).
 
 
 

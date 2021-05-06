@@ -10,7 +10,7 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import mimic_data
+from . import mimic_data, utils
 import pandas as pd
 
 
@@ -22,6 +22,8 @@ TUTORIAL_ON = False
 
 
 def start_tutorial():
+    # Don't start the tutorial unless required packages are present
+    utils.validate_notebook_requirements()
     global TUTORIAL_ON
     TUTORIAL_ON = True
 
@@ -56,13 +58,10 @@ def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
             to None.
         criteria (str): query criteria. may not . Defaults to None.
         color (str): css color name. Defaults to 'aquamarine'.
-        h_type (str, optional): [description]. Defaults to 'field'.
+        h_type (str, optional):  . Defaults to 'field'.
 
     Raises:
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
+        ValueError
     """
     if (criteria is not None and values is not None):
         print("Cannot process both criteria and values.",

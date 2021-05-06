@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.8] - 2021-04-19
+### Installation Improvements
+- Fairlearn removed as backend requirement (still required for tutorials)
+- Version ranges updated in setup.py (wider range of dependency versions now allowed)
+- Troubleshooting documentation added
+- Bug fixes implemented
+
 
 ## [0.1.7] - 2021-04-14
 ### Testing Update

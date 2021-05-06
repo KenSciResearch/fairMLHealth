@@ -1,8 +1,10 @@
 '''
 Back-end functions used throughout the library
 '''
+from importlib.util import find_spec
 import numpy as np
 import pandas as pd
+from six import string_types
 
 
 def cb_round(series, base=5, sig_dec=0):
@@ -17,9 +19,9 @@ def cb_round(series, base=5, sig_dec=0):
                 custom-rounded value
     """
     if not base >= 0.01:
-        raise ValueError(f"cannot round with base {base}."
-                         + "cb_round designed for base >= 0.01."
-                         )
+        err = (f"cannot round with base {base}." +
+               "cb_round designed for base >= 0.01.")
+        raise ValueError(err)
     result = series.apply(lambda x: round(base * round(float(x)/base), sig_dec))
     return result
 
@@ -28,7 +30,6 @@ def is_dictlike(obj):
     dictlike = all([callable(getattr(obj, "keys", None)),
                     not hasattr(obj, "size")])
     return dictlike
-
 
 class ValidationError(Exception):
     pass
@@ -82,8 +83,8 @@ def __preprocess_input(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
             binary_boolean = prtc_attr[c].isin([0, 1, False, True]).all()
             two_valued = ((set(prtc_attr[c].astype(int)) == {0, 1}))
             if not two_valued and binary_boolean:
-                msg = "prtc_attr must be binary or boolean and heterogeneous"
-                raise ValueError(msg)
+                err = "prtc_attr must be binary or boolean and heterogeneous"
+                raise ValueError(err)
             prtc_attr.loc[:, c] = prtc_attr[c].astype(int)
             if isinstance(c, int):
                 prtc_attr.rename(columns={c: f"prtc_attr_{c}"}, inplace=True)
@@ -127,11 +128,12 @@ def __validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
     for data in [X, y_true, y_pred]:
         if data is not None:
             if not isinstance(data, valid_data_types):
-                msg = f"One of X, y_true, or y_pred is invalid type {type(data)}"
-                raise TypeError(msg)
+                err = ("One of X, y_true, or y_pred is invalid type"
+                       + str(type(data)))
+                raise TypeError(err)
             if not data.shape[0] > 1:
-                msg = "One of X, y_true, or y_pred is too small to measure"
-                raise ValueError(msg)
+                err = "One of X, y_true, or y_pred is too small to measure"
+                raise ValueError(err)
     for y in [y_true, y_pred]:
         if y is None:
             continue
@@ -148,12 +150,26 @@ def __validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
         if not isinstance(prtc_attr, valid_data_types):
             raise TypeError("input data is invalid type")
         if set(np.unique(prtc_attr)) != {0, 1}:
-            msg = (f"Invalid values detected in protected attribute(s).",
+            err = (f"Invalid values detected in protected attribute(s).",
                    " Must be {0,1}.")
-            raise ValueError(msg)
+            raise ValueError(err)
     # priv_grp
     if not isinstance(priv_grp, int):
         raise TypeError("priv_grp must be an integer")
 
     # If all above runs, inputs pass validation
     return True
+
+
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
+    else:
+        pass
+

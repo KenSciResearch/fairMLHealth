@@ -1,22 +1,39 @@
+'''
+'''
 import copy
 import logging
 import sklearn.metrics as sk_metric
-from fairmlhealth.utils import *
 import numpy as np
 import pandas as pd
 from functools import partial
 
 
-# Set E as the error value used to prevent 'division by 0' errors
-E = 0.0000000001
 
+__all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
+           "false_negative_rate", "false_positive_rate", "f1_score",
+           "negative_predictive_value", "roc_auc_score", "precision",
+           "pr_auc_score", "precision", "true_negative_rate",
+           "true_positive_rate"]
+
+
+''' Utilities '''
 
 def binary_prediction_results(y_true, y_pred):
-    """ Returns a dictionary with counts of TP, TN, FP, and FN
+    """ Returns a dictionary with counts of TP, TN, FP, and FN. Since validaton
+        is assumed to have already been run, this should be faster than using
+        scikit
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
     """
     counts = {}
-    # Using numpy here instead of scikit since validaton has already been run
-    arr = np.array((y_true, y_pred))
+    # Workaround d.t. bug in some versions of numpy causing error when
+    # concatenating dataframes
+    arr = np.empty(2, dtype=object)
+    arr[:]= [y_true, y_pred]
+    #
     t_sum = np.sum(arr, axis=0)
     counts['TP'] = np.count_nonzero(t_sum == 2)
     counts['TN'] = np.count_nonzero(t_sum == 0)
@@ -25,79 +42,71 @@ def binary_prediction_results(y_true, y_pred):
     return counts
 
 
-def __formatted_prediction_success(y_true, y_pred):
-    rprt = binary_prediction_results(y_true, y_pred)
-    for k, v in rprt.items():
-        if v == 0:
-            rprt[k] = E
-    return(rprt)
-
-
-def validate_result(res, metric_name):
-    '''
-    '''
-    if res > 1+10*E or res < 0-E:
+def check_result(res, metric_name):
+    if res > 1 + 100*epsilon() or res < 0 - 100*epsilon():
         raise ValueError(f"{metric_name} result out of range ({res})")
     else:
-        return(np.clip(res, 0, 1))
+        return res
+
+
+def epsilon():
+    """ error value used to prevent 'division by 0' errors """
+    return 0.0000000001
+
+
+def ratio(num, den):
+    ''' Returns the ratio of num/den, avoiding division by zero errors
+    '''
+    if den == 0:
+        return num/epsilon()
+    else:
+        return num/den
+
+
+''' Metrics '''
 
 
 def accuracy(y_true, y_pred):
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = (rprt['TP'] + rprt['TN'] )/(y_true.shape[0])
-    return validate_result(res, "Accuracy")
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['TP'] + rprt['TN'],
+                y_true.shape[0])
+    return check_result(res, "Accuracy")
 
 
 def balanced_accuracy(y_true, y_pred):
-    sens = sensitivity(y_true, y_pred)
-    spec = specificity(y_true, y_pred)
-    res = (sens + spec)/2
-    return validate_result(res, "Balanced Accuracy")
+    sens = true_positive_rate(y_true, y_pred)
+    spec = true_negative_rate(y_true, y_pred)
+    res = ratio(sens + spec, 2)
+    return check_result(res, "Balanced Accuracy")
 
 
-def false_alarm_rate(y_true, y_pred): # FPR
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = rprt['FP']/(rprt['FP'] + rprt['TN'])
-    return validate_result(res, "False Alarm Rate")
+def false_negative_rate(y_true, y_pred): # Miss Rate
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['FN'],
+                rprt['FN'] + rprt['TP'])
+    return check_result(res, "FNR")
 
 
-def miss_rate(y_true, y_pred): # FNR
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = rprt['FN']/(rprt['FN'] + rprt['TP'])
-    return validate_result(res, "Miss Rate")
-
-
-def negative_predictive_value(y_true, y_pred):
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = (rprt['TN'] + rprt['FN'])/(rprt['TN'] + rprt['FP'])
-    return res
-
-def precision(y_true, y_pred): # aka. PPV
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = rprt['TP']/(rprt['TP'] + rprt['FP'])
-    return validate_result(res, "Precision")
-
-
-def sensitivity(y_true, y_pred): # aka. recall, TPR
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = rprt['TP']/(rprt['FN'] + rprt['TP'] )
-    return validate_result(res, "Sensitivity")
-
-
-def specificity(y_true, y_pred): # aka. TNR, selectivity
-    rprt = __formatted_prediction_success(y_true, y_pred)
-    res = rprt['TN']/(rprt['FP'] + rprt['TN'])
-    return validate_result(res, "Specificity")
+def false_positive_rate(y_true, y_pred): # False Alarm Rate
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['FP'],
+                rprt['FP'] + rprt['TN'])
+    return check_result(res, "FPR}")
 
 
 def f1_score(y_true, y_pred):
     pre = precision(y_true, y_pred)
-    rec = sensitivity(y_true, y_pred)
-    try:
-        res = 2*(pre*rec)/(pre+rec)
-    except ZeroDivisionError:
-        res = 0
-    return validate_result(res, "F1 Score")
+    rec = true_positive_rate(y_true, y_pred)
+    res = 2*ratio(pre*rec,
+                  pre+rec)
+    return check_result(res, "F1 Score")
+
+
+def negative_predictive_value(y_true, y_pred):
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['TN'] + rprt['FN'],
+                      rprt['TN'] + rprt['FP'])
+    return res
 
 
 def roc_auc_score(y_true, y_pred):
@@ -105,11 +114,33 @@ def roc_auc_score(y_true, y_pred):
         res = sk_metric.roc_auc_score(y_true, y_pred)
     except ValueError:
         res = 0
-    return validate_result(res, "ROC AUC Score")
+    return check_result(res, "ROC AUC Score")
 
 
 def pr_auc_score(y_true, y_pred):
     prc, rec, _ = sk_metric.precision_recall_curve(y_true, y_pred)
     res = sk_metric.auc(prc, rec)
-    return validate_result(res, "PR AUC Score")
+    return check_result(res, "PR AUC Score")
+
+
+def precision(y_true, y_pred): # aka. PPV
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['TP'],
+                      rprt['TP'] + rprt['FP'])
+    return check_result(res, "Precision")
+
+
+def true_negative_rate(y_true, y_pred): # aka. selectivity, specificity
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['TN'],
+                      rprt['FP'] + rprt['TN'])
+    return check_result(res, "TNR")
+
+
+def true_positive_rate(y_true, y_pred): # aka. recall, sensitivity
+    rprt =  binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt['TP'],
+                      rprt['FN'] + rprt['TP'])
+    return check_result(res, "TPR")
+
 
