@@ -17,7 +17,7 @@ from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
                              precision_score, roc_auc_score,
                              balanced_accuracy_score, classification_report)
 from scipy import stats
-import warnings
+from warnings import filterwarnings, warn
 
 # Tutorial Libraries
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
@@ -30,14 +30,14 @@ from .utils import ValidationError
 
 
 # ToDo: find better solution for these warnings
-warnings.filterwarnings('ignore', module='pandas')
-warnings.filterwarnings('ignore', module='sklearn')
+filterwarnings('ignore', module='pandas')
+filterwarnings('ignore', module='sklearn')
 
 
 ''' Deprecated Public Functions '''
 
 def flag_suspicious(df, caption="", as_styler=False):
-    warnings.warn(
+    warn(
             "flag_suspicious function will be deprecated in version 2.0" +
             " Use flag instead.", PendingDeprecationWarning
         )
@@ -46,7 +46,7 @@ def flag_suspicious(df, caption="", as_styler=False):
 
 def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
                             priv_grp=1, sig_dec=4, **kwargs):
-    warnings.warn(
+    warn(
             "classification_fairness function will be deprecated in version " +
             "2.0. Use summary_report instead.",
             PendingDeprecationWarning
@@ -57,7 +57,7 @@ def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
 
 def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
                         **kwargs):
-    warnings.warn(
+    warn(
             "regression_fairness function will be deprecated in version " +
             "2.0. Use summary_report instead.", PendingDeprecationWarning
         )
@@ -302,7 +302,7 @@ def data_report(X, y_true, features:list=None):
         res.append(r)
     if any(errs):
         for k, v in errs.items():
-            print(f"Error processing column(s) {k}. {v}\n")
+            warn(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     full_res['Value Prevalence'] = full_res['Obs.']/N_obs
     #
@@ -470,7 +470,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         res.append(r)
     if any(errs):
         for k, v in errs.items():
-            print(f"Error processing column(s) {k}. {v}\n")
+            warn(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     #
     overview = {'Feature Name': "ALL FEATURES",
@@ -557,7 +557,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
         res.append(r)
     if any(errs):
         for k, v in errs.items():
-            print(f"Error processing column(s) {k}. {v}\n")
+            warn(f"Error processing column(s) {k}. {v}\n")
     full_res = pd.concat(res, ignore_index=True)
     #
     overview = {'Feature Name': "ALL FEATURES",
@@ -647,7 +647,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None):
             res.append(r)
     if any(errs):
         for k, v in errs.items():
-            print(f"Error processing column(s) {k}. {v}\n")
+            warn(f"Error processing column(s) {k}. {v}\n")
     # Combine and format
     full_res = pd.concat(res, ignore_index=True)
     head_cols = ['Feature Name', 'Feature Value', 'Obs.']
@@ -719,7 +719,7 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None):
         res_f.append(r)
     if any(errs):
         for k, v in errs.items():
-            print(f"Error processing column(s) {k}. {v}\n")
+            warn(f"Error processing column(s) {k}. {v}\n")
     # Combine and format
     rprt_update = pd.concat(res_f, ignore_index=True)
     rprt_update = rprt_update[sorted(rprt_update.columns, key=lambda x: x[-5:])]
