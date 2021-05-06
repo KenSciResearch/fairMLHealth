@@ -18,7 +18,7 @@ import os
 import warnings
 
 from fairmlhealth.utils import is_dictlike
-from fairmlhealth.reports import classification_fairness as classfair
+from fairmlhealth.reports import summary_report
 
 
 """
@@ -92,7 +92,7 @@ def compare_measures(test_data, target_data, protected_attr_data, models):
         pandas dataframe of fairness and performance measures for each model
     """
     warnings.warn(
-            "compare_measures will be deprecated in version 2." +
+            "compare_measures function will be deprecated in version 2.0" +
             " Use compare_models instead.", PendingDeprecationWarning
         )
     comp = FairCompare(test_data, target_data, protected_attr_data, models,
@@ -197,23 +197,22 @@ class FairCompare(ABC):
         if model_name not in self.preds.keys():
             msg += (" Name not found Available options include "
                    f"{list(self.preds.keys())}")
-            print(err)
+            print(msg)
             return pd.DataFrame()
         elif self.preds[model_name] is None:
             msg += (" No predictions present.")
             print(msg)
             return pd.DataFrame()
         else:
-            res = classfair(self.X[model_name], self.prtc_attr[model_name],
-                            self.y[model_name], self.preds[model_name],
-                            self.probs[model_name], **kwargs)
-        return res
+            res = summary_report(self.X[model_name],
+                                 self.prtc_attr[model_name],
+                                 self.y[model_name],
+                                 self.preds[model_name],
+                                 self.probs[model_name],
+                                 pred_type="classification",
+                                 **kwargs)
+            return res
 
-    def save_comparison(self, filepath):
-        dirpath = os.path.dirname(filepath)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-        dump(self, filepath)
 
     def __paused_validation(self):
         if not hasattr(self, "__pause_validation"):

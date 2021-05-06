@@ -27,4 +27,4 @@ Resolves: (issue # or AB#)
 
 
 ## How was this update tested?
-Please describe the tests used to validate this update. Include clear instructions for reproducibility, and include relevant configuration details for your test environment
+[Please describe the tests used to validate this update. Include clear instructions for reproducibility, and include relevant configuration details for your test environment.]

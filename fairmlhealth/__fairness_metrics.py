@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.metrics import precision_score
 import warnings
 
-from .__classification_metrics import (
+from .__performance_metrics import (
     epsilon, false_positive_rate, true_positive_rate,
     true_negative_rate, false_negative_rate)
 

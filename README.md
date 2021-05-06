@@ -41,10 +41,7 @@ For a functioning notebook of the usage examples below, see [Example-ToolUsage](
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc
-from fairmlhealth import stratified_reports
-from fairmlhealth.reports import flag
-
+from fairmlhealth import model_comparison as fhmc, reports
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -77,11 +74,12 @@ Measure_model is designed to generate a report of multiple fairness metrics for 
 # Generate a pandas dataframe of measures
 fairness_measures = fhmc.measure_model(X_test, y_test, prtc_attr, model_1)
 # Display and color measures that are out of range
-flag(fairness_measures)
+reports.flag(fairness_measures)
 ```
 
 <img src="./docs/img/measure_model.png"
      alt="Example of single model measurement"
+     height="300px"
     />
 
 ### Evaluating
@@ -96,14 +94,14 @@ The data reporter is shown below with each of the two data argument options. It 
 
 ```python
 # Arguments Option 1: pass full set of data, subsetting with *features* argument
-stratified_reports.data_report(X_test, y_test, features=['gender'])
+reports.data_report(X_test, y_test, features=['gender'])
 
 # Arguments Option 2: pass the data subset of interest without using the *features* argument
-stratified_reports.data_report(X_test[['gender']], y_test)
+reports.data_report(X_test[['gender']], y_test)
 ```
 
 <img src="./docs/img/data_report.png"
-     alt="Data Report, Input Option 2"
+     alt="Data Report"
      />
 
 ### Stratified Performance Reports
@@ -111,8 +109,7 @@ stratified_reports.data_report(X_test[['gender']], y_test)
 The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
 ```python
-stratified_reports.classification_performance(X_test[['gender']], y_test,
-                                              model_1.predict(X_test))
+reports.performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/performance_report.png"
@@ -128,11 +125,10 @@ To simplify the report, fairness measures have been simplified to their componen
 See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
 ```python
-stratified_reports.classification_fairness(X_test[['gender', 'col1']],
-                                           y_test, model_1.predict(X_test))
+reports.bias_report(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
 
-<img src="./docs/img/fairness_report.png"
+<img src="./docs/img/bias_report.png"
      alt="Fairness Report Example"
      />
 
@@ -144,11 +140,12 @@ Below is an example output comparing the two example models defined above. Missi
 
 ```python
 comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
-flag(comparison)
+reports.flag(comparison)
 ```
 
 <img src="./docs/img/compare_models.png"
      alt="Two-Model compare_models Example"
+     height="400px"
      />
 
 The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
@@ -161,6 +158,7 @@ fhmc.compare_models(X_test, y_test,
 
 <img src="./docs/img/multiple_attributes.png"
      alt="Two-Attribute compare_models Example"
+     height="400px"
      />
 
 
