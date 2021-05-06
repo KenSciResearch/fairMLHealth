@@ -79,6 +79,7 @@ reports.flag(fairness_measures)
 
 <img src="./docs/img/measure_model.png"
      alt="Example of single model measurement"
+     height="300px"
     />
 
 ### Evaluating
@@ -100,7 +101,7 @@ reports.data_report(X_test[['gender']], y_test)
 ```
 
 <img src="./docs/img/data_report.png"
-     alt="Data Report, Input Option 2"
+     alt="Data Report"
      />
 
 ### Stratified Performance Reports
@@ -108,8 +109,7 @@ reports.data_report(X_test[['gender']], y_test)
 The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
 ```python
-reports.classification_performance_report(X_test[['gender']], y_test,
-                                              model_1.predict(X_test))
+reports.performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/performance_report.png"
@@ -125,11 +125,10 @@ To simplify the report, fairness measures have been simplified to their componen
 See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
 ```python
-reports.classification_fairness(X_test[['gender', 'col1']],
-                                           y_test, model_1.predict(X_test))
+reports.bias_report(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
 
-<img src="./docs/img/fairness_report.png"
+<img src="./docs/img/bias_report.png"
      alt="Fairness Report Example"
      />
 
@@ -146,6 +145,7 @@ reports.flag(comparison)
 
 <img src="./docs/img/compare_models.png"
      alt="Two-Model compare_models Example"
+     height="400px"
      />
 
 The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
@@ -158,6 +158,7 @@ fhmc.compare_models(X_test, y_test,
 
 <img src="./docs/img/multiple_attributes.png"
      alt="Two-Attribute compare_models Example"
+     height="400px"
      />
 
 
