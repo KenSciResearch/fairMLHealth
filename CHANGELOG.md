@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
-## [0.1.8] - 2021-04-19
+## [0.1.9] - 2021-04-19
 ### Reporting Updates
 - Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
 
