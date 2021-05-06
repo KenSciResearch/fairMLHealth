@@ -112,7 +112,10 @@ def scMAE(y_true, y_pred, y_range=None):
             raise ValueError(err)
     else:
         y_range = max(epsilon(), np.max(y_true) - np.min(y_true))
-    rmae = np.mean(np.abs(y_true - y_pred))/y_range
+    if y_range < 1:
+        rmae = np.mean(np.abs(y_true - y_pred))
+    else:
+        rmae = np.mean(np.abs(y_true - y_pred))/y_range
     return rmae
 
 
