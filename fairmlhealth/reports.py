@@ -430,9 +430,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
             f'{_y} Mean': x[y].mean(),
             f'{_yh} Mean': x[yh].mean(),
             'TPR': clmtrc.true_positive_rate(x[y], x[yh]),
-            'TNR': clmtrc.true_negative_rate(x[y], x[yh]),
             'FPR': clmtrc.false_positive_rate(x[y], x[yh]),
-            'FNR': clmtrc.false_negative_rate(x[y], x[yh]),
             'Accuracy': clmtrc.accuracy(x[y], x[yh]),
             'Precision': clmtrc.precision(x[y], x[yh])  # PPV
             }
@@ -602,14 +600,10 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None):
         gf_vals['PPV Ratio'] = fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Ratio'] = fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
         gf_vals['FPR Ratio'] = fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['TNR Ratio'] = fcmtrc.tnr_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['FNR Ratio'] = fcmtrc.fnr_ratio(y_true, y_pred, pa_name, priv_grp)
         #
         gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['TNR Diff'] = fcmtrc.tnr_diff(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['FNR Diff'] = fcmtrc.fnr_diff(y_true, y_pred, pa_name, priv_grp)
         return gf_vals
     #
     if y_true is None or y_pred is None:

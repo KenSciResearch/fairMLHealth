@@ -196,7 +196,8 @@ def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
                        + str(type(data)))
                 raise TypeError(err)
             if not data.shape[0] > 1:
-                err = "One of X, y_true, or y_pred is too small to measure"
+                err = ("One of X, y_true, or y_pred has too few nonmissing"
+                       + "observations to measure")
                 raise ValueError(err)
     for y in [y_true, y_pred]:
         if y is None:
