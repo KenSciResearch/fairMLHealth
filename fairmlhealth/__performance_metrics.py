@@ -19,26 +19,15 @@ __all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
 ''' Utilities '''
 
 def binary_prediction_results(y_true, y_pred):
-    """ Returns a dictionary with counts of TP, TN, FP, and FN. Since validaton
-        is assumed to have already been run, this should be faster than using
-        scikit
+    """ Returns a dictionary with counts of TP, TN, FP, and FN
 
         Args:
             y_true, y_pred (numpy-compatible, 1D array-like): binary valued
             objects holding the ground truth and predictions (respectively),
             on which validation has already been run.
     """
-    counts = {}
-    # Workaround d.t. bug in some versions of numpy causing error when
-    # concatenating dataframes
-    arr = np.empty(2, dtype=object)
-    arr[:]= [y_true, y_pred]
-    #
-    t_sum = np.sum(arr, axis=0)
-    counts['TP'] = np.count_nonzero(t_sum == 2)
-    counts['TN'] = np.count_nonzero(t_sum == 0)
-    counts['FP'] = np.count_nonzero(np.logical_and(arr[0]==0, arr[1]==1))
-    counts['FN'] = np.count_nonzero(np.logical_and(arr[0]==1, arr[1]==0))
+    tn, fp, fn, tp = sk_metric.confusion_matrix(y_true, y_pred).ravel()
+    counts = {'TP':tp, 'FP':fp, 'TN':tn, 'FN':fn}
     return counts
 
 
