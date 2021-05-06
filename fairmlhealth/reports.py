@@ -20,7 +20,7 @@ from scipy import stats
 import warnings
 
 # Tutorial Libraries
-from . import __classification_metrics as clmtrc, __fairness_metrics as fcmtrc
+from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__report_processing import (standard_preprocess, stratified_preprocess,
                               y_cols, clean_hidden_names, report_labels)
@@ -101,7 +101,7 @@ def regression_performance(y_true, y_pred):
     yh = y_cols()['disp_names']['yh']
     report[f'{y} Mean'] = np.mean(y_true)
     report[f'{yh} Mean'] = np.mean(y_pred)
-    report['scMAE'] = clmtrc.scMAE(y_true, y_pred)
+    report['scMAE'] = pmtrc.scMAE(y_true, y_pred)
     report['MSE'] = mean_squared_error(y_true, y_pred)
     report['MAE'] = mean_absolute_error(y_true, y_pred)
     report['Rsqrd'] = r2_score(y_true, y_pred)
@@ -120,7 +120,7 @@ def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
         aif.ratio(pdmean, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['scMAE Ratio'] = \
-        aif.ratio(clmtrc.scMAE, y_true, y_pred,
+        aif.ratio(pmtrc.scMAE, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif.ratio(mean_absolute_error, y_true, y_pred,
@@ -133,7 +133,7 @@ def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
         aif.difference(pdmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['scMAE Difference'] = \
-        aif.difference(clmtrc.scMAE, y_true, y_pred,
+        aif.difference(pmtrc.scMAE, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
@@ -429,14 +429,14 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         res = {'Obs.': x.shape[0],
             f'{_y} Mean': x[y].mean(),
             f'{_yh} Mean': x[yh].mean(),
-            'TPR': clmtrc.true_positive_rate(x[y], x[yh]),
-            'FPR': clmtrc.false_positive_rate(x[y], x[yh]),
-            'Accuracy': clmtrc.accuracy(x[y], x[yh]),
-            'Precision': clmtrc.precision(x[y], x[yh])  # PPV
+            'TPR': pmtrc.true_positive_rate(x[y], x[yh]),
+            'FPR': pmtrc.false_positive_rate(x[y], x[yh]),
+            'Accuracy': pmtrc.accuracy(x[y], x[yh]),
+            'Precision': pmtrc.precision(x[y], x[yh])  # PPV
             }
         if yp is not None:
-            res['ROC AUC'] = clmtrc.roc_auc_score(x[y], x[yp])
-            res['PR AUC'] = clmtrc.pr_auc_score(x[y], x[yp])
+            res['ROC AUC'] = pmtrc.roc_auc_score(x[y], x[yp])
+            res['PR AUC'] = pmtrc.pr_auc_score(x[y], x[yp])
         return res
     #
     #
@@ -517,7 +517,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
                 f'{_yh} Std. Dev.': x[yh].std(),
                 'Error Mean': (x[yh] - x[y]).mean(),
                 'Error Std. Dev.': (x[yh] - x[y]).std(),
-                'scMAE': clmtrc.scMAE(x[y], x[yh]),
+                'scMAE': pmtrc.scMAE(x[y], x[yh]),
                 'MAE': mean_absolute_error(x[y], x[yh]),
                 'MSE': mean_squared_error(x[y], x[yh])
                 }
@@ -821,15 +821,15 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
     def __m_p_c(y, yh, yp=None):
         # Returns a dict containing classification performance measure values for
         # non-stratified reports
-        res = {'Accuracy': clmtrc.accuracy(y, yh),
-            'Balanced Accuracy': clmtrc.balanced_accuracy(y, yh),
-            'F1-Score': clmtrc.f1_score(y, yh),
-            'Recall': clmtrc.true_positive_rate(y, yh),
-            'Precision': clmtrc.precision(y, yh)
+        res = {'Accuracy': pmtrc.accuracy(y, yh),
+            'Balanced Accuracy': pmtrc.balanced_accuracy(y, yh),
+            'F1-Score': pmtrc.f1_score(y, yh),
+            'Recall': pmtrc.true_positive_rate(y, yh),
+            'Precision': pmtrc.precision(y, yh)
             }
         if yp is not None:
-            res['ROC_AUC'] = clmtrc.roc_auc_score(y, yp)
-            res['PR_AUC'] = clmtrc.pr_auc_score(y, yp)
+            res['ROC_AUC'] = pmtrc.roc_auc_score(y, yp)
+            res['PR_AUC'] = pmtrc.pr_auc_score(y, yp)
         return res
     #
     #

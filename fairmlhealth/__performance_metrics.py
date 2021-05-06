@@ -102,6 +102,9 @@ def scMAE(y_true, y_pred, y_range=None):
     """ Scaled MAE, defined here as the MAE scaled by the range of true values.
         Related metrics such as MAPE (Mean Absolute Percentage Error) or SMAPE
         may be invalid for asymmetrical prediction ranges with negative values.
+
+        Using scaled MAE allows for a standardized "fair" range, rather than
+        re-defining this range for each individual regression problem.
     """
     if y_range is not None:
         if not isinstance(y_range, (int, float)):

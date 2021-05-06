@@ -2,7 +2,7 @@
 Validation tests for fairmlhealth
 '''
 
-from fairmlhealth.__classification_metrics import (
+from fairmlhealth.__performance_metrics import (
                                     true_positive_rate, true_negative_rate,
                                     false_negative_rate, false_positive_rate)
 import pytest
