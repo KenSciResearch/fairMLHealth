@@ -224,9 +224,7 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type == "classification":
         return __classification_bias_report(X, y_true, y_pred, features)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features)
+        return __regression_bias_report(X, y_true, y_pred, features)
 
 
 def data_report(X, y_true, features:list=None):
@@ -322,9 +320,7 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
         return __classification_performance_report(X, y_true, y_pred,
                                                    y_prob, features)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_performance_report(X, y_true, y_pred, features)
+        return __regression_performance_report(X, y_true, y_pred, features)
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -339,10 +335,8 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
         return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
                                         priv_grp, sig_dec, **kwargs)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp,
-        #                           sig_dec, **kwargs)
+        return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp,
+                                    sig_dec, **kwargs)
 
 
 ''' Private Functions '''
