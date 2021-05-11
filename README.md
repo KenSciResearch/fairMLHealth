@@ -2,9 +2,13 @@
 Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
 
 
-## Organization
-This library is constructed in three main parts:
-- ### [Tools (fairmlhealth)](fairmlhealth/README.md)
+## Resources
+- ### [Tables and References](docs/README.md)
+    - [Summary Tables](docs/docs/Summary_Tables.pdf)
+    - [References](docs/docs/References.pdf)
+    - [Our Publications](docs/publications/README.md)
+
+- ### [Tools (fairmlhealth)]
     - Methods for generating fairness comparison tables
     - Features used by templates and tutorials to facilitate comparison of multiple metrics
 
@@ -14,12 +18,6 @@ This library is constructed in three main parts:
 - ### [Tutorials and Examples](tutorials_and_examples/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
     - Examples for using the templates and tools
-- ### [Documentation](docs/README.md)
-    - [Publications](docs/publications/README.md)
-    - [Summary Tables](docs/docs/Summary_Tables.pdf)
-    - [References](docs/docs/References.pdf)
-
-
 
 ## Installation <a id="installation_instructions"></a>
 Installing directly from GitHub:
