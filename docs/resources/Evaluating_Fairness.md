@@ -2,7 +2,7 @@
 
 
 ## About
-All machine learning (ML) models can be assumed to hold biases, just as all humans hold biases and as all humans fall ill at some point in their lives. The motivation that drives us to study and prevent the harm caused by human illness drives us to prevent the harm caused by innate biases in ourselves and our ML models. That means building models that provide fair representation for all demographics. And it starts with measurement and evaluation.
+All machine learning (ML) models can be assumed to hold biases, just as all humans hold biases. Building models that will work for all patients starts with understanding that bias through measurement and evaluation.
 
 This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](publications/KDD2020-FairnessInHealthcareML-Slides.pptx), the notebook for which can be found here: [docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb](publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb).
 

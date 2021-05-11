@@ -4,9 +4,10 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
 
 ## Resources
 - ### [Tables and References](docs/README.md)
-    - [Summary Tables (Quick Reference of Measures)](docs/Measures_QuickReference.md)
-    - [References](docs/References.md)
+    - [Summary Tables (Quick Reference of Measures)](docs/resources/Measures_QuickReference.md)
+    - [References](docs/resources/References.md)
     - [Our Publications](docs/publications/README.md)
+    - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
 
 - ### Tools
     - Methods for generating fairness comparison tables
@@ -31,7 +32,7 @@ Installing from a local copy of the repo:
 ### Troubleshooting
 For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
 
-If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using our [Issue Template](docs/development/ISSUE_TEMPLATE.md).
+If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
 
 ## FairMLHealth Usage
 For a functioning notebook of the usage examples below, see [Example-ToolUsage](./tutorials_and_examples/Example-USAGE.ipynb)
@@ -170,8 +171,9 @@ For a more detailed example of how to use this package, please see the [Example 
 ## Connect with Us!
 This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and healthcare!
 
-- For problems with the source code or documentation, please use GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
-- Other comments, ideas, questions, and feedback are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
+- For problems with the source code or documentation, please submit inquiries using our [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) or [Feature Request Template](docs/code_contributions/FEATURE_REQUEST.md) through GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- Other comments, ideas, inquiries, suggestions, feedback and requests are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
+- See the [Contributing Guidelines](docs/code_contributions/CONTRIBUTING.md) for more information.
 
 ## Citations
 ### Repository
