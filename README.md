@@ -8,7 +8,7 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
     - [References](docs/References.md)
     - [Our Publications](docs/publications/README.md)
 
-- ### [Tools](fairMLHealth)
+- ### Tools
     - Methods for generating fairness comparison tables
     - Features used by templates and tutorials to facilitate comparison of multiple metrics
 
