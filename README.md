@@ -1,6 +1,7 @@
 # fairMLHealth
 Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
 
+View on GitHub Pages at [https://kensciresearch.github.io/fairMLHealth/](https://kensciresearch.github.io/fairMLHealth/).
 
 ## Organization
 This library is constructed in three main parts:
