@@ -3,9 +3,9 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
 
 
 ## Resources
-- ### [Tables and References](docs/README.md)
+- ### [Documentation and References](docs/README.md)
     - [Summary Tables (Quick Reference of Measures)](docs/resources/Measures_QuickReference.md)
-    - [References](docs/resources/References.md)
+    - [References and Resources](docs/resources/References_and_Resources.md)
     - [Our Publications](docs/publications/README.md)
     - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
 
