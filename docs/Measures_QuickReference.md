@@ -4,21 +4,20 @@
 
 ### Metrics by Category
 
-There are three common categories of metrics for determining whether a model is considered "fair": *Group Fairness*, which compares the statistical similarities of predictions relative to known and discrete protected groupings; *Similarity-Based Measures*, which evaluate predictions without those discrete protected groups; and *Causal Reasoning* measures, which evaluate fairness through the use of causal models.
-
+There are three common categories of metrics for determining whether a model is considered "fair": Group Fairness, which compares the statistical similarities of predictions relative to known and discrete protected groupings; Similarity-Based Measures, which evaluate predictions without those discrete protected groups; and Causal Reasoning measures, which evaluate fairness through the use of causal models.
 
 | Category | Metric | Definition | Weakness | References |
 |------|------|------|------|------|
-| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups: $\frac{P(\hat{y} = 1 \| unprivileged)}{P(\hat{y} = 1 \| privileged)}$<br> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
+| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups: $\dfrac{P(\hat{y} = 1 \lvert unprivileged)}{P(\hat{y} = 1 \rvert privileged)}$ <br> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||**Equalized Odds**| Odds are equalized if $P(+)$ is approximately the same for all protected attribute groups.<br>  **Equal Opportunity** is a special case of equalized odds specifying that $P(+ \rvert y = 1)$ is approximately the same across groups. <br> <br> Harms Addressed: Allocative, Representational | Historical biases present in the data  are not addressed and may still bias the model. | [Hardt *et al* (2016)](#hardt2016_ref) |
 ||**Predictive Parity**| This parity exists where the Positive Predictive Value is approximately the same for all protected attribute groups. <br> <br> Harms Addressed: Allocative, Representational | Historical biases present in the data are not addressed and may still bias the model.  | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||||||
-| **Similarity-Based Measures** |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
-| &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
+| Similarity-Based Measures |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. <br> <br> Harms Addressed: Representational | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
+| &nbsp; |**Entropy-Based Indices**| Measures of entropy, particularly existing inequality indices from the field of economics, are applied to evaluate either individuals or groups <br> <br> Harms Addressed: Representational |  |[Speicher (2018)](#speicher2018_ref) |
+| &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. <br> <br> Harms Addressed: Allocative, Representational | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
 ||||||
-| **Causal Reasoning** |**Counterfactual Fairness** | Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. | It may be intractable to develop a counterfactual model for some problems.  | [Russell *et al* (2017)](#russell2017_ref) |
+| Causal Reasoning |**Counterfactual Fairness** \*| Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. <br><br>Harms Addressed: Allocative, Representational | It may be intractable to develop a counterfactual model.  | [Russell *et al* (2017)](#russell2017_ref) |
 ||||||
-
 ### Statistical Definitions of Group Fairness
 |Metric |Statistical Criteria |Definition |Description |
 |------|------|------|------|
