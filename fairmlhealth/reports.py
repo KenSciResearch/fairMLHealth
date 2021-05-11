@@ -217,8 +217,8 @@ def flag(df, caption="", as_styler=False):
         return HTML(styled.render())
 
 
-def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", priv_grp=1, sig_dec=4):
+def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
+                priv_grp=1, sig_dec=4, cohorts=None):
     """
     """
     validtypes = ["classification", "regression"]
@@ -227,7 +227,21 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type == "classification":
         return __classification_bias_report(X, y_true, y_pred, features)
     elif pred_type == "regression":
-        return __regression_bias_report(X, y_true, y_pred, features)
+        #return __regression_bias_report(X, y_true, y_pred, features)
+        if cohorts is None:
+            ch_vals = np.ones(len(X))
+        else:
+            ch_vals = cohorts.to_numpy()
+        res = []
+        for ch in np.unique(ch_vals):
+            ixs = np.where(ch_vals == ch)
+            rep = __regression_bias_report(X.iloc[ixs].copy(),
+                                           y_true.iloc[ixs].copy(),
+                                            y_pred[ixs], features)
+            rep.insert(0, "Cohort", ch)
+            res.append(rep)
+        res_df = pd.concat(res, axis=0)
+        return res_df
 
 
 def data_report(X, y_true, features:list=None):
