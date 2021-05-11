@@ -22,8 +22,8 @@ There are three common categories of metrics for determining whether a model is 
 ### Statistical Definitions of Group Fairness
 |Metric |Statistical Criteria |Definition |Description |
 |------|------|------|------|
-|Demographic Parity|Statistical Independence |$R{\perp \!\!\! \perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
-|Equalized Odds| Statistical Separation |$R{\perp \!\!\! \perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Demographic Parity|Statistical Independence |$R{\perp\perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds| Statistical Separation |$R{\perp\perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
 |Predictive Parity |Statistical Sufficiency |$Y{\perp \!\!\! \perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
 
 From: [Verma & Rubin, 2018](#vermarubin)
@@ -66,10 +66,10 @@ From: [Verma & Rubin, 2018](#vermarubin)
 |&nbsp; |Selection Rate| $\sum_{i = 0}^N(\hat{y}_i)/N$ | - |
 |**Group Fairness Measures** |Demographic (Statistical) Parity Difference | $P(\hat{y} = 1 \lvert unprivileged) - P(\hat{y} = 1 \rvert privileged)$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Disparate Impact Ratio (Demographic Parity Ratio)| $\dfrac{P(\hat{y} = 1\ \rvert\ unprivileged)}{P(\hat{y} = 1\ \rvert\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
-|&nbsp; |Positive Rate Difference| $precision(\hat{y}_{unprivileged}) - precision(\hat{y}_{unprivileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Positive Rate Difference| $precision({\hat{y}}_{unprivileged}) - precision({\hat{y}}{unprivileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Average Odds Difference| $\dfrac{(FPR_{unprivileged} - FPR_{privileged}) + (TPR_{unprivileged} - TPR_{privileged})}{2}$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Average Odds Error| $\dfrac{\left\lvert FPR_{unprivileged} - FPR_{privileged}\right\rvert + \left\lvert TPR_{unprivileged} - TPR_{privileged}\right\rvert}{2}$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Equal Opportunity Difference| $recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Equal Opportunity Difference| $recall({\hat{y}}_{unprivileged}) - recall({\hat{y}}_{privileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Equalized Odds Difference| $max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Equalized Odds Ratio| $min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
 |**Individual Fairness Measures** |Consistency Score | $1 - \frac{1}{n\cdot{N_{n_neighbors}}} * \sum_{i=1}^n \lvert \hat{y}_i - \sum_{j\in\mathcal{N}_{neighbors}(x_i)} \hat{y}_j \rvert$ | 1 is consistent <br> 0 is inconsistent |
