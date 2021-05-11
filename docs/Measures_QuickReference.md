@@ -16,15 +16,15 @@ There are three common categories of metrics for determining whether a model is 
 | **Similarity-Based Measures** |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
 | &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
 ||||||
-| **Causal Reasoning** |**Counterfactual Fairness** \*| Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. | It may be intractable to develop a counterfactual model for some problems.  | [Russell *et al* (2017)](#russell2017_ref) |
+| **Causal Reasoning** |**Counterfactual Fairness** | Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. | It may be intractable to develop a counterfactual model for some problems.  | [Russell *et al* (2017)](#russell2017_ref) |
 ||||||
 
 ### Statistical Definitions of Group Fairness
 |Metric |Statistical Criteria |Definition |Description |
 |------|------|------|------|
-|Demographic Parity|Statistical Independence |$R{\perp\perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
-|Equalized Odds| Statistical Separation |$R{\perp\perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
-|Predictive Parity |Statistical Sufficiency |$Y{\perp \!\!\! \perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
+|Demographic Parity|Statistical Independence |$R{\perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds| Statistical Separation |$R{\perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Predictive Parity |Statistical Sufficiency |$Y{\perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
 
 From: [Verma & Rubin, 2018](#vermarubin)
 
