@@ -3,54 +3,52 @@
 ##  Fairness Metrics <a id="metric_quickref"></a>
 
 ### Metrics by Category
-|
-There are three common categories of metrics for determining whether a model is considered "fair": Group Fairness, which compares the statistical similarities of predictions relative to known and discrete protected groupings; Similarity-Based Measures, which evaluate predictions without those discrete protected groups; and Causal Reasoning measures, which evaluate fairness through the use of causal models.
+
+There are three common categories of metrics for determining whether a model is considered "fair": *Group Fairness*, which compares the statistical similarities of predictions relative to known and discrete protected groupings; *Similarity-Based Measures*, which evaluate predictions without those discrete protected groups; and *Causal Reasoning* measures, which evaluate fairness through the use of causal models.
+
 
 | Category | Metric | Definition | Weakness | References |
 |------|------|------|------|------|
-| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups: $\dfrac{P(\hat{y} = 1 \lvert unprivileged)}{P(\hat{y} = 1 \rvert privileged)}$ <br> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
+| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups: $\frac{P(\hat{y} = 1 \| unprivileged)}{P(\hat{y} = 1 \| privileged)}$<br> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||**Equalized Odds**| Odds are equalized if $P(+)$ is approximately the same for all protected attribute groups.<br>  **Equal Opportunity** is a special case of equalized odds specifying that $P(+ \rvert y = 1)$ is approximately the same across groups. <br> <br> Harms Addressed: Allocative, Representational | Historical biases present in the data  are not addressed and may still bias the model. | [Hardt *et al* (2016)](#hardt2016_ref) |
 ||**Predictive Parity**| This parity exists where the Positive Predictive Value is approximately the same for all protected attribute groups. <br> <br> Harms Addressed: Allocative, Representational | Historical biases present in the data are not addressed and may still bias the model.  | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||||||
-| Similarity-Based Measures |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. <br> <br> Harms Addressed: Representational | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
-| &nbsp; |**Entropy-Based Indices**| Measures of entropy, particularly existing inequality indices from the field of economics, are applied to evaluate either individuals or groups <br> <br> Harms Addressed: Representational |  |[Speicher (2018)](#speicher2018_ref) |
-| &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. <br> <br> Harms Addressed: Allocative, Representational | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
+| **Similarity-Based Measures** |**Individual Fairness**| Individual fairness exists if "similar" individuals (ignoring the protected attribute) are likely to have similar predictions. | The appropriate metric for similarity may be ambiguous. |[Dwork (2012)](#dwork2012_ref), [Zemel (2013)](#zemel2013_ref), [Kim *et al* (2018)](#kim2018_ref) |
+| &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
 ||||||
-| Causal Reasoning |**Counterfactual Fairness** \*| Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. <br>Harms Addressed: Allocative, Representational | It may be intractable to develop a counterfactual model.  | [Russell *et al* (2017)](#russell2017_ref) |
+| **Causal Reasoning** |**Counterfactual Fairness** \*| Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. | It may be intractable to develop a counterfactual model for some problems.  | [Russell *et al* (2017)](#russell2017_ref) |
 ||||||
-
-
 
 ### Statistical Definitions of Group Fairness
 |Metric |Statistical Criteria |Definition |Description |
-|- |- |- |- |
-|Demographic Parity|Statistical Independence |$$R{\perp \!\!\! \perp}G$$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
-|Equalized Odds| Statistical Separation |$$R{\perp \!\!\! \perp}A\rvert{Y}$$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
-|Predictive Parity |Statistical Sufficiency |$$Y{\perp \!\!\! \perp}A\rvert{R}$$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
+|------|------|------|------|
+|Demographic Parity|Statistical Independence |$R{\perp \!\!\! \perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds| Statistical Separation |$R{\perp \!\!\! \perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Predictive Parity |Statistical Sufficiency |$Y{\perp \!\!\! \perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
+
 From: [Verma & Rubin, 2018](#vermarubin)
 
-<br><br>
 ## Fairness Measures
 
 |Name |Definition |About |Aliases |
-|- |- |- |- |- |- |
-|**Demographic Parity** | $$P(\hat{y}\lvert{G=u}) = P(\hat{y}\lvert{G=p})$$ |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
-|**Conditional Statistical Parity** |$$P(\hat{y}=1\lvert{L=l,G=u}) =P(\hat{y}=1\lvert{L=l,G=p})$$ | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |
-|**False positive error rate (FPR) balance** |$$P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})$$ |Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y =0,G=f}) <br>Criteria: Statistical Separation | Predictive Equality |
-|**False negative error rate (FNR) balance**| $$P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})$$ | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: $$P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})$$. <br>Criteria: Statistical Separation | Equal Opportunity |
-|**Equalized Odds**| $$P(\hat{y}=1\lvert{Y=c, G=u})=P(\hat{y}=1\lvert{Y=c, G=p}), {c}\in{0,1}$$. | Equal TPR and equal FPR. Mathematically equivalent to the conjunction of FPR balance and FNR balance <br>Criteria: Statistical Separation|  Disparate mistreatment, Conditional procedure accuracy equality |
-|**Predictive Parity**| $$P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})$$ | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR): $$P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})$$ <br>Criteria: Statistical Sufficiency |Outcome Test |
-|**Conditional use accuracy equality**| $$(P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p}))$$ $$\wedge (P(Y=0\lvert{\hat{y}=0,G=u})=P(Y=0\lvert{\hat{y}=0,G=p}))$$ | Criteria: Statistical Sufficiency | &nbsp; |
-|**Overall Accuracy Equity**| $$P(\hat{y}=Y,G=m)=P(\hat{y}=Y,G=p)$$ |Use when True Negatives are as desirable as True Positives |&nbsp; |
-|**Treatment Equality**| $$FNu/FPu=FNp/FPp$$ | Groups have equal ratios of False Negative Rates to False Positive Rates |&nbsp; |
-|**Calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class <br>Criteria: Statistical Sufficiency |Test-fairness, matching conditional frequencies |
-|**Well-calibration**| $$P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})=s$$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class, and this probability is equal to S <br>Criteria: Statistical Sufficiency |&nbsp; |
-|**Balance for positive class**| $$E(S\lvert{Y=1,G=u})=E(S\lvert{Y=1,G=p})$$ | Subjects in the positive class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
-|**Balance for negative class**| $$E(S\lvert{Y=0,G=u})=E(S\lvert{Y=0,G=p})$$ | Subjects in the negative class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
+|------|------|------|------|
+|**Demographic Parity** | $P(\hat{y}\lvert{G=u}) = P(\hat{y}\lvert{G=p})$ |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
+|**Conditional Statistical Parity** |$P(\hat{y}=1\lvert{L=l,G=u}) =P(\hat{y}=1\lvert{L=l,G=p})$ | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |
+|**False positive error rate (FPR) balance** |$P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})$ |Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y =0,G=f}) <br>Criteria: Statistical Separation | Predictive Equality |
+|**False negative error rate (FNR) balance**| $P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})$ | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: $P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})$. <br>Criteria: Statistical Separation | Equal Opportunity |
+|**Equalized Odds**| $P(\hat{y}=1\lvert{Y=c, G=u})=P(\hat{y}=1\lvert{Y=c, G=p}), {c}\in{0,1}$. | Equal TPR and equal FPR. Mathematically equivalent to the conjunction of FPR balance and FNR balance <br>Criteria: Statistical Separation|  Disparate mistreatment, Conditional procedure accuracy equality |
+|**Predictive Parity**| $P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})$ | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR): $P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})$ <br>Criteria: Statistical Sufficiency |Outcome Test |
+|**Conditional use accuracy equality**| $(P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p}))$ $\wedge (P(Y=0\lvert{\hat{y}=0,G=u})=P(Y=0\lvert{\hat{y}=0,G=p}))$ | Criteria: Statistical Sufficiency | &nbsp; |
+|**Overall Accuracy Equity**| $P(\hat{y}=Y,G=m)=P(\hat{y}=Y,G=p)$ |Use when True Negatives are as desirable as True Positives |&nbsp; |
+|**Treatment Equality**| $FNu/FPu=FNp/FPp$ | Groups have equal ratios of False Negative Rates to False Positive Rates |&nbsp; |
+|**Calibration**| $P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class <br>Criteria: Statistical Sufficiency |Test-fairness, matching conditional frequencies |
+|**Well-calibration**| $P(Y=1\lvert{S=s,G=u})=P(Y=1\lvert{S=s,G=p})=s$ | For a predicted probability score S, both groups should have equal probability of belonging to the positive class, and this probability is equal to S <br>Criteria: Statistical Sufficiency |&nbsp; |
+|**Balance for positive class**| $E(S\lvert{Y=1,G=u})=E(S\lvert{Y=1,G=p})$ | Subjects in the positive class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
+|**Balance for negative class**| $E(S\lvert{Y=0,G=u})=E(S\lvert{Y=0,G=p})$ | Subjects in the negative class for all groups have equal average predicted probability score S <br>Criteria: Statistical Separation |&nbsp; |
 ||||||
-|**Causal discrimination**| $$(X_p=X_u \wedge G_p != G_u) \rightarrow  \hat{y}_u=\hat{y}_p$$ | Same classification produced for any two subjects with the exact same attributes |&nbsp; |
-|**Fairness through unawareness**| $$X_i=X_j \rightarrow \hat{y}_i=\hat{y}_j$$ | No sensitive attributes are explicitly used in the decision-making process <br>Criteria: Unawareness | &nbsp; |
-|**Fairness through awareness (Individual Fairness)**| for a set of applicants V , a distance metric between applicants k : V Å~V → R, a mapping from a set of applicants to probability distributions over outcomes M : V → δA, and a distance D metric between distribution of outputs, fairness is achieved iff $$D(M(x),M(y)) ≤ k(x,y)$$. | Similar individuals (as defined by some distance metric) should have similar classification |Individual Fairness |
+|**Causal discrimination**| $(X_p=X_u \wedge G_p != G_u) \rightarrow  \hat{y}_u=\hat{y}_p$ | Same classification produced for any two subjects with the exact same attributes |&nbsp; |
+|**Fairness through unawareness**| $X_i=X_j \rightarrow \hat{y}_i=\hat{y}_j$ | No sensitive attributes are explicitly used in the decision-making process <br>Criteria: Unawareness | &nbsp; |
+|**Fairness through awareness (Individual Fairness)**| for a set of applicants V , a distance metric between applicants k : V Å~V → R, a mapping from a set of applicants to probability distributions over outcomes M : V → δA, and a distance D metric between distribution of outputs, fairness is achieved iff $D(M(x),M(y)) ≤ k(x,y)$. | Similar individuals (as defined by some distance metric) should have similar classification |Individual Fairness |
 |**Counterfactual fairness**| A causal graph is counterfactually fair if the predicted outcome d in the graph does not depend on a descendant of the protected attribute G. |&nbsp; |&nbsp; |
 ||||||
 
@@ -65,19 +63,19 @@ From: [Verma & Rubin, 2018](#vermarubin)
 
 | Metric | Measure | Equation | Interpretation |
 |:---- |:---- |:---- |:---- |
-|&nbsp; |Selection Rate| $$\sum_{i = 0}^N(\hat{y}_i)/N$$ | - |
-|**Group Fairness Measures** |Demographic (Statistical) Parity Difference | $$P(\hat{y} = 1 \lvert unprivileged) - P(\hat{y} = 1 \rvert privileged)$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Disparate Impact Ratio (Demographic Parity Ratio)| $$\dfrac{P(\hat{y} = 1\ \rvert\ unprivileged)}{P(\hat{y} = 1\ \rvert\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}$$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
-|&nbsp; |Positive Rate Difference| $$precision(\hat{y}_{unprivileged}) - precision(\hat{y}_{unprivileged})$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Average Odds Difference| $$\dfrac{(FPR_{unprivileged} - FPR_{privileged}) + (TPR_{unprivileged} - TPR_{privileged})}{2}$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Average Odds Error| $$\dfrac{\left\lvert FPR_{unprivileged} - FPR_{privileged}\right\rvert + \left\lvert TPR_{unprivileged} - TPR_{privileged}\right\rvert}{2}$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Equal Opportunity Difference| $$recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Equalized Odds Difference| $$max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$$ |(-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp; |Equalized Odds Ratio| $$min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
-|**Individual Fairness Measures** |Consistency Score | $$1 - \frac{1}{n\cdot{N_{n_neighbors}}} * \sum_{i=1}^n \lvert \hat{y}_i - \sum_{j\in\mathcal{N}_{neighbors}(x_i)} \hat{y}_j \rvert$$ | 1 is consistent <br> 0 is inconsistent |
-|&nbsp; |Generalized Entropy Index| $$GE = \mathcal{E}(\alpha) = \begin{cases} \frac{1}{n \alpha (\alpha-1)}\sum_{i = 1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1  \\ \frac{1}{n}\sum_{i = 1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha = 1 \\ -\frac{1}{n}\sum_{i = 1}^n\ln\frac{b_{i}}{\mu},& \alpha = 0 \end{cases}$$ | - |
-|&nbsp; |Generalized Entropy Error| $$GE(\hat{y}_i - y_i + 1)$$ | - |
-|&nbsp; |Between-Group Generalized Entropy Error| $$GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] )$$ | 0 is fair <br>(+) is unfair |
+|&nbsp; |Selection Rate| $\sum_{i = 0}^N(\hat{y}_i)/N$ | - |
+|**Group Fairness Measures** |Demographic (Statistical) Parity Difference | $P(\hat{y} = 1 \lvert unprivileged) - P(\hat{y} = 1 \rvert privileged)$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Disparate Impact Ratio (Demographic Parity Ratio)| $\dfrac{P(\hat{y} = 1\ \rvert\ unprivileged)}{P(\hat{y} = 1\ \rvert\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
+|&nbsp; |Positive Rate Difference| $precision(\hat{y}_{unprivileged}) - precision(\hat{y}_{unprivileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Average Odds Difference| $\dfrac{(FPR_{unprivileged} - FPR_{privileged}) + (TPR_{unprivileged} - TPR_{privileged})}{2}$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Average Odds Error| $\dfrac{\left\lvert FPR_{unprivileged} - FPR_{privileged}\right\rvert + \left\lvert TPR_{unprivileged} - TPR_{privileged}\right\rvert}{2}$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Equal Opportunity Difference| $recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Equalized Odds Difference| $max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp; |Equalized Odds Ratio| $min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
+|**Individual Fairness Measures** |Consistency Score | $1 - \frac{1}{n\cdot{N_{n_neighbors}}} * \sum_{i=1}^n \lvert \hat{y}_i - \sum_{j\in\mathcal{N}_{neighbors}(x_i)} \hat{y}_j \rvert$ | 1 is consistent <br> 0 is inconsistent |
+|&nbsp; |Generalized Entropy Index| $GE = \mathcal{E}(\alpha) = \begin{cases} \frac{1}{n \alpha (\alpha-1)}\sum_{i = 1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1  \\ \frac{1}{n}\sum_{i = 1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha = 1 \\ -\frac{1}{n}\sum_{i = 1}^n\ln\frac{b_{i}}{\mu},& \alpha = 0 \end{cases}$ | - |
+|&nbsp; |Generalized Entropy Error| $GE(\hat{y}_i - y_i + 1)$ | - |
+|&nbsp; |Between-Group Generalized Entropy Error| $GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] )$ | 0 is fair <br>(+) is unfair |
 
 <br><br>
 ----
