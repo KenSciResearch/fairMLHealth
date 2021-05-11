@@ -1,7 +1,9 @@
 # Tutorials and Examples
 
 ## Tutorials
-* [Measuring Fairness in Binary Classification](Tutorial-MeasuringFairnessInBinaryClassification.ipynb)
+* [Evaluating Fairness in Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
 ## Examples
-* [Completed Binary Classification Assessment Template]( Example-BinaryClassificationTemplate.ipynb)
+* [Completed Binary Classification Assessment Template](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/tutorials_and_examples/Example-BinaryClassificationTemplate.ipynb)
+
+* [Simple Examples of Tool Usage](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/tutorials_and_examples/Example-ToolUsage.ipynb)

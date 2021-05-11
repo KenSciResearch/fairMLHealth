@@ -4,9 +4,9 @@
 ## About
 All machine learning (ML) models can be assumed to hold biases, just as all humans hold biases and as all humans fall ill at some point in their lives. The motivation that drives us to study and prevent the harm caused by human illness drives us to prevent the harm caused by innate biases in ourselves and our ML models. That means building models that provide fair representation for all demographics. And it starts with measurement and evaluation.
 
-This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](../docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx), the notebook for which can be found here: [/docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb](../docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb).
+This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](publications/KDD2020-FairnessInHealthcareML-Slides.pptx), the notebook for which can be found here: [docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb](publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb).
 
-There are abundant other publications covering the theoretical basis for fairness metrics, and many resources both online and academic covering the details of specific fairness measures. See [References](#references) and [Additional Resources](#additional_resources) below, or [Our References and Resources Page](../docs/References_and_Resources.md) for just a few. Many of these otherwise excellent references stop short of discussing the practical and philosophical considerations raised when evaluating real models for real customers. Here we attempt to bridge that gap.
+There are abundant other publications covering the theoretical basis for fairness metrics, and many resources both online and academic covering the details of specific fairness measures. See [References](#references) and [Additional Resources](#additional_resources) below, or [Our References and Resources Page](References_and_Resources.md) for just a few. Many of these otherwise excellent references stop short of discussing the practical and philosophical considerations raised when evaluating real models for real customers. Here we attempt to bridge that gap.
 
 
 ## Contents
@@ -64,7 +64,7 @@ References:
 
 The following section defines common fairness measures that are used elsewhere. Skip ahead to [Part 3](#part3) for an example of how these measures are applied.
 
-### [Convenient Charts of Fairness Measures](../docs/docs/Measures_QuickReference.md)
+### [Convenient Charts of Fairness Measures](Measures_QuickReference.md)
 
 ## Metrics of Fairness  <a id="metric_quickref"></a>
 
@@ -215,7 +215,7 @@ Similarity-based measures are not without their own drawbacks. The Consistency S
 
 ## See Also
 
-### [Summary Tables:  Convenient Charts of Fairness Measures](../docs/Measures_QuickReference.md)
+### [Summary Tables:  Convenient Charts of Fairness Measures](Measures_QuickReference.md)
 
 
 # Comparing Models and Mitigating Disparity <a class = "anchor" id = "part3"></a>
@@ -261,7 +261,7 @@ In this section we will compare the results of multiple models using FairMLHealt
 
 The table shows that relative fairness or unfairness of our predictions differs across the available measures, while model performance remains similar. Looking at the second row for example, we can see that the three altered model predictions have reduced Disparate Impact Ratio relative to our baseline. However, surprisingly, the Fair GridSearch result has so dramatically shifted the results that the model is now *less* fair by that measure. While the baseline model has a 20% bias in favor of the *unprivileged* group, the fairness-aware model has nearly a 40% bias favoring the *privileged* group. Yet, using the Balanced Accuracy Difference as a second example, we can see that both the unaware model and the GridSearch model are less fair by this measure.
 
-These specific results represent one set of models on a toy example, so the results may differ for other problems. For example, the GridSearch algorithm available in Fairlearn has been shown to be effective on some datasets ([Agarwal *et al.* (2019)](#Agarwal2019)). And unawareness does not always reduce Disparate Impact; in fact it can increase it, as we showed in the [KDD 2020 Tutorial](../docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb) which compared fairness relative to gender using this same general setup. This goes to say that the field has not yet found a panacea which can correct all fairness issues for every model, so it's important to test different approaches. Also remember to consider the effects of biased data collection processes or biased application of model results before deciding whether to make changes to the model or the input data.
+These specific results represent one set of models on a toy example, so the results may differ for other problems. For example, the GridSearch algorithm available in Fairlearn has been shown to be effective on some datasets ([Agarwal *et al.* (2019)](#Agarwal2019)). And unawareness does not always reduce Disparate Impact; in fact it can increase it, as we showed in the [KDD 2020 Tutorial](publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb) which compared fairness relative to gender using this same general setup. This goes to say that the field has not yet found a panacea which can correct all fairness issues for every model, so it's important to test different approaches. Also remember to consider the effects of biased data collection processes or biased application of model results before deciding whether to make changes to the model or the input data.
 
 
 ## Fairness-Aware ML Algorithms <a id="mitigation"></a>
@@ -299,7 +299,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](../docs/README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
 
 
 
