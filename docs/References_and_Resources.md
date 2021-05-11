@@ -1,30 +1,5 @@
-# Resources
+# References and Outside Resources
 ----
-## Other Fairness Libraries of Note
-* [Aequitas](https://github.com/dssg/aequitas)
-* [AIF360](https://github.com/IBM/AIF360)
-* [Awesome Fairness in AI](https://github.com/datamllab/awesome-fairness-in-ai)
-* [Dalex](https://dalex.drwhy.ai/)
-* [Fairlearn](https://github.com/fairlearn/fairlearn)
-* [Fairness Comparison](https://github.com/algofairness/fairness-comparison)
-* [FAT Forensics](https://github.com/fat-forensics/fat-forensics)
-* [ML Fairness Gym](https://github.com/google/ml-fairness-gym)
-* [Themis ML](https://themis-ml.readthedocs.io/en/latest/)
-
-## Recorded References
-Crawford, K. (2017, December). [The Trouble with Bias](https://youtu.be/fMym_BKWQzk) \[Conference presentation\]. NeurIPS 2017, Long Beach, CA. https://youtu.be/fMym_BKWQzk
-
-Stucchio, C. (2018, October). [AI Ethics, Impossibility Theorems and Tradeoffs](https://www.youtube.com/watch?v=Zn7oWIhFffs) \[Conference presentation\]. Crunch Data Conference 2018, Budapest, Hungary. https://www.youtube.com/watch?v=Zn7oWIhFffs
-
-Narayanan , A. (2018, March). [FAT* 2018 Translation Tutorial: 21 Definitions of Fairness and Their Politics](https://www.youtube.com/watch?v=wqamrPkF5kk)  \[Conference presentation\]. The Conference on Fairness, Accountability, and Transparency (FAT*) 2018. https://www.youtube.com/watch?v=wqamrPkF5kk
-
-## Additional Resources and Tutorials <a id="additional_resources"></a>
-
-Zhong, Z. (2018). ["A Tutorial on Fairness in Machine Learning"](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb). Towards Data Science. https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb
-
-Cortez, V. (2019). ["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning"](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text = Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D). Towards Data Science. https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text = Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D
-
-Google People + AI Research (PAIR). [PAIR Explorables: Measuring Fairness](https://pair.withgoogle.com/explorables/measuring-fairness/). https://pair.withgoogle.com/explorables/measuring-fairness/
 
 ## Academic References
 <a id="agniel2018biases"></a>
@@ -81,12 +56,38 @@ Shorrocks AF (1980). The class of additively decomposable inequality measures. E
 <a id="speicher2018_ref"></a>
 Speicher T, Heidari H, Grgic-Hlaca N, Gummadi KP, Singla A, Weller A, & Zafar M B (2018, July). A unified approach to quantifying algorithmic unfairness: Measuring individual &group unfairness via inequality indices. In Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining (pp. 2239-2248). Retrieved from [https://arxiv.org/pdf/1807.00787.pdf](https://arxiv.org/pdf/1807.00787.pdf)
 
-
 Sylvester, J., & Raff, E. (2018). What about applied fairness?. [arXiv preprint arXiv:1806.05250](https://arxiv.org/abs/1806.05250).
-
 
 <a id="zemel2013_ref"></a>
 Zemel R, Wu Y, Swersky K, Pitassi T, & Dwork C (2013, February). Learning fair representations. International Conference on Machine Learning (pp. 325-333). Retrieved from [http://proceedings.mlr.press/v28/zemel13.pdf](http://proceedings.mlr.press/v28/zemel13.pdf)
 
 <a id="zafar2017_ref"></a>
 Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).  https://arxiv.org/pdf/1610.08452.pdf
+
+## Recorded References
+Crawford, K. (2017, December). [The Trouble with Bias](https://youtu.be/fMym_BKWQzk) \[Conference presentation\]. NeurIPS 2017, Long Beach, CA. https://youtu.be/fMym_BKWQzk
+
+Stucchio, C. (2018, October). [AI Ethics, Impossibility Theorems and Tradeoffs](https://www.youtube.com/watch?v=Zn7oWIhFffs) \[Conference presentation\]. Crunch Data Conference 2018, Budapest, Hungary. https://www.youtube.com/watch?v=Zn7oWIhFffs
+
+Narayanan , A. (2018, March). [FAT* 2018 Translation Tutorial: 21 Definitions of Fairness and Their Politics](https://www.youtube.com/watch?v=wqamrPkF5kk)  \[Conference presentation\]. The Conference on Fairness, Accountability, and Transparency (FAT*) 2018. https://www.youtube.com/watch?v=wqamrPkF5kk
+
+
+## Other Fairness Libraries of Note
+* [Aequitas](https://github.com/dssg/aequitas)
+* [AIF360](https://github.com/IBM/AIF360)
+* [Awesome Fairness in AI](https://github.com/datamllab/awesome-fairness-in-ai)
+* [Dalex](https://dalex.drwhy.ai/)
+* [Fairlearn](https://github.com/fairlearn/fairlearn)
+* [Fairness Comparison](https://github.com/algofairness/fairness-comparison)
+* [FAT Forensics](https://github.com/fat-forensics/fat-forensics)
+* [ML Fairness Gym](https://github.com/google/ml-fairness-gym)
+* [Themis ML](https://themis-ml.readthedocs.io/en/latest/)
+
+
+## Other Resources and Tutorials <a id="additional_resources"></a>
+
+Zhong, Z. (2018). ["A Tutorial on Fairness in Machine Learning"](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb). Towards Data Science. https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb
+
+Cortez, V. (2019). ["How to define fairness to detect and prevent discriminatory outcomes in Machine Learning"](https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text = Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D). Towards Data Science. https://towardsdatascience.com/how-to-define-fairness-to-detect-and-prevent-discriminatory-outcomes-in-machine-learning-ef23fd408ef2#:~:text = Demographic%20Parity%20states%20that%20the,%E2%80%9Cbeing%20shown%20the%20ad%E2%80%9D
+
+Google People + AI Research (PAIR). [PAIR Explorables: Measuring Fairness](https://pair.withgoogle.com/explorables/measuring-fairness/). https://pair.withgoogle.com/explorables/measuring-fairness/
