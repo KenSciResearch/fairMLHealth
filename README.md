@@ -2,9 +2,13 @@
 Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
 
 
-## Organization
-This library is constructed in three main parts:
-- ### [Tools (fairmlhealth)](fairmlhealth/README.md)
+## Resources
+- ### [Tables and References](docs/README.md)
+    - [Summary Tables (Quick Reference of Measures)](docs/Measures_QuickReference.md)
+    - [References](docs/References.md)
+    - [Our Publications](docs/publications/README.md)
+
+- ### Tools
     - Methods for generating fairness comparison tables
     - Features used by templates and tutorials to facilitate comparison of multiple metrics
 
@@ -14,12 +18,6 @@ This library is constructed in three main parts:
 - ### [Tutorials and Examples](tutorials_and_examples/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
     - Examples for using the templates and tools
-- ### [Documentation](docs/README.md)
-    - [Publications](docs/publications/README.md)
-    - [Summary Tables](docs/docs/Summary_Tables.pdf)
-    - [References](docs/docs/References.pdf)
-
-
 
 ## Installation <a id="installation_instructions"></a>
 Installing directly from GitHub:
@@ -49,8 +47,11 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 # Load data
-X = pd.DataFrame({'col1':[1,2,50,3,45,32], 'col2':[34,26,44,2,1,1],
-                  'col3':[32,23,34,22,65,27], 'gender':[0,1,0,1,1,0]})
+X = pd.DataFrame({'col1':[1,2,50,3,45,32],
+                  'col2':[34,26,44,2,1,1],
+                  'col3':[32,23,34,22,65,27],
+                  'gender':[0,1,0,1,1,0]
+                  })
 y = pd.Series([1,1,0,1,0,1], name='y')
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random_state=36)
 
