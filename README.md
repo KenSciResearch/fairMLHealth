@@ -4,8 +4,8 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
 
 ## Resources
 - ### [Tables and References](README.md)
-    - [Summary Tables](docs/Summary_Tables.pdf)
-    - [References](docs/References.pdf)
+    - [Summary Tables](docs/Summary_Tables.md)
+    - [References](docs/References.md)
     - [Our Publications](docs/publications/README.md)
 
 - ### [Tools (fairmlhealth)]
