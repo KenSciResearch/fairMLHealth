@@ -59,13 +59,11 @@ def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
     if not isinstance(X, pd.DataFrame):
         if isinstance(X, pd.Series):
             X = pd.DataFrame(X, columns=[X.name])
-        else:
-            X = pd.DataFrame(X, columns=['X'])
-    if isinstance(y_true, (np.ndarray, pd.Series)):
+    if not isinstance(y_true, pd.DataFrame) and y_true is not None:
         y_true = pd.DataFrame(y_true)
-    if isinstance(y_pred, np.ndarray):
+    if not isinstance(y_pred, pd.DataFrame) and y_pred is not None:
         y_pred = pd.DataFrame(y_pred)
-    if isinstance(y_prob, np.ndarray):
+    if not isinstance(y_prob, pd.DataFrame) and y_prob is not None:
         y_prob = pd.DataFrame(y_prob)
     for data in [y_true, y_pred, y_prob]:
         if data is not None and (len(data.shape) > 1 and data.shape[1] > 1):
@@ -103,9 +101,13 @@ def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
                                 axis=1)
             y_prob.set_index(pa_cols, inplace=True)
             y_prob.columns = y_true.columns
+            y_prob = y_prob.iloc[:, 0]
 
     if y_pred is not None and y_true is not None:
         y_pred.columns = y_true.columns
+        y_pred = y_pred.iloc[:, 0]
+
+    y_true = y_true.iloc[:,0]
 
     return (X, prtc_attr, y_true, y_pred, y_prob)
 

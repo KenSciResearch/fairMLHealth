@@ -111,8 +111,11 @@ def regression_performance(y_true, y_pred):
 
 
 def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
-    def pdmean(y_true, y_pred, *args): return y_pred.mean()
-    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
+    def pdmean(y_true, y_pred, *args): return np.mean(y_pred)
+    def scmae_wrap(y_true, y_pred):
+        return pmtrc.scMAE(y_true, y_pred)
+    def meanerr(y_true, y_pred, *args):
+        return np.mean(y_pred - y_true)
     #
     gf_vals = {}
     # Ratios
@@ -120,7 +123,7 @@ def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
         aif.ratio(pdmean, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['scMAE Ratio'] = \
-        aif.ratio(pmtrc.scMAE, y_true, y_pred,
+        aif.ratio(scmae_wrap, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif.ratio(mean_absolute_error, y_true, y_pred,
@@ -133,7 +136,7 @@ def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
         aif.difference(pdmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['scMAE Difference'] = \
-        aif.difference(pmtrc.scMAE, y_true, y_pred,
+        aif.difference(scmae_wrap, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
@@ -271,18 +274,18 @@ def data_report(X, y_true, features:list=None):
         # Add feature-specific statistics for each group in the feature
         grp = df.groupby(f)
         try:
-            r = grp.apply(lambda x: pd.Series(__data_dict(x, yt)))
+            grp_res = grp.apply(lambda x: pd.Series(__data_dict(x, yt)))
         except BaseException as e:
             errs[k] = e
             continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
+        grp_res = grp_res.reset_index().rename(columns={f: 'Feature Value'})
         #
-        r.insert(0, 'Feature Name', f)
-        r['Missing Values'] = n_missing
+        grp_res.insert(0, 'Feature Name', f)
+        grp_res['Missing Values'] = n_missing
         N_missing += n_missing
         _, feat_count = np.unique(df[f], return_counts=True)
-        r['Feature Entropy'] = stats.entropy(feat_count, base=2)
-        res.append(r)
+        grp_res['Feature Entropy'] = stats.entropy(feat_count, base=2)
+        res.append(grp_res)
     if any(errs):
         for k, v in errs.items():
             warn(f"Error processing column(s) {k}. {v}\n")
@@ -408,13 +411,13 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         # Add feature-specific performance values for each group in the feature
         grp = df.groupby(f)
         try:
-            r = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh, yp)))
+            grp_res = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh, yp)))
         except BaseException as e:
             errs[f] = e
             continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
-        r.insert(0, 'Feature Name', f)
-        res.append(r)
+        grp_res = grp_res.reset_index().rename(columns={f: 'Feature Value'})
+        grp_res.insert(0, 'Feature Name', f)
+        res.append(grp_res)
     if any(errs):
         for k, v in errs.items():
             warn(f"Error processing column(s) {k}. {v}\n")
@@ -466,7 +469,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
                 f'{_yh} Std. Dev.': x[yh].std(),
                 'Error Mean': (x[yh] - x[y]).mean(),
                 'Error Std. Dev.': (x[yh] - x[y]).std(),
-                'scMAE': pmtrc.scMAE(x[y], x[yh]),
+                'scMAE': pmtrc.scMAE( x[y], x[yh]),
                 'MAE': mean_absolute_error(x[y], x[yh]),
                 'MSE': mean_squared_error(x[y], x[yh])
                 }
@@ -495,13 +498,13 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
         # Add feature-specific performance values for each group in the feature
         grp = df.groupby(f)
         try:
-            r = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh)))
+            grp_res = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh)))
         except BaseException as e:
             errs[f] = e
             continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
-        r.insert(0, 'Feature Name', f)
-        res.append(r)
+        grp_res = grp_res.reset_index().rename(columns={f: 'Feature Value'})
+        grp_res.insert(0, 'Feature Name', f)
+        res.append(grp_res)
     if any(errs):
         for k, v in errs.items():
             warn(f"Error processing column(s) {k}. {v}\n")
@@ -587,11 +590,11 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None):
             except BaseException as e:
                 errs[f] = e
                 continue
-            r = pd.DataFrame(meas, index=[0])
-            r['Obs.'] = df.loc[df[f].eq(v), pa_name].sum()
-            r['Feature Name'] = f
-            r['Feature Value'] = v
-            res.append(r)
+            grp_res = pd.DataFrame(meas, index=[0])
+            grp_res['Obs.'] = df.loc[df[f].eq(v), pa_name].sum()
+            grp_res['Feature Name'] = f
+            grp_res['Feature Value'] = v
+            res.append(grp_res)
     if any(errs):
         for k, v in errs.items():
             warn(f"Error processing column(s) {k}. {v}\n")
@@ -660,10 +663,10 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None):
         except BaseException as e:
             errs[f] = e
             continue
-        r = pd.DataFrame(meas, index=[0])
-        r['Feature Name'] = f
-        r['Feature Value'] = v
-        res_f.append(r)
+        grp_res = pd.DataFrame(meas, index=[0])
+        grp_res['Feature Name'] = f
+        grp_res['Feature Value'] = v
+        res_f.append(grp_res)
     if any(errs):
         for k, v in errs.items():
             warn(f"Error processing column(s) {k}. {v}\n")
@@ -685,7 +688,7 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
     # consistency_score raises error if null values are present in X
     if X.notnull().all().all():
         if_vals['Consistency Score'] = \
-            aif.consistency_score(X, y_pred.iloc[:, 0])
+            aif.consistency_score(X, y_pred)
     else:
         msg = "Cannot calculate consistency score. Null values present in data."
         logging.warning(msg)
@@ -843,10 +846,9 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     """
     #
     # Validate and Format Arguments
-    if not isinstance(priv_grp, int):
-        raise ValueError("priv_grp must be an integer value")
-    if not isinstance(sig_dec, int):
-        raise ValueError("sig_dec must be an integer value")
+    for k, v in {'priv_grp': priv_grp, 'sig_dec':sig_dec}.items():
+        if not isinstance(v, int):
+            raise ValueError(k + " must be an integer value")
     X, prtc_attr, y_true, y_pred, _ = \
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
@@ -874,5 +876,6 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     df.columns = ['Value']
     df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     return df
+
 
 

@@ -1,5 +1,6 @@
 import os
 
+
 def is_test_environment():
     """ Determines if the test is being run in its Azure CI/CD Docker
         environment. Notebook relying on MIMIC3 data, which should not

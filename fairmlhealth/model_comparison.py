@@ -17,7 +17,7 @@ import pandas as pd
 import os
 import warnings
 
-from fairmlhealth.utils import is_dictlike
+from fairmlhealth.utils import ValidationError, is_dictlike
 from fairmlhealth.reports import summary_report
 
 
@@ -27,7 +27,8 @@ from fairmlhealth.reports import summary_report
 
 
 def measure_model(test_data, targets, protected_attr, model=None,
-                  predictions=None, probabilities=None):
+                  predictions=None, probabilities=None,
+                  pred_type="classification"):
     """ Generates a report of fairness measures for the model
 
     Args:
@@ -47,14 +48,16 @@ def measure_model(test_data, targets, protected_attr, model=None,
         pandas dataframe of fairness measures for the model
     """
     comp = FairCompare(test_data, targets, protected_attr, model,
-                       predictions, probabilities=None, verboseMode=True)
+                       predictions, probabilities=None, pred_type=pred_type,
+                       verboseMode=True)
     model_name = list(comp.models.keys())[0]
     table = comp.measure_model(model_name, skip_performance=True)
     return table
 
 
 def compare_models(test_data, targets, protected_attr, models=None,
-                   predictions=None, probabilities=None):
+                   predictions=None, probabilities=None,
+                   pred_type="classification"):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -77,12 +80,14 @@ def compare_models(test_data, targets, protected_attr, models=None,
         pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
-                       predictions, probabilities=None, verboseMode=True)
+                       predictions, probabilities=None, pred_type=pred_type,
+                       verboseMode=True)
     table = comp.compare_measures()
     return table
 
 
 def compare_measures(test_data, target_data, protected_attr_data, models):
+    #ToDo: Remove this feature for V2.0
     """ Deprecated in favor of compare_models. Generates a report comparing
         fairness measures for the models passed.Note: This is a wrapper for the
         FairCompare.compare_measures method See FairCompare for more
@@ -150,6 +155,11 @@ class FairCompare(ABC):
         self.__meas_obj = ["X", "y", "prtc_attr", "models", "preds", "probs"]
         self.__data_types = (pd.DataFrame, pd.Series, np.ndarray)
         self.__iter_types = (list, tuple, set, dict, OrderedDict)
+        # ToDo: add feature to auto-detect pred type; remove pred_type as kwarg
+        if "pred_type" in kwargs:
+            self.pred_type = kwargs.get("pred_type")
+        else:
+            self.pred_type = "classification"
         #
         if "verboseMode" in kwargs:
             self.verboseMode = kwargs.get("verboseMode")
@@ -193,9 +203,9 @@ class FairCompare(ABC):
                 as found in the object's "models" dictionary
         """
         self.__validate()
-        msg = f"Could not measure fairness for {model_name}"
+        msg = f"Could not measure fairness for {model_name}."
         if model_name not in self.preds.keys():
-            msg += (" Name not found Available options include "
+            msg += (" model_name not found. Available options include "
                    f"{list(self.preds.keys())}")
             print(msg)
             return pd.DataFrame()
@@ -204,13 +214,13 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary_report(self.X[model_name],
-                                 self.prtc_attr[model_name],
-                                 self.y[model_name],
-                                 self.preds[model_name],
-                                 self.probs[model_name],
-                                 pred_type="classification",
-                                 **kwargs)
+            res = summary_report(X=self.X[model_name],
+                                prtc_attr=self.prtc_attr[model_name],
+                                y_true=self.y[model_name],
+                                y_pred=self.preds[model_name],
+                                y_prob=self.probs[model_name],
+                                pred_type=self.pred_type,
+                                **kwargs)
             return res
 
 
@@ -300,15 +310,18 @@ class FairCompare(ABC):
                        ) + e
                 raise ValidationError(msg)
             self.preds[mdl_name] = y_pred
-            # Since most fairness measures do not require probabilities, y_prob
-            # is optional
-            try:
-                y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
-            except BaseException:
-                y_prob = None
-                missing_probs.append(mdl_name)
-            self.probs[mdl_name] = y_prob
-        if any(missing_probs):
+            if self.pred_type == "classification":
+                # Since most fairness measures do not require probabilities,
+                # y_prob is optional
+                try:
+                    y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
+                except BaseException:
+                    y_prob = None
+                    missing_probs.append(mdl_name)
+                self.probs[mdl_name] = y_prob
+            else:
+                self.probs[mdl_name] = None
+        if self.pred_type == "classification" and any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
                    f"generated for the following models: {missing_probs}. " +
                    "Dependent metrics will be skipped.")
@@ -407,22 +420,25 @@ class FairCompare(ABC):
 
         # Measuring functions cannot yet handle continuous protected attributes
         # or targets
-        binVal_arrays = ['prtc_attr', 'y', 'preds']
+        binVal_arrays = ['prtc_attr']
+        if self.pred_type == "classification":
+            binVal_arrays += ['y', 'preds']
         binVal_arrays = [d for d in binVal_arrays if d in subset]
         for name in binVal_arrays:
             data_dict = getattr(self, name)
             for _, arr in data_dict.items():
                 err = None
+                # protected attribute must have information for both groups
                 if not all(np.unique(arr) == [0, 1]) and name == "prtc_attr":
-                    err = (f"Expected values of [0,1] in {name}." +
+                    err = (f"Expected values of [0, 1] in {name}." +
                             f" Received {np.unique(arr)}")
+                # other binary-valued arrays may be constant
                 elif (not all(v in [0, 1] for v in np.unique(arr))
                     and name != "prtc_attr"):
-                    err = (f"Expected values of [0,1] in {name}." +
+                    err = (f"Expected values of [0, 1] in {name}." +
                             f" Received {np.unique(arr)}")
                 elif len(np.unique(arr)) > 2:
-                    err = (f"Multiple labels found in {name}"
-                            "(only 2 allowed).")
+                    err = f"Multiple labels found in {name} (only 2 allowed)."
                 if err is not None:
                     raise ValidationError(err)
         return None
@@ -467,6 +483,3 @@ class FairCompare(ABC):
             pass
         return None
 
-
-class ValidationError(Exception):
-    pass
