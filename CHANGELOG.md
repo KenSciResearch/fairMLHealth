@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+
+## [0.1.9] - 2021-04-19
+### Reporting Updates
+- Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
+
+
+## [0.1.8] - 2021-04-19
+### Installation Improvements
+- Fairlearn removed as backend requirement (still required for tutorials)
+- Version ranges updated in setup.py (wider range of dependency versions now allowed)
+- Troubleshooting documentation added
+- Bug fixes implemented
+
+
+## [0.1.7] - 2021-04-14
+### Testing Update
+- Add integrated notebook testing
+- Enhance contribution documentation
+
+## [0.1.6] - 2021-04-14
+### Flexibility Update
+- Add method to model comparison allowing comparison of either predictions or models
+- Improved validation and exception handling
+
+## [0.1.5] - 2021-02-08
+### Documentation Update
+- Add "docs" folder containing background information on measuring fairness in ML, quick reference tables for the different metrics and measures, and our current list of recommended outside references and resources
+- Update tutorial and examples. Content introducing background on fairness has been moved to the docs folder
+- Add development documentation (docs folder): issue template and pull request template
+- Update READMEs and resources
+- Correct typos
+
+
 ## [0.1.4] - 2020-12-09
 ### Added and fixed
 - Add validations in the model comparison methods

@@ -21,10 +21,13 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
-test_deps = [
-    "pytest==5.4.2",
-]
+test_deps = ["pytest==5.4.2", "nbformat", "nbconvert", "ipython"
+            ]
 
+# Requirements for running tutorial notebooks
+tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',
+                 'xgboost'
+                 ]
 
 setup(
     name='fairmlhealth',
@@ -33,26 +36,24 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/KenSciResearch/fairMLHealth',
-    author='KenSci',
-    author_email='christine.allen@kensci.com',
+    author='christine allen',
+    author_email='ca.magallen@gmail.com',
     tests_require=test_deps,
     extras_require={
-        "test": test_deps,
-    },
-    python_requires='>=3.6, <4',
-    install_requires=['aif360>=0.3.0',
-                      'fairlearn>=0.4.6',
-                      'lightgbm',
-                      'matplotlib',
-                      'numpy==1.18.2',
-                      'pandas==1.0.3',
-                      'requests',
-                      'scipy==1.4.1',
-                      'scikit-learn==0.23.2',
-                      'seaborn',
-                      'xgboost',
+                    "test": test_deps,
+                    "tutorial": tutorial_deps
+                    },
+    python_requires='>=3.6,<4',
+    install_requires=[
+                      'aif360>=0.3.0',
                       'ipython',
-                    ],
+                      'jupyter',
+                      'numpy>=1.16',
+                      'pandas>=1.0.3',
+                      'requests',
+                      'scipy>=1.4.1,<1.6.0',
+                      'scikit-learn>=0.21'
+                    ] + tutorial_deps,
     project_urls={'KenSci': 'https://www.kensci.com'},
     keywords='healthcare, machine learning, fairness, fair ML',
     classifiers=[

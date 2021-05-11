@@ -1,4 +1,4 @@
-FROM kentoso.azurecr.io/kensciml/python36:latest AS setup
+FROM kentoso.azurecr.io/kensciml/python37:latest AS setup
 
 RUN apt-get update && apt-get install -y libgomp1
 RUN apt-get install -y libgomp1 gcc g++
@@ -9,6 +9,9 @@ COPY . .
 RUN python3 -m pip install --upgrade wheel setuptools pip
 RUN python3 setup.py install
 RUN python3 -m pip install -U pytest
+
+# ensure that python3 kernel is avialble
+ENV IS_CICD=true
 RUN python3 -m pytest
 
 # create artifacts folder for built package.
