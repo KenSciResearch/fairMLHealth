@@ -10,3 +10,19 @@ def is_test_environment():
     """
     is_azpipeline = os.environ.get('IS_CICD', False)
     return is_azpipeline
+
+
+def is_url_valid(url):
+    """ Tests url for error response code
+
+    Args:
+        url (string): url to be validated
+
+    Returns:
+        bool: False if response status is 400 or above; otherwise True
+    """
+    status = requests.get(url).status_code
+    if status >= 400:
+        return False
+    else:
+        return True
