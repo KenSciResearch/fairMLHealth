@@ -6,12 +6,23 @@ Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
 '''
 
+import __utils as utils
 import json
 import nbformat
 import os
+import regex as re
 import subprocess
 import tempfile
 
+
+
+def find_broken_urls(nb):
+    url_list = list_urls(nb)
+    broken_urls = []
+    for url in url_list:
+        if not utils.is_url_valid(url):
+            broken_urls.append(url)
+    return broken_urls
 
 
 def find_kernel(nb_file=None):
@@ -55,10 +66,19 @@ def list_errors(nb):
     Args:
         nb (parsed nbformat.NotebookNode)
     """
-    errors = [output for cell in nb.cells if "outputs" in cell
+    errs = [output for cell in nb.cells if "outputs" in cell
                 for output in cell["outputs"]
                 if output.output_type == "error"]
-    return errors
+    return errs
+
+
+def list_urls(nb):
+    urls = []
+    for cell in nb.cells:
+        if "http" in cell['source']:
+            search_text = cell['source']
+            urls += re.findall(r'(https?://[^\s]+)', search_text)
+    return urls
 
 
 def list_warnings(nb):
@@ -67,16 +87,15 @@ def list_warnings(nb):
     Args:
         nb (parsed nbformat.NotebookNode)
     """
-    warns = []
+    wrns = []
     for cell in nb.cells:
         if "outputs" in cell:
             for output in cell["outputs"]:
                 if (output.output_type == "stream"
                     and output.name == "stderr"
                     and "warning" in output.text.lower()):
-                    warns.append(output)
-
-    return warns
+                    wrns.append(output)
+    return wrns
 
 
 def validate_notebook(nb_path, timeout=60):
@@ -110,5 +129,12 @@ def validate_notebook(nb_path, timeout=60):
         nb = nbformat.read(tf, nbformat.current_nbformat)
 
     errors = list_errors(nb)
+
+    # broken urls are currently counted as errors; consider including as
+    #   warnings
+    broken_urls = find_broken_urls()
+    if any(broken_urls):
+        broken_urls = ["broken url: " + u for u in broken_urls]
+    errors += broken_urls
 
     return nb, errors
