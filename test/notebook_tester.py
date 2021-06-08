@@ -10,17 +10,20 @@ import __utils as utils
 import json
 import nbformat
 import os
-import regex as re
 import subprocess
 import tempfile
 
 
 
 def find_broken_urls(nb):
+    ''' Validates most urls with some exceptions (see documentation for
+    __utils.is_url_valid)
+    '''
     url_list = list_urls(nb)
     broken_urls = []
     for url in url_list:
-        if not utils.is_url_valid(url):
+        is_valid = utils.is_url_valid(url)
+        if type(is_valid)==bool and not is_valid:
             broken_urls.append(url)
     return broken_urls
 
@@ -77,7 +80,7 @@ def list_urls(nb):
     for cell in nb.cells:
         if "http" in cell['source']:
             search_text = cell['source']
-            urls += re.findall(r'(https?://[^\s]+)', search_text)
+            urls += utils.get_urls(search_text)
     return urls
 
 

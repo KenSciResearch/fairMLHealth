@@ -21,7 +21,7 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
-test_deps = ["pytest==5.4.2", "nbformat", "nbconvert", "ipython"
+test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex"
             ]
 
 # Requirements for running tutorial notebooks
