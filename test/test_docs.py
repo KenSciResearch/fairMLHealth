@@ -89,5 +89,3 @@ def test_tutorialsREADME():
     repo_main = base_dir()
     file = os.path.join(repo_main, "tutorials_and_examples", "README.md")
     validate_markdown(file)
-
-test_evaluatingFairness()

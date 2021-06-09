@@ -77,21 +77,21 @@ def is_url_valid(url):
         unsuccessful; otherwise True.
     """
     status = None
-    if is_test_environment():
-        # ToDo: add validation in case request error; for now, just suppress
-        with suppress(requests.exceptions.RequestException):
-            # Use stream=True to download only until reaching Response.content.
-            #   Could use requests.head, but apparently some sites don't support it.
-            status = requests.get(url, stream=True).status_code
-        # Repeat attempt in case of server error or timeout
-        if status in range(500, 505):
-            sleep(5)
-            status = requests.get(url).status_code
-        # Response codes below 400 indicate that the address exists
-        if status is not None and status < 400:
-            status = True
-    else:
-        pass
+    #if is_test_environment():
+    # ToDo: add validation in case request error; for now, just suppress
+    with suppress(requests.exceptions.RequestException):
+        # Use stream=True to download only until reaching Response.content.
+        #   Could use requests.head, but apparently some sites don't support it.
+        status = requests.get(url, stream=True).status_code
+    # Repeat attempt in case of server error or timeout
+    if status in range(500, 505):
+        sleep(5)
+        status = requests.get(url).status_code
+    # Response codes below 400 indicate that the address exists
+    if status is not None and status < 400:
+        status = True
+    #else:
+    #    pass
     return status
 
 

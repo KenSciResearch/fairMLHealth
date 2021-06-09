@@ -6,7 +6,7 @@ Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
 '''
 
-import __utils as utils
+from . import __utils as utils
 import json
 import nbformat
 import os
@@ -135,7 +135,7 @@ def validate_notebook(nb_path, timeout=60):
 
     # broken urls are currently counted as errors; consider including as
     #   warnings
-    broken_urls = find_broken_urls()
+    broken_urls = find_broken_urls(nb)
     if any(broken_urls):
         broken_urls = ["broken url: " + u for u in broken_urls]
     errors += broken_urls
