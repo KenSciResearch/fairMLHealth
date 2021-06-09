@@ -1,21 +1,10 @@
 from contextlib import suppress
+from urllib3.exceptions import InsecureRequestWarning
+import warnings
 import os
 import regex as re
 import requests
 from time import sleep
-
-
-
-
-def __invalid_url_ending(char):
-    ''' Some characters will be incorrectly evaluated by regex.findall as part
-    of a url when they are actually part of the document text.
-    '''
-    invalid_chars = [")", ".", ",", "]"]
-    is_valid = False
-    if char not in invalid_chars:
-        is_valid = True
-    return is_valid
 
 
 def get_urls(text_string):
@@ -40,16 +29,49 @@ def get_urls(text_string):
     while any(raw_urls):
         url = raw_urls.pop()
         # Markdown of format [text](link) displaying a url as text
-        #     (i.e. "[url](url)") should be split
-        if "](" in url and url.endswith(")"):
-            raw_urls += url.split("](")
+        #     (i.e. "[url](url)") should be split and added back to the list
+        if "](http" in url:
+            raw_urls += url.split("](http")
+            raw_urls[1] = "http" + raw_urls[1]
             continue
-        # Trailing symbols will be recognized as part of the url
         else:
-            while not __invalid_url_ending(url[-1]):
+            # Remove errant leading & trailing symbols will be recognized as
+            #   part of the url
+            url = url.rstrip()
+            while __invalid_url_delimiter(url[-1]):
                 url = url[:-1]
             output.append(url)
     return output
+
+
+def get_url_status(url, tryonce=False):
+    """ Gets URL response code. Re-tests in case of server error. Does not
+        verify secure connection. Does nothing in event of exception.
+
+    Args:
+        url (string): url to be validated
+        tryonce (bool): when False, will try again in case of certain erros
+            (such as server error). Defaults to False.
+
+    Returns:
+        bool: None if test unsuccessful; otherwise int of response status.
+    """
+    status = None
+    # ToDo: add validation in case request error; for now, just suppress
+    with suppress(requests.exceptions.RequestException):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=InsecureRequestWarning)
+            # Use stream=True to download only until reaching Response.content.
+            #   Could use requests.head, but some sites don't support it.
+            status = requests.get(url, stream=True, verify=False,
+                                  timeout=5).status_code
+    # Repeat attempt in case of server error or timeout
+    if not tryonce and status in range(500, 505):
+        sleep(5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=InsecureRequestWarning)
+            status = requests.get(url, stream=True, verify=False).status_code
+    return status
 
 
 def is_test_environment():
@@ -64,10 +86,8 @@ def is_test_environment():
 
 
 def is_url_valid(url):
-    """ Tests url for error response code. Skips validation (returns True) for
-        urls for which SSL certificate cannot be validated (this behavior to be
-        improved). Currently set to return None unless running in the
-        test environment (via GitHub)
+    """ Tests url for non-error response code. Does not verify secure
+        connection. Does nothing in event of exception.
 
     Args:
         url (string): url to be validated
@@ -76,21 +96,25 @@ def is_url_valid(url):
         bool: False if response status is 400 or above; None if test
         unsuccessful; otherwise True.
     """
-    status = None
-    # ToDo: add validation in case request error; for now, just suppress
-    with suppress(requests.exceptions.RequestException):
-        # Use stream=True to download only until reaching Response.content.
-        #   Could use requests.head, but apparently some sites don't support it.
-        status = requests.get(url, stream=True).status_code
-    # Repeat attempt in case of server error or timeout
-    if status in range(500, 505):
-        sleep(5)
-        status = requests.get(url).status_code
+    status = get_url_status(url)
     # Response codes below 400 indicate that the address exists
-    if status is not None and status < 400:
-        status = True
-    return status
+    if status is not None:
+        is_valid = True if status < 400 else False
+    else:
+        is_valid = None
+    return is_valid
 
 
 class URLError(requests.exceptions.BaseHTTPError):
     pass
+
+
+def __invalid_url_delimiter(char):
+    ''' Some characters will be incorrectly evaluated by regex.findall as part
+    of a url when they are actually part of the document text.
+    '''
+    invalid_chars = ["(", ")", ".", ",", "[", "]"]
+    is_invalid = True
+    if char not in invalid_chars:
+        is_invalid = False
+    return is_invalid

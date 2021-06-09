@@ -24,7 +24,9 @@ def find_broken_urls(nb):
     for url in url_list:
         is_valid = utils.is_url_valid(url)
         if type(is_valid)==bool and not is_valid:
-            broken_urls.append(url)
+            code = utils.get_url_status(url, tryonce=True)
+            err = f"{repr(url)} ({code} Error)"
+            broken_urls.append(err)
     return broken_urls
 
 

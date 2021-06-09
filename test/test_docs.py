@@ -6,7 +6,8 @@ documentation that is expected.
 import os
 from pathlib import Path
 import pytest
-from .__utils import get_urls, is_test_environment, is_url_valid, URLError
+from .__utils import (get_urls, get_url_status,  is_test_environment,
+                      is_url_valid, URLError)
 
 
 
@@ -30,15 +31,17 @@ def validate_urls(filepath):
         test_url = urls.pop()
         is_valid = is_url_valid(test_url)
         if type(is_valid)==bool and not is_valid:
-            raise URLError(f"Invalid URL detected in {filepath}: {test_url}")
+            err_code = get_url_status(test_url, tryonce=True)
+            raise URLError(f"Invalid URL detected in {filepath}:"
+                           + f" {repr(test_url)}, {err_code} Error")
 
 
 def validate_markdown(md_path):
     validate_filepath(md_path)
     # Validating URLs takes time, so only validate if running on test env.
     #   environment (on GitHub)
-    if is_test_environment():
-        validate_urls(md_path)
+    #if is_test_environment():
+    validate_urls(md_path)
 
 
 ''' Testers '''
