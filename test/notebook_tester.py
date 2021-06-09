@@ -138,6 +138,6 @@ def validate_notebook(nb_path, timeout=60):
     broken_urls = find_broken_urls(nb)
     if any(broken_urls):
         broken_urls = ["broken url: " + u for u in broken_urls]
-    errors += broken_urls
+        errors += broken_urls
 
     return nb, errors
