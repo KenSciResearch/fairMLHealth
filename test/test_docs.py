@@ -5,7 +5,7 @@ example, fails if an http(s) link is broken.
 import os
 from pathlib import Path
 import pytest
-from .__utils import get_urls, is_url_valid, URLError
+from .__utils import get_urls, is_test_environment, is_url_valid, URLError
 
 
 
@@ -34,7 +34,10 @@ def validate_urls(filepath):
 
 def validate_markdown(md_path):
     validate_filepath(md_path)
-    validate_urls(md_path)
+    # Validating URLs takes time, so only validate if running on Azure
+    #   environment (on GitHub)
+    if is_test_environment():
+        validate_urls(md_path)
 
 
 ''' Testers '''

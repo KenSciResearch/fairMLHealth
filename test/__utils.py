@@ -77,7 +77,6 @@ def is_url_valid(url):
         unsuccessful; otherwise True.
     """
     status = None
-    #if is_test_environment():
     # ToDo: add validation in case request error; for now, just suppress
     with suppress(requests.exceptions.RequestException):
         # Use stream=True to download only until reaching Response.content.
@@ -90,8 +89,6 @@ def is_url_valid(url):
     # Response codes below 400 indicate that the address exists
     if status is not None and status < 400:
         status = True
-    #else:
-    #    pass
     return status
 
 
