@@ -1,6 +1,7 @@
 ''' 
-Test script to flag obvious errors in markdown documentation files. For
-example, fails if an http(s) link is broken. 
+Test script to flag obvious errors in markdown documentation files. Example
+errors included broken http(s) links. At least verifies the presence of
+documentation that is expected.
 '''
 import os
 from pathlib import Path
@@ -50,6 +51,7 @@ def test_docsREADME():
 
 
 def test_evaluatingFairness():
+    ''' Validates document elaborating on fairness evaluation process '''
     repo_main = base_dir()
     file = os.path.join(repo_main, "docs", "resources",
                         "Evaluating_Fairness.md")
@@ -57,12 +59,14 @@ def test_evaluatingFairness():
 
 
 def test_main():
+    ''' Validates the repository's main README '''
     repo_main = base_dir()
     file = os.path.join(repo_main, "README.md")
     validate_markdown(file)
 
 
 def test_measuresQuickRef():
+    ''' Validates document containing charts of measure definitions '''
     repo_main = base_dir()
     file = os.path.join(repo_main, "docs", "resources",
                         "Measures_QuickReference.md")
@@ -76,6 +80,8 @@ def test_publicationsREADME():
 
 
 def test_refsAndResources():
+    ''' Validates document containing a list of references and outside resources
+    '''
     repo_main = base_dir()
     file = os.path.join(repo_main, "docs", "resources",
                         "References_and_Resources.md")
