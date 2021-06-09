@@ -10,7 +10,7 @@ RUN python3 -m pip install --upgrade wheel setuptools pip
 RUN python3 setup.py install
 RUN python3 -m pip install -U pytest
 
-# ensure that python3 kernel is avialble
+# Add flag for test environment
 ENV IS_CICD=true
 RUN python3 -m pytest
 

@@ -34,7 +34,7 @@ def validate_urls(filepath):
 
 def validate_markdown(md_path):
     validate_filepath(md_path)
-    # Validating URLs takes time, so only validate if running on Azure
+    # Validating URLs takes time, so only validate if running on test env.
     #   environment (on GitHub)
     if is_test_environment():
         validate_urls(md_path)

@@ -53,7 +53,7 @@ def get_urls(text_string):
 
 
 def is_test_environment():
-    """ Determines if the test is being run in its Azure CI/CD Docker
+    """ Determines if the test is being run in its test (Docker)
         environment. Notebook relying on MIMIC3 data, which should not
         be stored in the cloud, should not be tested if in this environment
 
@@ -66,7 +66,7 @@ def is_test_environment():
 def is_url_valid(url):
     """ Tests url for error response code. Skips validation (returns True) for
         urls for which SSL certificate cannot be validated (this behavior to be
-        improved). Currently set to return None unless running in the Azure
+        improved). Currently set to return None unless running in the
         test environment (via GitHub)
 
     Args:
