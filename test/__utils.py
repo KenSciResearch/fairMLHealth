@@ -110,10 +110,12 @@ class URLError(requests.exceptions.BaseHTTPError):
 
 
 def __invalid_url_delimiter(char):
-    ''' Some characters will be incorrectly evaluated by regex.findall as part
-    of a url when they are actually part of the document text.
+    ''' Some characters will be incorrectly evaluated by get_urls as part of
+    the address when they are actually part of the document text. Its possible
+    that some addresses may end with some of these characters, but more likely
+    that they're get_urls errors
     '''
-    invalid_chars = ["(", ")", ".", ",", "[", "]"]
+    invalid_chars = ["(", ")", ".", ",", "[", "]", "}"]
     is_invalid = True
     if char not in invalid_chars:
         is_invalid = False
