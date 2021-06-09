@@ -12,6 +12,10 @@ RUN python3 -m pip install -U pytest
 
 # Add flag for test environment
 ENV IS_CICD=true
+
+# Force install of test dependencies before running pytest (should happen
+#   automatically but sometimes fails)
+RUN python3 -m pip install .[test]
 RUN python3 -m pytest
 
 # create artifacts folder for built package.
