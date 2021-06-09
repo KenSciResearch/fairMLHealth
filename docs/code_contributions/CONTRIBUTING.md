@@ -85,11 +85,11 @@ We review every single PR. The purpose of reviews is to create the best content 
 
 #### Self review
 You should always review your own PR first. For content changes, make sure that you:
-- [ ] Confirm that the changes address every part of the content design plan from your issue (if there are differences, explain them).
-- [ ] Review the content for technical accuracy.
-- [ ] Copy-edit the changes for grammar, spelling, and adherence to the style guide.
-- [ ] Check that any documentation changes render correctly online. Remember, that lists and tables can be tricky.
-- [ ] If there are any failing checks in your PR, troubleshoot them until they're all passing.
+- [] Confirm that the changes address every part of the content design plan from your issue (if there are differences, explain them).
+- [] Review the content for technical accuracy.
+- [] Copy-edit the changes for grammar, spelling, and adherence to the style guide.
+- [] Check that any documentation changes render correctly online. Remember, that lists and tables can be tricky.
+- [] If there are any failing checks in your PR, troubleshoot them until they're all passing.
 
 ### Pull request template
 When you open a pull request, you must fill out the [Pull Request Template](PULL_REQUEST_TEMPLATE.md). This template helps reviewers understand your changes and the purpose of your pull request.
