@@ -41,5 +41,3 @@ def validate_notebook_requirements():
     else:
         pass
 
-class ValidationError(Exception):
-    pass

@@ -9,16 +9,13 @@ Contributors:
 # Licensed under the MIT License.
 
 from abc import ABC
-from collections import OrderedDict
-from joblib import dump
-import logging
-import numpy as np
 import pandas as pd
-import os
 import warnings
 
-from fairmlhealth.utils import is_dictlike
-from fairmlhealth.reports import summary_report
+from .utils import is_dictlike
+from .reports import summary_report
+from . import __validation as valid
+from .__validation import ValidationError
 
 
 """
@@ -106,7 +103,7 @@ class FairCompare(ABC):
     """
 
     def __init__(self, test_data, target_data, protected_attr=None,
-                 models=None, preds=None, probs=None, **kwargs):
+                 models=None, preds=None, probs=None, priv_grp=1, **kwargs):
         """ Generates fairness comparisons
 
         Args:
@@ -137,6 +134,7 @@ class FairCompare(ABC):
         #
         self.X = test_data
         self.prtc_attr = protected_attr
+        self.priv_grp = priv_grp
         self.y = target_data
 
         # The user is forced to pass either models or predictions as None to
@@ -147,9 +145,8 @@ class FairCompare(ABC):
         self.probs = None if self.models is not None else probs
 
         #
-        self.__meas_obj = ["X", "y", "prtc_attr", "models", "preds", "probs"]
-        self.__data_types = (pd.DataFrame, pd.Series, np.ndarray)
-        self.__iter_types = (list, tuple, set, dict, OrderedDict)
+        self.__meas_obj = ["X", "y", "prtc_attr", "priv_grp", "models",
+                           "preds", "probs"]
         #
         if "verboseMode" in kwargs:
             self.verboseMode = kwargs.get("verboseMode")
@@ -162,15 +159,15 @@ class FairCompare(ABC):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
         """
-        self.__validate()
+        # Model objects are assumed to be held in a dict
+        if not is_dictlike(self.models):
+            self.__set_dicts()
+        #
         if len(self.models) == 0:
             warnings.warn("No models to compare.")
             return pd.DataFrame()
         else:
             test_results = []
-            # self.measure_model runs __validate, but self has just been
-            #   validated. Toggle-off model validation for faster/quieter
-            #   processing
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
@@ -192,7 +189,7 @@ class FairCompare(ABC):
             model_name (str): a key corresponding to the model of interest,
                 as found in the object's "models" dictionary
         """
-        self.__validate()
+        self.__validate(model_name)
         msg = f"Could not measure fairness for {model_name}"
         if model_name not in self.preds.keys():
             msg += (" Name not found Available options include "
@@ -213,6 +210,65 @@ class FairCompare(ABC):
                                  **kwargs)
             return res
 
+    def __check_models_predictions(self, enforce=True):
+        """ If any predictions are missing, generates predictions for each model.
+            Assumes that models and data have been validated.
+
+        """
+        # Model objects are assumed to be held in a dict
+        if not is_dictlike(self.models):
+            self.__set_dicts()
+        #
+        model_objs = [*self.models.values()]
+        pred_objs = [*self.preds.values()]
+        prob_objs = [*self.probs.values()]
+        missing_probs = []
+        #
+        if enforce:
+            if not any(m is None for m in model_objs):
+                for mdl_name, mdl in self.models.items():
+                    pred_func = getattr(mdl, "predict", None)
+                    if not callable(pred_func):
+                        msg = f"{mdl} model does not have predict function"
+                        raise ValidationError(msg)
+                    try:
+                        y_pred = mdl.predict(self.X[mdl_name])
+                    except BaseException as e:
+                        msg = (f"Failure generating predictions for {mdl_name}"
+                               " model. Verify if data are correctly formatted"
+                               " for this model.") + e
+                        raise ValidationError(msg)
+                    self.preds[mdl_name] = y_pred
+                    # Since most fairness measures do not require probabilities,
+                    #   y_prob is optional
+                    try:
+                        y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
+                    except BaseException:
+                        y_prob = None
+                        missing_probs.append(mdl_name)
+                    self.probs[mdl_name] = y_prob
+
+            elif not all(m is None for m in model_objs):
+                raise ValidationError(
+                    "Incomplete set of models detected. Can't process a mix of"
+                    + " models and predictions")
+            else:
+                if any(p is None for p in pred_objs):
+                    raise ValidationError(
+                        "Cannot measure without either models or predictions")
+                missing_probs = [p for p in prob_objs if p is None]
+        else:
+            if any(p is None for p in pred_objs):
+                raise ValidationError(
+                        "Cannot measure without either models or predictions")
+            missing_probs = [p for p in prob_objs if p is None]
+
+        if any(missing_probs):
+            warnings.warn("Please note that probabilities could not be " +
+                f"generated for the following models: {missing_probs}. " +
+                "Dependent metrics will be skipped.")
+
+        return None
 
     def __paused_validation(self):
         if not hasattr(self, "__pause_validation"):
@@ -235,7 +291,7 @@ class FairCompare(ABC):
         # Iterable attributes must be of same length so that keys can be
         # properly matched when they're converted to dictionaries.
         iterable_obj = [m for m in self.__meas_obj
-                        if isinstance(getattr(self, m), self.__iter_types)]
+                        if isinstance(getattr(self, m), valid.ITER_TYPES)]
         if any(iterable_obj):
             lengths = [len(getattr(self, i)) for i in iterable_obj]
             err = "All iterable arguments must be of same length"
@@ -259,7 +315,7 @@ class FairCompare(ABC):
         # All measure-related attributes will be assumed as dicts henceforth
         for name in self.__meas_obj:
             if not is_dictlike(getattr(self, name)):
-                if not isinstance(getattr(self, name), self.__iter_types):
+                if not isinstance(getattr(self, name), valid.ITER_TYPES):
                     objL = [getattr(self, name)] * expected_len
                 else:
                     objL = getattr(self, name)
@@ -267,51 +323,6 @@ class FairCompare(ABC):
                 setattr(self, name, objD)
             else:
                 pass
-        return None
-
-    def __set_predictions(self):
-        """ If any predictions are missing, generates predictions for each model.
-            Assumes that models and data have been validated.
-
-        """
-        # self.models is expected as a dict with None as all of its values here,
-        # since __set_dicts() is assumed to have been run
-        if any(m is None for m in [*self.models.values()]):
-            return None
-        #
-        pred_objs = [*self.preds.values()]
-        prob_objs = [*self.probs.values()]
-        if not any(p is None for p in pred_objs + prob_objs):
-            return None
-        else:
-            self.preds, self.probs = {}, {}
-        #
-        missing_probs = []
-        for mdl_name, mdl in self.models.items():
-            pred_func = getattr(mdl, "predict", None)
-            if not callable(pred_func):
-                msg = f"{mdl} model does not have predict function"
-                raise ValidationError(msg)
-            try:
-                y_pred = mdl.predict(self.X[mdl_name])
-            except BaseException as e:
-                msg = (f"Failure generating predictions for {mdl_name} model."
-                       " Verify if data are correctly formatted for this model."
-                       ) + e
-                raise ValidationError(msg)
-            self.preds[mdl_name] = y_pred
-            # Since most fairness measures do not require probabilities, y_prob
-            # is optional
-            try:
-                y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
-            except BaseException:
-                y_prob = None
-                missing_probs.append(mdl_name)
-            self.probs[mdl_name] = y_prob
-        if any(missing_probs):
-            warnings.warn("Please note that probabilities could not be " +
-                   f"generated for the following models: {missing_probs}. " +
-                   "Dependent metrics will be skipped.")
         return None
 
     def __setup(self):
@@ -326,10 +337,11 @@ class FairCompare(ABC):
                        "not both")
                 raise ValidationError(err)
             self.__set_dicts()
-            self.__check_readiness()
-            self.__validate_data(subset=['X'])
-            self.__set_predictions()
-            self.__validate_data()
+            for x in self.X.values():
+                valid.validate_report_input(x)
+            self.__check_models_predictions()
+            for m in self.models.keys():
+                self.__validate(m)
         except ValidationError as ve:
             raise ValidationError(f"Error loading FairCompare. {ve}")
 
@@ -337,7 +349,7 @@ class FairCompare(ABC):
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation
 
-    def __validate(self):
+    def __validate(self, model_name):
         """ Verifies that attributes are set appropriately and updates as
                 appropriate
 
@@ -348,129 +360,12 @@ class FairCompare(ABC):
         if self.__paused_validation():
             return None
         else:
-            self.__check_readiness()
-            self.__validate_data()
+            self.__check_models_predictions(enforce=False)
+            valid.validate_report_input(X=self.X[model_name],
+                                        y_true=self.y[model_name],
+                                        y_pred=self.preds[model_name],
+                                        y_prob=self.probs[model_name],
+                                        prtc_attr=self.prtc_attr[model_name],
+                                        priv_grp=self.priv_grp[model_name]
+                                        )
             return None
-
-    def __validate_data(self, subset=None):
-        """ Verifies that data are of correct type and length.
-
-        Args:
-            subset (list/tuple/set of strings): names of the data properties to
-                validate. If passed as None, validates all. Defaults to None.
-
-        Raises:
-            ValidationError
-        """
-        if subset is not None:
-            err = "Subset incorrectly specified"
-            if not isinstance(subset, (list, tuple, set)) and len(subset) > 0:
-                raise ValidationError(err)
-            elif not all(d in self.__meas_obj for d in subset):
-                raise ValidationError(err)
-            else:
-                subset = [d for d in subset if d != "models"]
-        else:
-            subset = [d for d in self.__meas_obj if d != "models"]
-        data_obj = {d: getattr(self, d) for d in subset}
-
-        # Ensure data dicts contain  containing pandas-compatible arrays of
-        # same length
-        data_lengths = []
-        for data_name, data in data_obj.items():
-            for d in data.values():
-                if data_name == "probs" and d is None:
-                    continue
-                elif not isinstance(d, self.__data_types):
-                    err = (f"Input {data_name} must be numpy array or pandas " +
-                           "object, or a list/dict of such objects")
-                    raise ValidationError(err)
-                else:
-                    data_lengths.append(d.shape[0])
-        if not len(set(data_lengths)) == 1:
-            err = "All data arguments must be of same length."
-            raise ValidationError(err)
-
-        # This class cannot yet handle grouped protected attributes or
-        # multi-objective predictions
-        oneD_arrays = ['prtc_attr', 'y', 'preds', 'probs']
-        oneD_arrays = [d for d in oneD_arrays if d in subset]
-        for name in oneD_arrays:
-            data_dict = getattr(self, name)
-            for _, arr in data_dict.items():
-                if data_name == "probs" and d is None:
-                    continue
-                elif len(arr.shape) > 1 and arr.shape[1] > 1:
-                    err = ("This library is not yet compatible with groups of"
-                        " protected attributes.")
-                    raise ValidationError(err)
-
-        # Measuring functions cannot yet handle continuous protected attributes
-        # or targets
-        binVal_arrays = ['prtc_attr', 'y', 'preds']
-        binVal_arrays = [d for d in binVal_arrays if d in subset]
-        binVals = np.array([0, 1])
-        for name in binVal_arrays:
-            data_dict = getattr(self, name)
-            for _, arr in data_dict.items():
-                err = None
-                if len(np.unique(arr)) > 2:
-                    err = (f"Multiple labels found in {name}. "
-                            "Expected only 0 or 1.")
-                # Protected attribute must have entries for both 0 and 1
-                elif (name == "prtc_attr"
-                      not np.array_equal(np.unique(arr), binVals)):
-                    err = (f"Expected values of [0, 1] in {name}." +
-                            f" Received {np.unique(arr)}")
-                # Other arrays may have entries for only but either 0 or 1
-                elif (not all(v in binVals for v in np.unique(arr))
-                      and name != "prtc_attr"):
-                    err = (f"Expected values of [0, 1] in {name}." +
-                            f" Received {np.unique(arr)}")
-                if err is not None:
-                    raise ValidationError(err)
-        return None
-
-    def __check_readiness(self):
-        """ If models are present, verifies that models have a predict function
-            and generates predictions using the models. This is designed to run
-            as extra validation in case the user manually change the object's
-            models property, so some tests may overlap with those of other
-            functions called in __setup()
-
-        Raises:
-            ValidationError
-        """
-        # Model objects are assumed to be held in a dict
-        if not is_dictlike(self.models):
-            self.__set_dicts()
-
-        # No validation is necessaryIf there are no models (and only
-        # predictions)
-        model_objs = [*self.models.values()]
-        pred_objs = [*self.preds.values()]
-
-        if (all(m is None for m in model_objs) and
-            all(p is None for p in pred_objs) ):
-                warnings.warn("No models or predictions defined")
-        elif any(m is None for m in model_objs):
-            if any(p is None for p in pred_objs):
-                err = ("Ether models or predictions must have a full set "
-                           + "of nonmissing objects")
-                raise ValidationError(err)
-            # If all predictions are defined and some models are present, either
-            # there is a bug or the user has changed this object's models. The
-            # reverse is not an issue, since models will automatically be used
-            # to generate predictions.
-            elif not all(m is None for m in model_objs):
-                err = "Some models are missing"
-                raise ValidationError(err)
-            else:
-                return None
-        else:
-            pass
-        return None
-
-
-class ValidationError(Exception):
-    pass

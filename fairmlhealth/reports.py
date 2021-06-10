@@ -22,10 +22,10 @@ from warnings import filterwarnings, warn
 # Tutorial Libraries
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
-from .__report_processing import (standard_preprocess, stratified_preprocess,
+from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               y_cols, clean_hidden_names, report_labels)
 from . import tutorial_helpers as helpers
-from .utils import ValidationError
+from .__validation import ValidationError
 
 
 
