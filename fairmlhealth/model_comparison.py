@@ -409,20 +409,24 @@ class FairCompare(ABC):
         # or targets
         binVal_arrays = ['prtc_attr', 'y', 'preds']
         binVal_arrays = [d for d in binVal_arrays if d in subset]
+        binVals = np.array([0, 1])
         for name in binVal_arrays:
             data_dict = getattr(self, name)
             for _, arr in data_dict.items():
                 err = None
-                if not all(np.unique(arr) == [0, 1]) and name == "prtc_attr":
-                    err = (f"Expected values of [0,1] in {name}." +
+                if len(np.unique(arr)) > 2:
+                    err = (f"Multiple labels found in {name}. "
+                            "Expected only 0 or 1.")
+                # Protected attribute must have entries for both 0 and 1
+                elif (name == "prtc_attr"
+                      not np.array_equal(np.unique(arr), binVals)):
+                    err = (f"Expected values of [0, 1] in {name}." +
                             f" Received {np.unique(arr)}")
-                elif (not all(v in [0, 1] for v in np.unique(arr))
-                    and name != "prtc_attr"):
-                    err = (f"Expected values of [0,1] in {name}." +
+                # Other arrays may have entries for only but either 0 or 1
+                elif (not all(v in binVals for v in np.unique(arr))
+                      and name != "prtc_attr"):
+                    err = (f"Expected values of [0, 1] in {name}." +
                             f" Received {np.unique(arr)}")
-                elif len(np.unique(arr)) > 2:
-                    err = (f"Multiple labels found in {name}"
-                            "(only 2 allowed).")
                 if err is not None:
                     raise ValidationError(err)
         return None
