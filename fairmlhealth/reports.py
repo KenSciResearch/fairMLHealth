@@ -17,7 +17,7 @@ from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
                              precision_score, roc_auc_score,
                              balanced_accuracy_score, classification_report)
 from scipy import stats
-from warnings import catch_warnings, simplefilter, warn
+from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
 # Tutorial Libraries
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
@@ -25,7 +25,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               y_cols, clean_hidden_names, report_labels)
 from . import tutorial_helpers as helpers
-from .__validation import ValidationError
+from .__validation import format_feedback, ValidationError
 
 
 
@@ -314,36 +314,7 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 
 ''' Private Functions '''
 
-
-def __format_feedback(func):
-    def format_info(dict):
-        info_dict = {}
-        for k, v in dict.items():
-            _v = list(set(v)) if isinstance(v, list) else [v]
-            for w in _v:
-                if w in info_dict.keys():
-                    info_dict[w].append(k)
-                else:
-                    info_dict[w] = [k]
-        info_dict = {k:list(set(v)) for k, v in info_dict.items()}
-        return info_dict
-
-    def wrapper(*args, **kwargs):
-        res, errs, warns = func(*args, **kwargs)
-        if any(errs):
-            err_dict = format_info(errs)
-            for er, cols in err_dict.items():
-                warn(f"Error processing column(s) {cols}. {er}\n")
-        if any(warns):
-            warn_dict = format_info(warns)
-            for wr, cols in warn_dict.items():
-                warn(f"Possible error in column(s) {cols}. {wr}\n")
-        return res
-
-    return wrapper
-
-
-@__format_feedback
+@format_feedback
 def __apply_toFeatures(stratified_features, df, func, *args):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
@@ -388,7 +359,7 @@ def __apply_toFeatures(stratified_features, df, func, *args):
     return results, errs, warns
 
 
-@__format_feedback
+@format_feedback
 def __apply_toValues(stratified_features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing.
