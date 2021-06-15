@@ -190,7 +190,9 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type == "classification":
         return __classification_bias_report(X, y_true, y_pred, features)
     elif pred_type == "regression":
-        return __regression_bias_report(X, y_true, y_pred, features)
+        msg = "Regression reporting will be available in version 2.0"
+        raise ValueError(msg)
+        #return __regression_bias_report(X, y_true, y_pred, features)
 
 
 def data_report(X, y_true, features:list=None):
