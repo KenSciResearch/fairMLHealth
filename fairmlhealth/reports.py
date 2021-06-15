@@ -17,7 +17,7 @@ from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
                              precision_score, roc_auc_score,
                              balanced_accuracy_score, classification_report)
 from scipy import stats
-from warnings import filterwarnings, warn
+from warnings import catch_warnings, simplefilter, warn
 
 # Tutorial Libraries
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
@@ -110,40 +110,6 @@ def regression_performance(y_true, y_pred):
     return report
 
 
-def __regression_bias(pa_name, y_true, y_pred, priv_grp=1):
-    def pdmean(y_true, y_pred, *args): return y_pred.mean()
-    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
-    #
-    gf_vals = {}
-    # Ratios
-    gf_vals['Mean Prediction Ratio'] = \
-        aif.ratio(pdmean, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Ratio'] = \
-        aif.ratio(pmtrc.scMAE, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Ratio'] = \
-        aif.ratio(mean_absolute_error, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Ratio'] = \
-        aif.ratio(meanerr, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    # Differences
-    gf_vals['Mean Prediction Difference'] = \
-        aif.difference(pdmean, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Difference'] = \
-        aif.difference(pmtrc.scMAE, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Difference'] = \
-        aif.difference(mean_absolute_error, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Difference'] = \
-        aif.difference(meanerr, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    return gf_vals
-
-
 
 ''' Main Reports '''
 
@@ -224,9 +190,7 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type == "classification":
         return __classification_bias_report(X, y_true, y_pred, features)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features)
+        return __regression_bias_report(X, y_true, y_pred, features)
 
 
 def data_report(X, y_true, features:list=None):
@@ -245,8 +209,12 @@ def data_report(X, y_true, features:list=None):
         reformat those data into quantiles
     """
     #
+    def entr(x):
+        ''' Calculates the entropy of a series '''
+        return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
+
     def __data_dict(x, col):
-        # Generate dictionary of statistics
+        ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
         name = clean_hidden_names(col)
         if not x[col].isna().all():
@@ -256,7 +224,6 @@ def data_report(X, y_true, features:list=None):
             res[f'{name} Min'] = x[col].min()
             res[f'{name} Max'] = x[col].max()
         return res
-
     #
     df = stratified_preprocess(X, y_true, features=features)
     yt, _, _ = y_cols(df)['col_names'].values()
@@ -264,34 +231,19 @@ def data_report(X, y_true, features:list=None):
     if yt is None:
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    res = []
-    N_missing = 0
-    N_obs = df.shape[0]
-    errs = {}
-    for f in stratified_features:
-        n_missing = df.loc[df[f].isna() | df[f].eq('nan'), f].count()
-        # Add feature-specific statistics for each group in the feature
-        grp = df.groupby(f)
-        try:
-            r = grp.apply(lambda x: pd.Series(__data_dict(x, yt)))
-        except BaseException as e:
-            errs[k] = e
-            continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
-        #
-        r.insert(0, 'Feature Name', f)
-        r['Missing Values'] = n_missing
-        N_missing += n_missing
-        _, feat_count = np.unique(df[f], return_counts=True)
-        r['Feature Entropy'] = stats.entropy(feat_count, base=2)
-        res.append(r)
-    if any(errs):
-        for k, v in errs.items():
-            warn(f"Error processing column(s) {k}. {v}\n")
-    full_res = pd.concat(res, ignore_index=True)
-    full_res['Value Prevalence'] = full_res['Obs.']/N_obs
+    results = __apply_toFeatures(stratified_features, df, __data_dict, yt)
+    #
+    results['Value Prevalence'] = results['Obs.']/df.shape[0]
+    n_missing = df.replace('nan', np.nan).notnull().count().reset_index()
+    n_missing.columns = ['Feature Name', 'Feature Missing Values']
+    entropy = df.apply(axis=0, func=entr).reset_index()
+    entropy.columns = ['Feature Name', 'Feature Entropy']
+    results= results.merge(n_missing, how='left', on='Feature Name'
+                   ).merge(entropy, how='left', on='Feature Name')
     #
     N_feat = len(stratified_features)
+    N_missing = n_missing['Feature Missing Values'].sum()
+    N_obs = df.shape[0]
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES",
                 'Missing Values': N_missing,
@@ -302,12 +254,8 @@ def data_report(X, y_true, features:list=None):
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
     # Combine and format
-    rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
-    head_cols = ['Feature Name', 'Feature Value',
-                 'Obs.', 'Missing Values']
-    tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
-    rprt = rprt[head_cols + tail_cols]
-    rprt = rprt.round(4)
+    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    rprt = sort_report(rprt)
     return rprt
 
 
@@ -325,6 +273,25 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
         #return __regression_performance_report(X, y_true, y_pred, features)
+
+
+def sort_report(report):
+    """ Sorts columns in standardized order
+
+    Args:
+        report (pd.DataFrame): any of the stratified reports produced by this
+        module
+
+    Returns:
+        pd.DataFrame: sorted report
+    """
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
+    head_names = ['Feature Name', 'Feature Value', 'Obs.',
+                 f'{yname} Mean', f'{yhname} Mean']
+    head_cols = [c for c in head_names if c in report.columns]
+    tail_cols = sorted([c for c in report.columns if c not in head_cols])
+    return report[head_cols + tail_cols]
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
@@ -346,6 +313,139 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 
 
 ''' Private Functions '''
+
+
+def __format_feedback(func):
+    def format_info(dict):
+        info_dict = {}
+        for k, v in dict.items():
+            _v = list(set(v)) if isinstance(v, list) else [v]
+            for w in _v:
+                if w in info_dict.keys():
+                    info_dict[w].append(k)
+                else:
+                    info_dict[w] = [k]
+        info_dict = {k:list(set(v)) for k, v in info_dict.items()}
+        return info_dict
+
+    def wrapper(*args, **kwargs):
+        res, errs, warns = func(*args, **kwargs)
+        if any(errs):
+            err_dict = format_info(errs)
+            for er, cols in err_dict.items():
+                warn(f"Error processing column(s) {cols}. {er}\n")
+        if any(warns):
+            warn_dict = format_info(warns)
+            for wr, cols in warn_dict.items():
+                warn(f"Possible error in column(s) {cols}. {wr}\n")
+        return res
+
+    return wrapper
+
+
+@__format_feedback
+def __apply_toFeatures(stratified_features, df, func, *args):
+    """ Iteratively applies a function across groups of each stratified feature,
+    collecting errors and warnings to be displayed succinctly after processing
+
+    Args:
+        stratified_features (list): columns of df to be iteratively analyzed
+        df (pd.DataFrame): data to be analyzed
+        func (function): a function accepting *args and returning a dictionary
+
+    Returns:
+        pd.DataFrame: set of results for each feature-value
+    """
+    #
+    errs = {}
+    warns = {}
+    res = []
+    for f in stratified_features:
+        #
+        if df[f].nunique() == 1:
+            warns[f] = "Cannot assess bias for a single value."
+            continue
+        # Data are expected in string format
+        assert df[f].astype(str).eq(df[f]).all()
+        with catch_warnings(record=True) as w:
+            simplefilter("always")
+            try:
+                grp = df.groupby(f)
+                grp_res = grp.apply(lambda x: pd.Series(func(x, *args)))
+            except BaseException as e:
+                errs[f] = e
+                continue
+            if len(w) > 0:
+                warns[f] = w
+        grp_res = grp_res.reset_index().rename(columns={f: 'Feature Value'})
+        grp_res.insert(0, 'Feature Name', f)
+        res.append(grp_res)
+    if len(res) == 0:
+        results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
+    else:
+        results = pd.concat(res, ignore_index=True)
+    results = pd.concat(res, ignore_index=True)
+    return results, errs, warns
+
+
+@__format_feedback
+def __apply_toValues(stratified_features, df, func, yt, yh):
+    """ Iteratively applies a function across groups of each stratified feature,
+    collecting errors and warnings to be displayed succinctly after processing.
+
+    Args:
+        stratified_features (list): columns of df to be iteratively analyzed
+        df (pd.DataFrame): data to be analyzed
+        func (function): a function accepting two array arguments for comparison
+            (selected from df as yt and yh), as well as a pa_name (str) and
+            priv_grp (int) which will be set by __apply_toValues. This function
+            must return a dictionary.
+        yt (string): name of column found in df containing target values
+        yh (string): name of column found in df containing predicted values
+
+    Returns:
+        pd.DataFrame: set of results for each feature-value
+    """
+    #
+    errs = {}
+    warns = {}
+    pa_name = 'prtc_attr'
+    res = []
+    for f in stratified_features:
+        vals = sorted(df[f].unique().tolist())
+        if len(vals) == 1:
+            warns[f] = "Cannot assess bias for a single value."
+            continue
+        # AIF360 can't handle float types
+        for v in vals:
+            df[pa_name] = 0
+            df.loc[df[f].eq(v), pa_name] = 1
+            if v != "nan":
+                df.loc[df[f].eq("nan"), pa_name] = np.nan
+            # Nothing to measure if only one value is present (other than nan)
+            if df[pa_name].nunique() == 1:
+                continue
+            # Data are expected in string format
+            assert df[f].astype(str).eq(df[f]).all()
+            with catch_warnings(record=True) as w:
+                simplefilter("always")
+                try:
+                    subset = df.loc[df[pa_name].notnull(),
+                                    [pa_name, yt, yh]].set_index(pa_name)
+                    grp_res = func(subset[yt], subset[yh], pa_name, priv_grp=1)
+                except BaseException as e:
+                    errs[f] = e
+                    continue
+                if len(w) > 0:
+                    warns[f] = w
+            grp_res = pd.DataFrame(grp_res, index=[0])
+            grp_res.insert(0, 'Feature Name', f)
+            res.append(grp_res)
+    if len(res) == 0:
+        results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
+    else:
+        results = pd.concat(res, ignore_index=True)
+    return results, errs, warns
 
 
 def __class_prevalence(y_true, priv_grp):
@@ -394,7 +494,6 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
             res['PR AUC'] = pmtrc.pr_auc_score(x[y], x[yp])
         return res
     #
-    #
     if y_true is None or y_pred is None:
         msg = "Cannot assess performance without both y_true and y_pred"
         raise ValueError(msg)
@@ -406,25 +505,8 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    res = []
-    errs = {}
-    for f in stratified_features:
-        if not df[f].astype(str).eq(df[f]).all():
-            assert TypeError(f, "data are expected in string format")
-        # Add feature-specific performance values for each group in the feature
-        grp = df.groupby(f)
-        try:
-            r = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh, yp)))
-        except BaseException as e:
-            errs[f] = e
-            continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
-        r.insert(0, 'Feature Name', f)
-        res.append(r)
-    if any(errs):
-        for k, v in errs.items():
-            warn(f"Error processing column(s) {k}. {v}\n")
-    full_res = pd.concat(res, ignore_index=True)
+    results = __apply_toFeatures(stratified_features, df,
+                                  __perf_rep, yt, yh, yp)
     #
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES"}
@@ -433,14 +515,8 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
     # Combine and format
-    rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
-    head_cols = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
-    tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
-    rprt = rprt[head_cols + tail_cols]
-    rprt = rprt.round(4)
+    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    rprt = sort_report(rprt)
     return rprt
 
 
@@ -489,29 +565,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    res = []
-    skipped_vars = []
-    errs = {}
-    for f in stratified_features:
-        if df[f].nunique() == 1:
-            skipped_vars.append(f)
-            continue
-        # Data are expected in string format
-        assert df[f].astype(str).eq(df[f]).all()
-        # Add feature-specific performance values for each group in the feature
-        grp = df.groupby(f)
-        try:
-            r = grp.apply(lambda x: pd.Series(__perf_rep(x, yt, yh)))
-        except BaseException as e:
-            errs[f] = e
-            continue
-        r = r.reset_index().rename(columns={f: 'Feature Value'})
-        r.insert(0, 'Feature Name', f)
-        res.append(r)
-    if any(errs):
-        for k, v in errs.items():
-            warn(f"Error processing column(s) {k}. {v}\n")
-    full_res = pd.concat(res, ignore_index=True)
+    results = __apply_toFeatures(stratified_features, df, __perf_rep, yt, yh)
     #
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES"}
@@ -520,19 +574,13 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
         overview[k] = v
     overview_df = pd.DataFrame(overview, index=[0])
     #
-    rprt = pd.concat([overview_df, full_res], axis=0, ignore_index=True)
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
-    head_cols = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
-    tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
-    rprt = rprt[head_cols + tail_cols]
-    rprt = rprt.round(4)
+    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    rprt = sort_report(rprt)
     return rprt
 
 
-
-def __classification_bias_report(X, y_true, y_pred, features:list=None):
+def __classification_bias_report(X, y_true, y_pred, features:list=None,
+                                 priv_grp=1):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -550,11 +598,14 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None):
         reformat those data into quantiles
     """
     #
-    def __bias_rep(pa_name, y_true, y_pred, priv_grp=1):
+    def __bias_rep(y_true, y_pred, pa_name, priv_grp=1):
         gf_vals = {}
-        gf_vals['PPV Ratio'] = fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['TPR Ratio'] = fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['FPR Ratio'] = fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
+        gf_vals['PPV Ratio'] = \
+            fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
+        gf_vals['TPR Ratio'] =  \
+            fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
+        gf_vals['FPR Ratio'] =  \
+            fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
         #
         gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
@@ -572,46 +623,12 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None):
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    res = []
-    pa_name = 'prtc_attr'
-    errs = {}
-    for f in stratified_features:
-        vals = sorted(df[f].unique().tolist())
-        # AIF360 can't handle float types
-        for v in vals:
-            df[pa_name] = 0
-            df.loc[df[f].eq(v), pa_name] = 1
-            if v != "nan":
-                df.loc[df[f].eq("nan"), pa_name] = np.nan
-            # Nothing to measure if only one value is present (other than nan)
-            if df[pa_name].nunique() == 1:
-                continue
-            try:
-                subset = df.loc[df[pa_name].notnull(),
-                                [pa_name, yt, yh]].set_index(pa_name)
-                meas = __bias_rep(pa_name, subset[yt], subset[yh], priv_grp=1)
-            except BaseException as e:
-                errs[f] = e
-                continue
-            r = pd.DataFrame(meas, index=[0])
-            r['Obs.'] = df.loc[df[f].eq(v), pa_name].sum()
-            r['Feature Name'] = f
-            r['Feature Value'] = v
-            res.append(r)
-    if any(errs):
-        for k, v in errs.items():
-            warn(f"Error processing column(s) {k}. {v}\n")
-    # Combine and format
-    full_res = pd.concat(res, ignore_index=True)
-    head_cols = ['Feature Name', 'Feature Value', 'Obs.']
-    tail_cols = sorted([c for c in full_res.columns if c not in head_cols])
-    rprt = full_res[head_cols + tail_cols]
-    rprt = rprt.round(4)
-    #
+    results = __apply_toValues(stratified_features, df, __bias_rep, yt, yh)
+    rprt = sort_report(results)
     return rprt
 
 
-def __regression_bias_report(X, y_true, y_pred, features:list=None):
+def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -635,53 +652,9 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None):
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    res = []
-    for f in stratified_features:
-        # Data are expected in string format
-        assert df[f].astype(str).eq(df[f]).all()
-        grp = df.groupby(f, as_index=False)[yt].count()
-        grp.rename(columns={f: 'Feature Value', yt: 'Obs.'}, inplace=True)
-        grp['Feature Name'] = f
-        res.append(grp)
-    rprt = pd.concat(res, axis=0, ignore_index=True)
-    #
-    res_f = []
-    rprt = rprt[['Feature Name', 'Feature Value', 'Obs.']]
-    pa_name = 'prtc_attr'
-    errs = {}
-    for _, row in rprt.iterrows():
-        f = row['Feature Name']
-        v = row['Feature Value']
-        df[pa_name] = 0
-        df.loc[df[f].eq(v), pa_name] = 1
-        if v != "nan":
-            df.loc[df[f].eq("nan"), pa_name] = np.nan
-        # Nothing to measure if only one value is present (other than nan)
-        if df[pa_name].nunique() == 1:
-            continue
-        try:
-            subset = df.loc[df[pa_name].notnull(),
-                            [pa_name, yt, yh]].set_index(pa_name)
-            meas = __regression_bias(pa_name, subset[yt], subset[yh], priv_grp=1)
-        except BaseException as e:
-            errs[f] = e
-            continue
-        r = pd.DataFrame(meas, index=[0])
-        r['Feature Name'] = f
-        r['Feature Value'] = v
-        res_f.append(r)
-    if any(errs):
-        for k, v in errs.items():
-            warn(f"Error processing column(s) {k}. {v}\n")
-    # Combine and format
-    rprt_update = pd.concat(res_f, ignore_index=True)
-    rprt_update = rprt_update[sorted(rprt_update.columns, key=lambda x: x[-5:])]
-    rprt = rprt.merge(rprt_update, on=['Feature Name', 'Feature Value'], how='left')
-    head_cols = ['Feature Name', 'Feature Value', 'Obs.']
-    tail_cols = sorted([c for c in rprt.columns if c not in head_cols])
-    rprt = rprt[head_cols + tail_cols]
-    rprt = rprt.round(4)
-    #
+    results = __apply_toValues(stratified_features, df,
+                               __regression_bias, yt, yh)
+    rprt = sort_report(results)
     return rprt
 
 
@@ -810,8 +783,7 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
     gfl, ifl, mpl, dtl = labels.values()
     # Generate a dictionary of measure values to be converted t a dataframe
     mv_dict = {}
-    mv_dict[gfl] = \
-        __summary(X, pa_name, y_true, y_pred, y_prob, priv_grp)
+    mv_dict[gfl] =  __summary(X, pa_name, y_true, y_pred, y_prob, priv_grp)
     mv_dict[dtl] = __class_prevalence(y_true, priv_grp)
     if not kwargs.pop('skip_if', False):
         mv_dict[ifl] = __similarity_measures(X, pa_name, y_true, y_pred)
@@ -830,6 +802,41 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
     df.set_index(['level_0', 'level_1'], inplace=True)
     df.rename_axis(('Metric', 'Measure'), inplace=True)
     return df
+
+
+def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
+    def pdmean(y_true, y_pred, *args): return y_pred.mean()
+    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
+    #
+    gf_vals = {}
+    # Ratios
+    gf_vals['Mean Prediction Ratio'] = \
+        aif.ratio(pdmean, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['scMAE Ratio'] = \
+        aif.ratio(pmtrc.scMAE, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Ratio'] = \
+        aif.ratio(mean_absolute_error, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Error Ratio'] = \
+        aif.ratio(meanerr, y_true, y_pred,
+                  prot_attr=pa_name, priv_group=priv_grp)
+    # Differences
+    gf_vals['Mean Prediction Difference'] = \
+        aif.difference(pdmean, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['scMAE Difference'] = \
+        aif.difference(pmtrc.scMAE, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Difference'] = \
+        aif.difference(mean_absolute_error, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['Mean Error Difference'] = \
+        aif.difference(meanerr, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    return gf_vals
+
 
 
 def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
@@ -857,8 +864,8 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
     #
-    gf_vals = \
-        __regression_bias(pa_name, y_true, y_pred, priv_grp=priv_grp)
+    bias_df = pd.concat([y_true.reset_index(), y_pred], axis=1)
+    gf_vals = __regression_bias(y_true, y_pred, pa_name, priv_grp=priv_grp)
     #
     if not kwargs.pop('skip_if', False):
         if_vals = __similarity_measures(X, pa_name, y_true, y_pred)

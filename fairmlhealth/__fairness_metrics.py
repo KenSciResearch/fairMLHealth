@@ -2,6 +2,7 @@
 from aif360.sklearn.metrics import difference, ratio
 import pandas as pd
 from sklearn.metrics import precision_score
+from sklearn.exceptions import UndefinedMetricWarning
 import warnings
 
 from .__performance_metrics import (
@@ -55,7 +56,7 @@ def eq_odds_ratio(y_true, y_pred, prtc_attr=None, priv_grp=1):
 ''' Simple '''
 def ppv_ratio(y_true, y_pred, pa_name, priv_grp):
     return ratio(precision_score, y_true, y_pred,
-                 prot_attr=pa_name, priv_group=priv_grp)
+                     prot_attr=pa_name, priv_group=priv_grp)
 
 
 def tpr_ratio(y_true, y_pred, pa_name, priv_grp):

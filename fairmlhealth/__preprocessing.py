@@ -23,8 +23,11 @@ def clean_hidden_names(col):
 
 
 def prep_X(data):
-    ''' Validates then returns X in the required format
-    '''
+    """ Ensures that data are in the correct format
+
+    Returns:
+        pd.DataFrame: formatted "X" data (test data)
+    """
     if not isinstance(data, pd.DataFrame):
         if isinstance(data, pd.Series):
             X = pd.DataFrame(data, columns=[data.name])
