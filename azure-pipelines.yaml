@@ -12,6 +12,10 @@ resources:
       type: git
       ref: integration
 
+variables:
+- name: BDIST_WHEEL
+  value: false
+
 stages:
 - stage: A_Test_Default
   jobs:
@@ -19,14 +23,13 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
-    - env:
-      BDIST_WHEEL: true
     - checkout: self
     - task: UsePythonVersion@0
       displayName: Use Python Version
       inputs:
         versionSpec: 3.x
         checkLatest: true
+    - bash: export BDIST_WHEEL=true
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
