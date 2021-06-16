@@ -1,4 +1,4 @@
-# CI trigger on master branch, only for changes in included path
+# CI trigger only for changes in included path
 trigger:
   batch: true
   branches:
@@ -6,15 +6,18 @@ trigger:
     - master
     - integration
 
+
 resources:
   repositories:
     - repository: self
       type: git
       ref: integration
 
+
 variables:
 - name: BDIST_WHEEL
   value: false
+
 
 stages:
 - stage: A_Test_Default
@@ -29,7 +32,6 @@ stages:
       inputs:
         versionSpec: 3.x
         checkLatest: true
-    - bash: export BDIST_WHEEL=true
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
