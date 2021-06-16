@@ -24,7 +24,7 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
-                              y_cols, report_labels)
+                              report_labels)
 from . import tutorial_helpers as helpers
 from .__validation import format_errwarn, ValidationError
 
@@ -98,8 +98,8 @@ def regression_performance(y_true, y_pred):
             model.predict().
     """
     report = {}
-    y = y_cols()['disp_names']['yt']
-    yh = y_cols()['disp_names']['yh']
+    y = __y_cols()['disp_names']['yt']
+    yh = __y_cols()['disp_names']['yh']
     report[f'{y} Mean'] = np.mean(y_true)
     report[f'{yh} Mean'] = np.mean(y_pred)
     report['scMAE'] = pmtrc.scMAE(y_true, y_pred)
@@ -223,6 +223,7 @@ def data_report(X, Y, features:list=None, targets:list=None):
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
+        name = __clean_names(col)
         if not x[col].isna().all():
             res[col + " Mean"] = x[col].mean()
             res[col + " Median"] = x[col].median()
@@ -300,8 +301,8 @@ def sort_report(report):
     Returns:
         pd.DataFrame: sorted report
     """
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
+    yname = __y_cols()['disp_names']['yt']
+    yhname = __y_cols()['disp_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
                  f'{yname} Mean', f'{yhname} Mean']
     head_cols = [c for c in head_names if c in report.columns]
@@ -471,8 +472,8 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     """
     #
     def __perf_rep(x, y, yh, yp):
-        _y = y_cols()['disp_names']['yt']
-        _yh = y_cols()['disp_names']['yh']
+        _y = __y_cols()['disp_names']['yt']
+        _yh = __y_cols()['disp_names']['yh']
         res = {'Obs.': x.shape[0],
             f'{_y} Mean': x[y].mean(),
             f'{_yh} Mean': x[yh].mean(),
@@ -491,7 +492,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
+    yt, yh, yp = __y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
@@ -531,8 +532,8 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     """
     #
     def __perf_rep(x, y, yh):
-        _y = y_cols()['disp_names']['yt']
-        _yh = y_cols()['disp_names']['yh']
+        _y = __y_cols()['disp_names']['yt']
+        _yh = __y_cols()['disp_names']['yh']
         res = {'Obs.': x.shape[0],
                 f'{_y} Mean': x[y].mean(),
                 f'{_yh} Mean': x[yh].mean(),
@@ -551,7 +552,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
+    yt, yh, yp = __y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
@@ -609,7 +610,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
+    yt, yh, yp = __y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
@@ -638,7 +639,7 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
+    yt, yh, yp = __y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
@@ -881,3 +882,45 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     return df
 
 
+def __clean_names(col):
+    ''' If the column is a hidden variable, replaces the variable with a
+        display name
+    '''
+    yvars = __y_cols()
+    if col in yvars['col_names'].values():
+        idx = list(yvars['col_names'].values()).index(col)
+        key = list(yvars['col_names'].keys())[idx]
+        display_name = yvars['disp_names'][key]
+    else:
+        display_name = col
+    return display_name
+
+
+def __y_cols(df=None):
+    ''' Returns a dict of hidden column names for each
+        of the y values used in stratified reporting functions, the keys for
+        which are as follows: "yt"="y true"; "yh"="y predicted";
+        "yp"="y probabilities". This allows for consistent references that are
+        not likely to be found among the actual columns of the data (e.g., so
+        that columns can be added without error).
+
+        Optionally drops name values that are missing from the df argument.
+
+        Args:
+            df (pandas DataFrame, optional): dataframe to check for the presence
+                of known names; names that are not found will be dropped from
+                the results. Defaults to None.
+    '''
+    y_names = {'col_names': {'yt': '__fairmlhealth_y_true',
+                            'yh': '__fairmlhealth_y_pred',
+                            'yp': '__fairmlhealth_y_prob'},
+              'disp_names': {'yt': 'Target',
+                             'yh': 'Pred.',
+                             'yp': 'Prob.'}
+            }
+    #
+    if df is not None:
+        for k in y_names['col_names'].keys():
+            if y_names['col_names'][k] not in df.columns:
+                y_names['col_names'][k] = None
+    return y_names

@@ -8,21 +8,6 @@ from . import __validation as valid
 from .__validation import ValidationError
 
 
-'''
-def clean_hidden_names(col):
-    ''' If the column is a hidden variable, replaces the variable with a
-        display name
-    '''
-    yvars = y_cols()
-    if col in yvars['col_names'].values():
-        idx = list(yvars['col_names'].values()).index(col)
-        key = list(yvars['col_names'].keys())[idx]
-        display_name = yvars['disp_names'][key]
-    else:
-        display_name = col
-    return display_name
-'''
-
 
 def prep_X(data):
     """ Ensures that data are in the correct format
@@ -212,32 +197,3 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     return df
 
 
-
-def y_cols(df=None):
-    ''' Returns a dict of hidden column names for each
-        of the y values used in stratified reporting functions, the keys for
-        which are as follows: "yt"="y true"; "yh"="y predicted";
-        "yp"="y probabilities". This allows for consistent references that are
-        not likely to be found among the actual columns of the data (e.g., so
-        that columns can be added without error).
-
-        Optionally drops name values that are missing from the df argument.
-
-        Args:
-            df (pandas DataFrame, optional): dataframe to check for the presence
-                of known names; names that are not found will be dropped from
-                the results. Defaults to None.
-    '''
-    y_names = {'col_names': {'yt': '__fairmlhealth_y_true',
-                            'yh': '__fairmlhealth_y_pred',
-                            'yp': '__fairmlhealth_y_prob'},
-              'disp_names': {'yt': 'Target',
-                             'yh': 'Pred.',
-                             'yp': 'Prob.'}
-            }
-    #
-    if df is not None:
-        for k in y_names['col_names'].keys():
-            if y_names['col_names'][k] not in df.columns:
-                y_names['col_names'][k] = None
-    return y_names
