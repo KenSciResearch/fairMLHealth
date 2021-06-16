@@ -25,14 +25,24 @@ resources:
       ref: integration
 
 stages:
-- stage: One_Ubuntu
-  #ToDo: update to use ubuntu-latest
+- stage: A_Ubuntu
   jobs:
-  - template: python-package.yaml@templates
-    parameters:
-      publish_doc: false
+  - job: Test Earliest Supported Python Version
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+    - task: UsePythonVersion@0
+      displayName: Use Python Version
+      inputs:
+        versionSpec: 3.6.8
+    - task: ShellScript@2
+      displayName: Build and Test
+      inputs:
+        scriptPath: integration_test.sh
 
-- stage: Two_Windows
+
+- stage: B_Windows
   jobs:
   - job: Test_Windows
     pool:
