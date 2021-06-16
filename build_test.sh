@@ -12,12 +12,3 @@ export IS_CICD=true
 #   automatically but sometimes fails)
 python3 -m pip install .[test]
 python3 -m pytest
-
-
-# create artifacts folder for built package.
-if [ -z ${BDIST_WHEEL+x} ]; then export BDIST_WHEEL=false; fi
-if $BDIST_WHEEL
-then
-    mkdir /artifacts
-    python3 setup.py bdist_wheel --dist-dir /artifacts
-fi

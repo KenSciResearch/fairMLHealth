@@ -12,18 +12,12 @@ resources:
       type: git
       ref: integration
 
-variables:
-- name: BDIST_WHEEL
-  value: false
-
 stages:
 - stage: A_Test_Default
   jobs:
   - job: Test_Latest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
-    variables:
-      BDIST_WHEEL: true
     steps:
     - checkout: self
     - task: UsePythonVersion@0
@@ -34,7 +28,7 @@ stages:
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
-        scriptPath: integration_test.sh
+        scriptPath: build_test.sh
 
 - stage: B_Test_Options
   jobs:
@@ -51,7 +45,7 @@ stages:
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
-        scriptPath: integration_test.sh
+        scriptPath: build_test.sh
   - job: Test_Windows
     pool:
       vmImage: windows-2019
@@ -65,5 +59,5 @@ stages:
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
-        scriptPath: integration_test.sh
+        scriptPath: build_test.sh
 
