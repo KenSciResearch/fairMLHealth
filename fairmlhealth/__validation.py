@@ -12,7 +12,7 @@ ITER_TYPES = (list, tuple, set, dict, OrderedDict)
 
 
 
-def format_feedback(func):
+def format_errwarn(func):
     """ Wraps a function returning some result with dictionaries for errors and
         warnings, then formats those errors and warnings as grouped warnings.
         Used for reporting functions to skip errors (and warnings) while

@@ -8,6 +8,7 @@ from . import __validation as valid
 from .__validation import ValidationError
 
 
+'''
 def clean_hidden_names(col):
     ''' If the column is a hidden variable, replaces the variable with a
         display name
@@ -20,6 +21,7 @@ def clean_hidden_names(col):
     else:
         display_name = col
     return display_name
+'''
 
 
 def prep_X(data):
@@ -111,7 +113,8 @@ def report_labels(pred_type: str = "binary"):
     return report_labels
 
 
-def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
+def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
+                        y_prob=None, priv_grp=1):
     """ Formats data for use by fairness reporting functions.
     Args:
         X (array-like): Sample features
@@ -147,7 +150,7 @@ def standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1):
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def stratified_preprocess(X, y_true, y_pred=None, y_prob=None,
+def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
                           features:list=None):
     """
     Runs validation and formats data for use in stratified reports

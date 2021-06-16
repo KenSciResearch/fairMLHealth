@@ -6,6 +6,7 @@ Contributors:
 """
 
 
+from datetime import time
 import aif360.sklearn.metrics as aif
 from IPython.display import HTML
 import logging
@@ -23,9 +24,9 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
-                              y_cols, clean_hidden_names, report_labels)
+                              y_cols, report_labels)
 from . import tutorial_helpers as helpers
-from .__validation import format_feedback, ValidationError
+from .__validation import format_errwarn, ValidationError
 
 
 
@@ -195,15 +196,19 @@ def bias_report(X, y_true, y_pred, features:list=None,
         #return __regression_bias_report(X, y_true, y_pred, features)
 
 
-def data_report(X, y_true, features:list=None):
+def data_report(X, Y, features:list=None, targets:list=None):
     """
     Generates a table of stratified data metrics
 
     Args:
-        df (pandas dataframe or compatible object): sample data to be assessed
-        y_true (1D array-like): Sample target true values
-        features (list): columns in df to be assessed if not all columns.
-            Defaults to None.
+        X (pandas dataframe or compatible object): sample data to be assessed
+        Y (pandas dataframe or compatible object): sample targets to be
+            assessed. Note that any observations with missing targets will be
+            ignored.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        targets (list): columns in Y to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -218,47 +223,55 @@ def data_report(X, y_true, features:list=None):
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
-        name = clean_hidden_names(col)
         if not x[col].isna().all():
-            res[f'{name} Mean'] = x[col].mean()
-            res[f'{name} Median'] = x[col].median()
-            res[f'{name} Std. Dev.'] = x[col].std()
-            res[f'{name} Min'] = x[col].min()
-            res[f'{name} Max'] = x[col].max()
+            res[col + " Mean"] = x[col].mean()
+            res[col + " Median"] = x[col].median()
+            res[col + " Std. Dev."] = x[col].std()
+        else:
+            # Force addition of second column to ensure proper formatting
+            # as pandas series
+            for c in [col + " Mean", col + " Median", col + " Std. Dev."]:
+                res[c] = np.nan
         return res
     #
-    df = stratified_preprocess(X, y_true, features=features)
-    yt, _, _ = y_cols(df)['col_names'].values()
-    stratified_features = [f for f in df.columns.tolist() if f != yt]
-    if yt is None:
-        raise ValidationError("Cannot generate report with undefined targets")
+    X_df = stratified_preprocess(X=X, features=features)
+    Y_df = standard_preprocess(X=Y)[0]
+    if X_df.shape[0] != Y_df.shape[0]:
+        raise ValidationError("Number of observations mismatch between X and Y")
+    if features is None:
+        features = X_df.columns.tolist()
+    stratified_features = [f for f in features if f in X_df.columns]
     #
-    results = __apply_toFeatures(stratified_features, df, __data_dict, yt)
+    res = []
+    for t in Y_df.columns:
+        X_df[t] = Y_df[t]
+        res_t = __apply_toFeatures(stratified_features, X_df, __data_dict, t)
+        res.append(res_t.set_index(['Feature Name', 'Feature Value']))
+    results = pd.concat(res, axis=1).reset_index()
     #
-    results['Value Prevalence'] = results['Obs.']/df.shape[0]
-    n_missing = df.replace('nan', np.nan).notnull().count().reset_index()
+    results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
+    n_missing = X_df.replace('nan', np.nan).notnull().count().reset_index()
     n_missing.columns = ['Feature Name', 'Feature Missing Values']
-    entropy = df.apply(axis=0, func=entr).reset_index()
+    entropy = X_df.apply(axis=0, func=entr).reset_index()
     entropy.columns = ['Feature Name', 'Feature Entropy']
-    results= results.merge(n_missing, how='left', on='Feature Name'
+    results = results.merge(n_missing, how='left', on='Feature Name'
                    ).merge(entropy, how='left', on='Feature Name')
     #
     N_feat = len(stratified_features)
     N_missing = n_missing['Feature Missing Values'].sum()
-    N_obs = df.shape[0]
+    N_obs = X_df.shape[0]
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES",
                 'Missing Values': N_missing,
-                'Value Prevalence': (N_obs*N_feat - N_missing)/(N_obs*N_feat)
+                'Value Prevalence': np.nan
                 }
-    ov_dict = __data_dict(df, yt)
-    for k, v in ov_dict.items():
-        overview[k] = v
+
     overview_df = pd.DataFrame(overview, index=[0])
     # Combine and format
     rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     rprt = sort_report(rprt)
     return rprt
+
 
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -316,7 +329,7 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 
 ''' Private Functions '''
 
-@format_feedback
+@format_errwarn
 def __apply_toFeatures(stratified_features, df, func, *args):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
@@ -335,11 +348,13 @@ def __apply_toFeatures(stratified_features, df, func, *args):
     res = []
     for f in stratified_features:
         #
+        if f == yt or f == yt:
+            continue
+        #
         if df[f].nunique() == 1:
             warns[f] = "Cannot assess bias for a single value."
             continue
         # Data are expected in string format
-        assert df[f].astype(str).eq(df[f]).all()
         with catch_warnings(record=True) as w:
             simplefilter("always")
             try:
@@ -361,7 +376,7 @@ def __apply_toFeatures(stratified_features, df, func, *args):
     return results, errs, warns
 
 
-@format_feedback
+@format_errwarn
 def __apply_toValues(stratified_features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing.
@@ -385,6 +400,10 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
     pa_name = 'prtc_attr'
     res = []
     for f in stratified_features:
+        #
+        if f == yt or f == yt:
+            continue
+        #
         vals = sorted(df[f].unique().tolist())
         if len(vals) == 1:
             warns[f] = "Cannot assess bias for a single value."
