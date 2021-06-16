@@ -23,8 +23,8 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
-    - env:
-      BDIST_WHEEL: true
+      env:
+        BDIST_WHEEL: true
     - checkout: self
     - task: UsePythonVersion@0
       displayName: Use Python Version
