@@ -25,16 +25,15 @@ resources:
       ref: integration
 
 stages:
-- stage: A
+- stage: 1 - Ubuntu
   jobs:
   - template: python-package.yaml@templates
     parameters:
       publish_doc: false
 
-- stage: B
+- stage: 2 - Windows
   jobs:
   - job: Phase_2
-    displayName: Build and Test - Windows
     pool:
       vmImage: windows-2019
     steps:
@@ -43,13 +42,7 @@ stages:
       displayName: Use Python Version
       inputs:
         versionSpec: 3.6.8
-    - task: CmdLine@2
-      displayName: Set up test environment & add flag
+    - task: ShellScript@2
+      displayName: Build and Test
       inputs:
-        script: "# Set up test environment \npython3 -m pip install --upgrade wheel setuptools pip\npython3 setup.py install\n\n# Add flag for test environment\nENV IS_CICD=true\n\n# Force install of test dependencies before running pytest (should happen\n#   automatically but sometimes fails)\npython3 -m pip install .[test]\n\n"
-    - task: CmdLine@2
-      displayName: Install pytest
-      inputs:
-        script: python3 -m pip install pytest && pytest --doctest-modules --junitxml=junit/test-results.xml
-    - task: PyTest@2
-      displayName: Run PyTest
+        scriptPath: integration_test.sh
