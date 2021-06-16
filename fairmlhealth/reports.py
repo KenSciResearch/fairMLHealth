@@ -26,7 +26,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels)
 from . import tutorial_helpers as helpers
-from .__validation import format_errwarn, ValidationError
+from .__validation import format_errwarn, validate_targets, validate_preds, ValidationError
 
 
 
@@ -223,7 +223,6 @@ def data_report(X, Y, features:list=None, targets:list=None):
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
-        name = __clean_names(col)
         if not x[col].isna().all():
             res[col + " Mean"] = x[col].mean()
             res[col + " Median"] = x[col].median()
@@ -246,7 +245,8 @@ def data_report(X, Y, features:list=None, targets:list=None):
     res = []
     for t in Y_df.columns:
         X_df[t] = Y_df[t]
-        res_t = __apply_toFeatures(stratified_features, X_df, __data_dict, t)
+        feature_subset = stratified_features.copy().remove(t)
+        res_t = __apply_featureGroups(feature_subset, X_df, __data_dict, t)
         res.append(res_t.set_index(['Feature Name', 'Feature Value']))
     results = pd.concat(res, axis=1).reset_index()
     #
@@ -331,7 +331,7 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 ''' Private Functions '''
 
 @format_errwarn
-def __apply_toFeatures(stratified_features, df, func, *args):
+def __apply_featureGroups(stratified_features, df, func, *args):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
 
@@ -348,13 +348,6 @@ def __apply_toFeatures(stratified_features, df, func, *args):
     warns = {}
     res = []
     for f in stratified_features:
-        #
-        if f == yt or f == yt:
-            continue
-        #
-        if df[f].nunique() == 1:
-            warns[f] = "Cannot assess bias for a single value."
-            continue
         # Data are expected in string format
         with catch_warnings(record=True) as w:
             simplefilter("always")
@@ -378,7 +371,7 @@ def __apply_toFeatures(stratified_features, df, func, *args):
 
 
 @format_errwarn
-def __apply_toValues(stratified_features, df, func, yt, yh):
+def __apply_biasGroups(stratified_features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing.
 
@@ -387,7 +380,7 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
         df (pd.DataFrame): data to be analyzed
         func (function): a function accepting two array arguments for comparison
             (selected from df as yt and yh), as well as a pa_name (str) and
-            priv_grp (int) which will be set by __apply_toValues. This function
+            priv_grp (int) which will be set by __apply_biasGroups. This function
             must return a dictionary.
         yt (string): name of column found in df containing target values
         yh (string): name of column found in df containing predicted values
@@ -401,14 +394,7 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
     pa_name = 'prtc_attr'
     res = []
     for f in stratified_features:
-        #
-        if f == yt or f == yt:
-            continue
-        #
         vals = sorted(df[f].unique().tolist())
-        if len(vals) == 1:
-            warns[f] = "Cannot assess bias for a single value."
-            continue
         # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
@@ -422,9 +408,13 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
             assert df[f].astype(str).eq(df[f]).all()
             with catch_warnings(record=True) as w:
                 simplefilter("always")
-                try:
-                    subset = df.loc[df[pa_name].notnull(),
+                subset = df.loc[df[pa_name].notnull(),
                                     [pa_name, yt, yh]].set_index(pa_name)
+                try:
+                    # Re-run validation since subsetting may cause errant groups
+                    validate_targets(subset[yt])
+                    validate_preds(subset[yh])
+                    #
                     grp_res = func(subset[yt], subset[yh], pa_name, priv_grp=1)
                 except BaseException as e:
                     errs[f] = e
@@ -498,7 +488,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toFeatures(stratified_features, df,
+    results = __apply_featureGroups(stratified_features, df,
                                   __perf_rep, yt, yh, yp)
     #
     overview = {'Feature Name': "ALL FEATURES",
@@ -558,7 +548,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toFeatures(stratified_features, df, __perf_rep, yt, yh)
+    results = __apply_featureGroups(stratified_features, df, __perf_rep, yt, yh)
     #
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES"}
@@ -616,7 +606,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toValues(stratified_features, df, __bias_rep, yt, yh)
+    results = __apply_biasGroups(stratified_features, df, __bias_rep, yt, yh)
     rprt = sort_report(results)
     return rprt
 
@@ -645,7 +635,7 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toValues(stratified_features, df,
+    results = __apply_biasGroups(stratified_features, df,
                                __regression_bias, yt, yh)
     rprt = sort_report(results)
     return rprt
@@ -880,20 +870,6 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     df.columns = ['Value']
     df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     return df
-
-
-def __clean_names(col):
-    ''' If the column is a hidden variable, replaces the variable with a
-        display name
-    '''
-    yvars = __y_cols()
-    if col in yvars['col_names'].values():
-        idx = list(yvars['col_names'].values()).index(col)
-        key = list(yvars['col_names'].keys())[idx]
-        display_name = yvars['disp_names'][key]
-    else:
-        display_name = col
-    return display_name
 
 
 def __y_cols(df=None):
