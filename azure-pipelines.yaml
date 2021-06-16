@@ -6,30 +6,21 @@ trigger:
     - master
     - integration
 
-variables:
-  # You don't need to change anything here, unless you want to
-  # publish docker image or documents to somewhere else.
-  - group: kentoso-acr-credentials
-  - group: kentoso-dev-twistlock-credentials
-  - group: kentoso-private-pypi-url
-  # - group: kentoso-doc-blobstorage
-
 resources:
   repositories:
-    - repository: templates
-      type: github
-      name: KenSciML/BuildTemplates
-      endpoint: KenSciML
     - repository: self
       type: git
       ref: integration
 
 stages:
-- stage: A_Ubuntu
+- stage: A_Test_Default
   jobs:
   - job: Test_Latest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
+    # Set BDIST_WHEEL variable to enable test of wheel build (see shell script)
+    env:
+      BDIST_WHEEL: true
     steps:
     - checkout: self
     - task: UsePythonVersion@0
@@ -41,6 +32,8 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: integration_test.sh
+
+- stage: B_Test_Options
   - job: Test_Earliest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
@@ -55,10 +48,6 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: integration_test.sh
-
-
-- stage: B_Windows
-  jobs:
   - job: Test_Windows
     pool:
       vmImage: windows-2019
@@ -67,7 +56,8 @@ stages:
     - task: UsePythonVersion@0
       displayName: Use Python Version
       inputs:
-        versionSpec: 3.9.5
+        versionSpec: 3.x
+        checkLatest: true
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
