@@ -25,15 +25,16 @@ resources:
       ref: integration
 
 stages:
-- stage: 1_Ubuntu
+- stage: One_Ubuntu
+  #ToDo: update to use ubuntu-latest
   jobs:
   - template: python-package.yaml@templates
     parameters:
       publish_doc: false
 
-- stage: 2_Windows
+- stage: Two_Windows
   jobs:
-  - job: Test_Windows_2
+  - job: Test_Windows
     pool:
       vmImage: windows-2019
     steps:
@@ -46,3 +47,4 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: integration_test.sh
+
