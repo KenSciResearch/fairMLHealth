@@ -22,9 +22,9 @@ stages:
   - job: Test_Latest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
+    variables:
+      BDIST_WHEEL: true
     steps:
-      env:
-        BDIST_WHEEL: true
     - checkout: self
     - task: UsePythonVersion@0
       displayName: Use Python Version
