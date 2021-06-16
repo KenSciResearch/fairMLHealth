@@ -245,7 +245,7 @@ def data_report(X, Y, features:list=None, targets:list=None):
     res = []
     for t in Y_df.columns:
         X_df[t] = Y_df[t]
-        feature_subset = stratified_features.copy().remove(t)
+        feature_subset = [f for f in stratified_features if f != t]
         res_t = __apply_featureGroups(feature_subset, X_df, __data_dict, t)
         res.append(res_t.set_index(['Feature Name', 'Feature Value']))
     results = pd.concat(res, axis=1).reset_index()
@@ -331,12 +331,12 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
 ''' Private Functions '''
 
 @format_errwarn
-def __apply_featureGroups(stratified_features, df, func, *args):
+def __apply_featureGroups(features, df, func, *args):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
 
     Args:
-        stratified_features (list): columns of df to be iteratively analyzed
+        features (list): columns of df to be iteratively analyzed
         df (pd.DataFrame): data to be analyzed
         func (function): a function accepting *args and returning a dictionary
 
@@ -347,7 +347,7 @@ def __apply_featureGroups(stratified_features, df, func, *args):
     errs = {}
     warns = {}
     res = []
-    for f in stratified_features:
+    for f in features:
         # Data are expected in string format
         with catch_warnings(record=True) as w:
             simplefilter("always")
@@ -371,12 +371,12 @@ def __apply_featureGroups(stratified_features, df, func, *args):
 
 
 @format_errwarn
-def __apply_biasGroups(stratified_features, df, func, yt, yh):
+def __apply_biasGroups(features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing.
 
     Args:
-        stratified_features (list): columns of df to be iteratively analyzed
+        features (list): columns of df to be iteratively analyzed
         df (pd.DataFrame): data to be analyzed
         func (function): a function accepting two array arguments for comparison
             (selected from df as yt and yh), as well as a pa_name (str) and
@@ -393,7 +393,7 @@ def __apply_biasGroups(stratified_features, df, func, yt, yh):
     warns = {}
     pa_name = 'prtc_attr'
     res = []
-    for f in stratified_features:
+    for f in features:
         vals = sorted(df[f].unique().tolist())
         # AIF360 can't handle float types
         for v in vals:
