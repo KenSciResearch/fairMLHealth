@@ -18,10 +18,10 @@ stages:
   - job: Test_Latest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
-    # Set BDIST_WHEEL variable to enable test of wheel build (see shell script)
-    env:
-      BDIST_WHEEL: true
     steps:
+    # Set BDIST_WHEEL variable to enable test of wheel build (see shell script)
+    - env:
+      BDIST_WHEEL: true
     - checkout: self
     - task: UsePythonVersion@0
       displayName: Use Python Version
