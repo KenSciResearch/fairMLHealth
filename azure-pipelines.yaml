@@ -27,7 +27,20 @@ resources:
 stages:
 - stage: A_Ubuntu
   jobs:
-  - job: Test_Earliest_Python_Version
+  - job: Test_Latest_Supported_PyVersion
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+    - task: UsePythonVersion@0
+      displayName: Use Python Version
+      inputs:
+        versionSpec: 3.9.5
+    - task: ShellScript@2
+      displayName: Build and Test
+      inputs:
+        scriptPath: integration_test.sh
+  - job: Test_Earliest_Supported_PyVersion
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -52,7 +65,7 @@ stages:
     - task: UsePythonVersion@0
       displayName: Use Python Version
       inputs:
-        versionSpec: 3.6.8
+        versionSpec: 3.9.5
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
