@@ -21,9 +21,8 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
-test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex",
-             "win32api"
-            ]
+test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex"
+            ] + ['pywin32; platform_system == "Windows"']
 
 # Requirements for running tutorial notebooks
 tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',
