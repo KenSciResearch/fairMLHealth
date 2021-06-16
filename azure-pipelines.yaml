@@ -27,7 +27,7 @@ resources:
 stages:
 - stage: A_Ubuntu
   jobs:
-  - job: Test Earliest Supported Python Version
+  - job: Test_Earliest_Python_Version
     pool:
       vmImage: ubuntu-latest
     steps:
