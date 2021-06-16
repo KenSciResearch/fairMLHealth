@@ -25,15 +25,15 @@ resources:
       ref: integration
 
 stages:
-- stage: 1 - Ubuntu
+- stage: 1_Ubuntu
   jobs:
   - template: python-package.yaml@templates
     parameters:
       publish_doc: false
 
-- stage: 2 - Windows
+- stage: 2_Windows
   jobs:
-  - job: Phase_2
+  - job: Test_Windows_2
     pool:
       vmImage: windows-2019
     steps:
