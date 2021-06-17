@@ -44,7 +44,7 @@ stages:
       inputs:
         script: |
           python3 -m pip install pywin32 --upgrade
-          export PYTHON_HOME=$(where python)
+          let PYTHON_HOME=$(where python)
           ${PYTHON_HOME}\Lib\site-packages\win32\pywin32_postinstall.py -install
     - task: ShellScript@2
       displayName: Build and Test
