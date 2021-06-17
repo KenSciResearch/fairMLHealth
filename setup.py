@@ -2,7 +2,6 @@
 
 """
 from setuptools import setup, find_packages
-import pathlib
 
 
 # Set strings that should be defined elsewhere. ToDo: define elsewhere
@@ -20,9 +19,11 @@ def _get_version():
     )
     return json.load(open(version_file))['version']
 
-
+#
+os_deps = ['pywin32; platform_system == "Windows"'
+            ]
 test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex"
-            ] + ['win32api; platform_system == "Windows"']
+            ] + os_deps
 
 # Requirements for running tutorial notebooks
 tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',

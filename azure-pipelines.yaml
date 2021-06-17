@@ -54,7 +54,7 @@ stages:
     - task: UsePythonVersion@0
       displayName: Use Python Version
       inputs:
-        versionSpec: 3.x
+        versionSpec: 3.8.x
         checkLatest: true
     - task: ShellScript@2
       displayName: Build and Test
