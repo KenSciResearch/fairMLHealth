@@ -33,6 +33,23 @@ stages:
       displayName: Test Wheel Build
       inputs:
         script: 'python3 setup.py bdist_wheel'
+
+- stage: B_Test_Options
+  jobs:
+  - job: Test_Earliest_Supported_PyVersion
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+    - task: UsePythonVersion@0
+      displayName: Use Python Version
+      inputs:
+        versionSpec: 3.6.x
+        checkLatest: true
+    - task: ShellScript@2
+      displayName: Build and Test
+      inputs:
+        scriptPath: build_test.sh
   - job: Test_Windows
     pool:
       vmImage: windows-2019
@@ -51,22 +68,4 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: build_test.sh
-
-- stage: B_Test_Options
-  jobs:
-  - job: Test_Earliest_Supported_PyVersion
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - checkout: self
-    - task: UsePythonVersion@0
-      displayName: Use Python Version
-      inputs:
-        versionSpec: 3.6.x
-        checkLatest: true
-    - task: ShellScript@2
-      displayName: Build and Test
-      inputs:
-        scriptPath: build_test.sh
-
 
