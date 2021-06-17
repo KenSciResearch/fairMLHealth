@@ -1,4 +1,6 @@
 #!/bin/bash
+# About: Sets-up test environment & runs tests; for use in development of
+#   this library
 
 # Set up test environment
 python3 -m pip install --upgrade wheel setuptools pip
