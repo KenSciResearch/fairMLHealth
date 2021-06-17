@@ -29,6 +29,10 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: build_test.sh
+    - task: CmdLine@2
+      displayName: Test Wheel Build
+      inputs:
+        script: 'RUN python3 setup.py bdist_wheel'
   - job: Test_Windows
     pool:
       vmImage: windows-2019
@@ -44,8 +48,7 @@ stages:
       inputs:
         script: |
           python3 -m pip install pywin32 --upgrade
-          let PYTHON_HOME=$(where python)
-          ${PYTHON_HOME}\Lib\site-packages\win32\pywin32_postinstall.py -install
+          $(where python)\Lib\site-packages\win32\pywin32_postinstall.py -install
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
