@@ -1,5 +1,8 @@
-# CI trigger only for changes in included path
+# About: Configuration for continuous integration via Azure DevOps
+
+
 trigger:
+  # CI trigger only for changes in included path
   batch: true
   branches:
     include:
@@ -14,6 +17,7 @@ resources:
 
 stages:
 - stage: Stage1_Test_Optimal_Setup
+  # Test full install on environment in which the library is primarily developed
   jobs:
   - job: Test_Latest_Supported_PyVersion
     pool:
@@ -35,6 +39,7 @@ stages:
         script: 'python3 setup.py bdist_wheel'
 
 - stage: Stage2_Test_Optional_Setups
+  # Library pass pytest for other supported environments
   jobs:
   - job: Test_Earliest_Supported_PyVersion
     pool:
@@ -68,4 +73,3 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: build_test.sh
-
