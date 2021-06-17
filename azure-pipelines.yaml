@@ -41,7 +41,8 @@ stages:
         checkLatest: true
     - task: CmdLine@2
       displayName: pywin32 workaround
-      script: |
+      inputs:
+        script: |
           python3 -m pip install pywin32 --upgrade
           export PYTHON_HOME=$(where python)
           ${PYTHON_HOME}\Lib\site-packages\win32\pywin32_postinstall.py -install
