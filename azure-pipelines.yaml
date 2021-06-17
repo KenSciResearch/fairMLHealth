@@ -29,6 +29,26 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: build_test.sh
+  - job: Test_Windows
+    pool:
+      vmImage: windows-2019
+    steps:
+    - checkout: self
+    - task: UsePythonVersion@0
+      displayName: Use Python Version
+      inputs:
+        versionSpec: 3.8.x
+        checkLatest: true
+    - task: CmdLine@2
+      displayName: pywin32 workaround
+      script: |
+          python3 -m pip install pywin32 --upgrade
+          export PYTHON_HOME=$(where python)
+          ${PYTHON_HOME}\Lib\site-packages\win32\pywin32_postinstall.py -install
+    - task: ShellScript@2
+      displayName: Build and Test
+      inputs:
+        scriptPath: build_test.sh
 
 - stage: B_Test_Options
   jobs:
@@ -46,18 +66,5 @@ stages:
       displayName: Build and Test
       inputs:
         scriptPath: build_test.sh
-  - job: Test_Windows
-    pool:
-      vmImage: windows-2019
-    steps:
-    - checkout: self
-    - task: UsePythonVersion@0
-      displayName: Use Python Version
-      inputs:
-        versionSpec: 3.8.x
-        checkLatest: true
-    - task: ShellScript@2
-      displayName: Build and Test
-      inputs:
-        scriptPath: build_test.sh
+
 
