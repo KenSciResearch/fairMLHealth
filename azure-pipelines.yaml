@@ -32,7 +32,7 @@ stages:
     - task: CmdLine@2
       displayName: Test Wheel Build
       inputs:
-        script: 'RUN python3 setup.py bdist_wheel'
+        script: 'python3 setup.py bdist_wheel'
   - job: Test_Windows
     pool:
       vmImage: windows-2019
@@ -46,9 +46,7 @@ stages:
     - task: CmdLine@2
       displayName: pywin32 workaround
       inputs:
-        script: |
-          python3 -m pip install pywin32 --upgrade
-          python3 C:\Users\VssAdministrator\AppData\Roaming\Python\Python38\Scripts\pywin32_postinstall.py -install
+        scriptPath: win32workaround.sh
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
