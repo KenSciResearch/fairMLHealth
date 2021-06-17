@@ -43,7 +43,7 @@ stages:
       inputs:
         versionSpec: 3.8.x
         checkLatest: true
-    - task: CmdLine@2
+    - task: ShellScript@2
       displayName: pywin32 workaround
       inputs:
         script: |
