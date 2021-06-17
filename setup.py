@@ -20,7 +20,8 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 #
-os_deps = ['pywin32; platform_system == "Windows"'
+os_deps = ['pywin32; platform_system == "Windows"',
+           'pypiwin32; platform_system == "Windows"'
             ]
 test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex"
             ] + os_deps
