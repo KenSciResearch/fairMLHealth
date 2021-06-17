@@ -13,7 +13,7 @@ resources:
       ref: integration
 
 stages:
-- stage: A_Test_Default
+- stage: Stage1_Test_Optimal_Setup
   jobs:
   - job: Test_Latest_Supported_PyVersion
     pool:
@@ -34,7 +34,7 @@ stages:
       inputs:
         script: 'python3 setup.py bdist_wheel'
 
-- stage: B_Test_Options
+- stage: Stage2_Test_Optional_Setups
   jobs:
   - job: Test_Earliest_Supported_PyVersion
     pool:
