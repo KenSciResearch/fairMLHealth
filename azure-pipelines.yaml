@@ -48,8 +48,7 @@ stages:
       inputs:
         script: |
           python3 -m pip install pywin32 --upgrade
-          where python
-          python3 -m Lib\site-packages\win32\pywin32_postinstall.py -install
+          python3 Scripts/pywin32_postinstall.py -install
     - task: ShellScript@2
       displayName: Build and Test
       inputs:
