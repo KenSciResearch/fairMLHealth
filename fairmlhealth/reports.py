@@ -216,7 +216,7 @@ def data_report(X, Y, features:list=None, targets:list=None):
         reformat those data into quantiles
     """
     #
-    def entr(x):
+    def entrp(x):
         ''' Calculates the entropy of a series '''
         return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
 
@@ -253,7 +253,7 @@ def data_report(X, Y, features:list=None, targets:list=None):
     results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
     n_missing = X_df.replace('nan', np.nan).notnull().count().reset_index()
     n_missing.columns = ['Feature Name', 'Feature Missing Values']
-    entropy = X_df.apply(axis=0, func=entr).reset_index()
+    entropy = X_df.apply(axis=0, func=entrp).reset_index()
     entropy.columns = ['Feature Name', 'Feature Entropy']
     results = results.merge(n_missing, how='left', on='Feature Name'
                    ).merge(entropy, how='left', on='Feature Name')
@@ -263,10 +263,10 @@ def data_report(X, Y, features:list=None, targets:list=None):
     N_obs = X_df.shape[0]
     overview = {'Feature Name': "ALL FEATURES",
                 'Feature Value': "ALL VALUES",
+                'Obs.': N_obs,
                 'Missing Values': N_missing,
-                'Value Prevalence': np.nan
+                'Value Prevalence': (N_obs*N_feat-N_missing)/(N_obs*N_feat)
                 }
-
     overview_df = pd.DataFrame(overview, index=[0])
     # Combine and format
     rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
