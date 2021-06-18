@@ -22,6 +22,9 @@ def prep_X(data):
             X = pd.DataFrame(data, columns=['X'])
     else:
         X = data
+    # Convert columns to numeric type if they do not contain strings
+    for col in X.columns:
+        X.loc[:, col] = pd.to_numeric(X[col], errors='ignore')
     return X
 
 def prep_prtc_attr(arr):
@@ -118,11 +121,10 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
 
     # Format inputs to required datatypes
     X = prep_X(X)
-
     # Format protected attributes
     if prtc_attr is not None:
         prtc_attr = prep_prtc_attr(prtc_attr)
-
+    #
     y_col = None
     if y_true is not None:
         y_true = prep_targets(y_true, prtc_attr)
@@ -131,7 +133,6 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
         y_pred = prep_preds(y_pred, y_col, prtc_attr)
     if y_prob is not None:
         y_prob = prep_probs(y_prob, y_col, prtc_attr)
-
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
@@ -161,7 +162,6 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     X, _, y_true, y_pred, y_prob = \
         standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                            y_prob=y_prob)
-
     # Attach y variables and subset to expected columns
     yt, yh, yp = y_cols()['col_names'].values()
     df = X.copy()
@@ -186,8 +186,6 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
             over_max_vals.append(f)
         else:
             pass
-        df[f].fillna(np.nan, inplace=True)
-        df[f] = df[f].astype(str)
     if any(over_max_vals):
         print(f"USER ALERT! The following features have more than {max_cats}",
               "values, which will slow processing time. Consider reducing to",

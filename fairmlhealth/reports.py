@@ -6,14 +6,13 @@ Contributors:
 """
 
 
-from datetime import time
 import aif360.sklearn.metrics as aif
+from functools import reduce
 from IPython.display import HTML
 import logging
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
+
 from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
                              precision_score, roc_auc_score,
                              balanced_accuracy_score, classification_report)
@@ -233,41 +232,57 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
         return res
     #
     X_df = stratified_preprocess(X=X, features=features)
-    Y_df = standard_preprocess(X=Y)[0]
+    Y_df = stratified_preprocess(X=Y, features=targets)
     if X_df.shape[0] != Y_df.shape[0]:
         raise ValidationError("Number of observations mismatch between X and Y")
+    #
     if features is None:
         features = X_df.columns.tolist()
-    stratified_features = [f for f in features if f in X_df.columns]
+    strat_feats = [f for f in features if f in X_df.columns]
+    #
+    if targets is None:
+        targets = Y_df.columns.tolist()
+    strat_targs = [t for t in targets if t in Y_df.columns]
     #
     res = []
-    for t in Y_df.columns:
+    # "Obs."" included in index for ease of calculation
+    ix_cols = ['Feature Name', 'Feature Value', 'Obs.']
+    for t in strat_targs:
         X_df[t] = Y_df[t]
-        feature_subset = [f for f in stratified_features if f != t]
-        res_t = __apply_featureGroups(feature_subset, X_df, __data_dict, t)
-        res.append(res_t.set_index(['Feature Name', 'Feature Value']))
+        feat_subset = [f for f in strat_feats if f != t]
+        if not any(feat_subset):
+            continue
+        res_t = __apply_featureGroups(feat_subset, X_df, __data_dict, t)
+        # convert id columns to strings to work around bug in pd.concat
+        for m in ix_cols:
+            res_t[m] = res_t[m].astype(str)
+        res.append(res_t.set_index(ix_cols))
     results = pd.concat(res, axis=1).reset_index()
     #
+    results['Obs.'] = results['Obs.'].astype(float).astype(int)
     results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
-    n_missing = X_df.replace('nan', np.nan).notnull().count().reset_index()
-    n_missing.columns = ['Feature Name', 'Feature Missing Values']
-    entropy = X_df.apply(axis=0, func=entrp).reset_index()
-    entropy.columns = ['Feature Name', 'Feature Entropy']
+    n_missing = X_df[strat_feats].replace('nan', np.nan
+                                ).isna().sum().reset_index()
+    n_missing.columns = ['Feature Name', 'Missing Values']
+    entropy = X_df[strat_feats].apply(axis=0, func=entrp).reset_index()
+    entropy.columns = ['Feature Name', 'Entropy']
     results = results.merge(n_missing, how='left', on='Feature Name'
-                   ).merge(entropy, how='left', on='Feature Name')
+                    ).merge(entropy, how='left', on='Feature Name')
     #
     if add_overview:
-        N_feat = len(stratified_features)
-        N_missing = n_missing['Feature Missing Values'].sum()
+        res = []
+        for i, t in enumerate(strat_targs):
+            res_t = pd.DataFrame(__data_dict(X_df, t), index=[0])
+            res.append(res_t.set_index('Obs.'))
+        overview = pd.concat(res, axis=1).reset_index()
+        N_feat = len(strat_feats)
+        N_missing = n_missing['Missing Values'].sum()
         N_obs = X_df.shape[0]
-        overview = {'Feature Name': "ALL FEATURES",
-                    'Feature Value': "ALL VALUES",
-                    'Obs.': N_obs,
-                    'Missing Values': N_missing,
-                    'Value Prevalence': (N_obs*N_feat-N_missing)/(N_obs*N_feat)
-                    }
-        overview_df = pd.DataFrame(overview, index=[0])
-        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+        overview['Feature Name'] = "ALL FEATURES"
+        overview['Feature Value'] = "ALL VALUES"
+        overview['Missing Values'] = N_missing,
+        overview['Value Prevalence'] = (N_obs*N_feat-N_missing)/(N_obs*N_feat)
+        rprt = pd.concat([overview, results], axis=0, ignore_index=True)
     else:
         rprt = results
     rprt = sort_report(rprt)
@@ -392,6 +407,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
     pa_name = 'prtc_attr'
     res = []
     for f in features:
+        df[f] = df[f].astype(str)
         vals = sorted(df[f].unique().tolist())
         # AIF360 can't handle float types
         for v in vals:
@@ -403,7 +419,6 @@ def __apply_biasGroups(features, df, func, yt, yh):
             if df[pa_name].nunique() == 1:
                 continue
             # Data are expected in string format
-            assert df[f].astype(str).eq(df[f]).all()
             with catch_warnings(record=True) as w:
                 simplefilter("always")
                 subset = df.loc[df[pa_name].notnull(),
@@ -482,11 +497,11 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_featureGroups(stratified_features, df,
+    results = __apply_featureGroups(strat_feats, df,
                                   __perf_rep, yt, yh, yp)
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
@@ -544,11 +559,11 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_featureGroups(stratified_features, df, __perf_rep, yt, yh)
+    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
@@ -603,11 +618,11 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_biasGroups(stratified_features, df, __bias_rep, yt, yh)
+    results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
     rprt = sort_report(results)
     return rprt
 
@@ -632,12 +647,11 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_biasGroups(stratified_features, df,
-                               __regression_bias, yt, yh)
+    results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
     rprt = sort_report(results)
     return rprt
 
