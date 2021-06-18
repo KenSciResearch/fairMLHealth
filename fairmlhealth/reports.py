@@ -36,14 +36,6 @@ filterwarnings('ignore', module='sklearn')
 
 ''' Deprecated Public Functions '''
 
-def flag_suspicious(df, caption="", as_styler=False):
-    warn(
-            "flag_suspicious function will be deprecated in version 2.0" +
-            " Use flag instead.", PendingDeprecationWarning
-        )
-    return flag(df, caption="", as_styler=False)
-
-
 def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
                             priv_grp=1, **kwargs):
     warn(
@@ -112,7 +104,7 @@ def regression_performance(y_true, y_pred):
 ''' Main Reports '''
 
 
-def flag(df, caption="", as_styler=False):
+def flag(df, caption="", as_styler=True):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
     Args:
@@ -179,18 +171,21 @@ def flag(df, caption="", as_styler=False):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", priv_grp=1):
+                pred_type="classification", flag_oor=False, priv_grp=1):
     """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_bias_report(X, y_true, y_pred, features, priv_grp)
+        df = __classification_bias_report(X, y_true, y_pred, features, priv_grp)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+        # df = __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+    if flag_oor:
+        df = flag(df)
+    return df
 
 
 def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
@@ -325,7 +320,7 @@ def sort_report(report):
     return report[head_cols + tail_cols]
 
 
-def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
+def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
                    pred_type="classification", priv_grp=1, **kwargs):
     """
     """
@@ -333,12 +328,15 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
+        df = __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
                                         priv_grp, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+        #df = __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+    if flag_oor:
+        df = flag(df)
+    return df
 
 
 ''' Private Functions '''

@@ -13,7 +13,7 @@ import pandas as pd
 import warnings
 
 from .utils import is_dictlike
-from .reports import summary_report
+from .reports import summary_report, flag
 from . import __validation as valid
 from .__validation import ValidationError
 
@@ -24,7 +24,7 @@ from .__validation import ValidationError
 
 
 def measure_model(test_data, targets, protected_attr, model=None,
-                  predictions=None, probabilities=None):
+                  predictions=None, probabilities=None, flag_oor=True):
     """ Generates a report of fairness measures for the model
 
     Args:
@@ -39,19 +39,23 @@ def measure_model(test_data, targets, protected_attr, model=None,
         probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
+        flag_oor (boolean): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range)
 
     Returns:
         pandas dataframe of fairness measures for the model
     """
     comp = FairCompare(test_data, targets, protected_attr, model,
-                       predictions, probabilities=None, verboseMode=True)
+                       predictions, probabilities, verboseMode=True)
     model_name = list(comp.models.keys())[0]
-    table = comp.measure_model(model_name, skip_performance=True)
+    table = comp.measure_model(model_name, flag_oor=flag_oor,
+                               skip_performance=True)
     return table
 
 
 def compare_models(test_data, targets, protected_attr, models=None,
-                   predictions=None, probabilities=None):
+                   predictions=None, probabilities=None, flag_oor=True):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -69,34 +73,18 @@ def compare_models(test_data, targets, protected_attr, models=None,
         probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
+        flag_oor (boolean): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range)
 
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
-                       predictions, probabilities=None, verboseMode=True)
-    table = comp.compare_measures()
+                       predictions, probabilities, flag_oor=flag_oor,
+                       verboseMode=True)
+    table = comp.compare_measures(flag_oor=flag_oor)
     return table
-
-
-def compare_measures(test_data, target_data, protected_attr_data, models):
-    """ Deprecated in favor of compare_models. Generates a report comparing
-        fairness measures for the models passed.Note: This is a wrapper for the
-        FairCompare.compare_measures method See FairCompare for more
-        information.
-
-    Returns:
-        pandas dataframe of fairness and performance measures for each model
-    """
-    warnings.warn(
-            "compare_measures function will be deprecated in version 2.0" +
-            " Use compare_models instead.", PendingDeprecationWarning
-        )
-    comp = FairCompare(test_data, target_data, protected_attr_data, models,
-                       verboseMode=False)
-    table = comp.compare_measures()
-    return table
-
 
 class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
@@ -155,7 +143,7 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self):
+    def compare_measures(self, flag_oor=False):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
         """
@@ -177,9 +165,11 @@ class FairCompare(ABC):
             self.__toggle_validation()  # toggle-on model validation
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
-                return output
+                if flag_oor:
+                    output = flag(output)
             else:
-                return None
+                output = None
+            return output
 
     def measure_model(self, model_name, **kwargs):
         """ Returns a pandas dataframe containing fairness measures for the
