@@ -192,10 +192,12 @@ def __validate_length(data, name="array", expected_len=0):
     Raises:
         ValidationError
     """
-    minlen = 4
+    # AIF360's consistency_score defaults to 5 nearest neighbors, thus 5 is
+    #   the minimum acceptable length as long as that dependency exists
+    minlen = 5
     if expected_len < minlen:
         raise ValidationError(f"Cannot measure fewer than {minlen} observations"
-                              + f" (found in {name}")
+                              + f" (found in {name})")
     N = data.shape[0]
     if not N == expected_len:
         raise ValidationError("All data arguments must be of same length."

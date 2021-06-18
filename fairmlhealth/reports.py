@@ -379,7 +379,6 @@ def __apply_featureGroups(features, df, func, *args):
         results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
     else:
         results = pd.concat(res, ignore_index=True)
-    results = pd.concat(res, ignore_index=True)
     return results, errs, warns
 
 
@@ -424,9 +423,6 @@ def __apply_biasGroups(features, df, func, yt, yh):
                 subset = df.loc[df[pa_name].notnull(),
                                     [pa_name, yt, yh]].set_index(pa_name)
                 try:
-                    # Re-run validation since subsetting may cause errant groups
-                    validate_targets(subset[yt])
-                    validate_preds(subset[yh])
                     #
                     grp_res = func(subset[yt], subset[yh], pa_name, priv_grp=1)
                 except BaseException as e:
@@ -453,8 +449,10 @@ def __class_prevalence(y_true, priv_grp):
                 group. Defaults to 1.
     """
     dt_vals = {}
-    dt_vals['Prevalence of Privileged Class (%)'] = \
-        round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
+    prev = round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
+    if not isinstance(prev, float):
+        prev = prev[0]
+    dt_vals['Prevalence of Privileged Class (%)'] = prev
     return dt_vals
 
 
@@ -501,8 +499,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_featureGroups(strat_feats, df,
-                                  __perf_rep, yt, yh, yp)
+    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
