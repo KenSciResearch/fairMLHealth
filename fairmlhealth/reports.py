@@ -136,20 +136,20 @@ def flag(df, caption="", as_styler=True):
                          for c in measures]], :].index
     #
     def color_diff(row):
-        clr = ['color:magenta'
+        clr = ['background-color:magenta'
                if (row.name in difference and not -0.1 < i < 0.1)
                else '' for i in row]
         return clr
 
     def color_if(row):
-        clr = ['color:magenta'
+        clr = ['background-color:magenta'
                if (row.name in cs_high and i < 0.8) or
                   (row.name in cs_low and i > 0.2)
                else '' for i in row]
         return clr
 
     def color_ratios(row):
-        clr = ['color:magenta'
+        clr = ['background-color:magenta'
                if (row.name in ratios and not 0.8 < i < 1.2)
                else '' for i in row]
         return clr
