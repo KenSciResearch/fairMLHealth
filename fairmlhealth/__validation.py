@@ -3,55 +3,10 @@
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
-from warnings import catch_warnings, simplefilter, warn, filterwarnings
-
-
 
 
 ITER_TYPES = (list, tuple, set, dict, OrderedDict)
 
-
-
-def format_errwarn(func):
-    """ Wraps a function returning some result with dictionaries for errors and
-        warnings, then formats those errors and warnings as grouped warnings.
-        Used for reporting functions to skip errors (and warnings) while
-        providing
-
-    Args:
-        func (function): any function returning a tuple of format:
-            (result, error_dictionary, warning_dictionary). Note that
-            dictionaries should be of form {<column or id>:<message>}
-
-    Returns:
-        function: the first member of the tuple returned by func
-    """
-    def format_info(dict):
-        info_dict = {}
-        for colname, err_wrn in dict.items():
-            _ew = list(set(err_wrn)) if isinstance(err_wrn, list) else [err_wrn]
-            for m in _ew:
-                m = getattr(m, 'message') if 'message' in dir(m) else str(m)
-                if m in info_dict.keys():
-                    info_dict[m].append(colname)
-                else:
-                    info_dict[m] = [colname]
-        info_dict = {ew:list(set(c)) for ew, c in info_dict.items()}
-        return info_dict
-
-    def wrapper(*args, **kwargs):
-        res, errs, warns = func(*args, **kwargs)
-        if any(errs):
-            err_dict = format_info(errs)
-            for er, cols in err_dict.items():
-                warn(f"Error processing column(s) {cols}. {er}\n")
-        if any(warns):
-            warn_dict = format_info(warns)
-            for wr, cols in warn_dict.items():
-                warn(f"Possible error in column(s) {cols}. {wr}\n")
-        return res
-
-    return wrapper
 
 
 def validate_prtc_attr(arr, expected_len=0):

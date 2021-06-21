@@ -25,8 +25,8 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from . import tutorial_helpers as helpers
-from .__validation import format_errwarn, validate_targets, validate_preds, ValidationError
-
+from .__validation import ValidationError
+from .utils import format_errwarn, iterate_cohorts
 
 
 # ToDo: find better solution for these warnings
@@ -523,6 +523,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     return rprt
 
 
+@iterate_cohorts
 def __classification_bias_report(X, y_true, y_pred, features:list=None,
                                  priv_grp=1):
     """
@@ -572,6 +573,7 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     return rprt
 
 
+@iterate_cohorts
 def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     """
     Generates a table of stratified fairness metrics metrics for each specified
@@ -618,6 +620,7 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
     return if_vals
 
 
+@iterate_cohorts
 def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
                              priv_grp=1, **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
@@ -775,7 +778,7 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     return gf_vals
 
 
-
+@iterate_cohorts
 def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
                          **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
