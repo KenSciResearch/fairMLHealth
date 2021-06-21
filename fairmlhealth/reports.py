@@ -117,57 +117,7 @@ def flag(df, caption="", as_styler=True):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    if caption is None:
-        caption = "Fairness Measures"
-    #
-    idx = pd.IndexSlice
-    measures = df.index.get_level_values(1)
-    ratios = df.loc[idx['Group Fairness',
-                    [c.lower().endswith("ratio") for c in measures]], :].index
-    difference = df.loc[idx['Group Fairness',
-                        [c.lower().endswith("difference")
-                         for c in measures]], :].index
-    cs_high = df.loc[idx['Individual Fairness',
-                     [c.lower().replace(" ", "_") == "consistency_score"
-                      for c in measures]], :].index
-    cs_low = df.loc[idx['Individual Fairness',
-                        [c.lower().replace(" ", "_")
-                            == "generalized_entropy_error"
-                         for c in measures]], :].index
-    #
-    def color_diff(row):
-        clr = ['background-color:magenta'
-               if (row.name in difference and not -0.1 < i < 0.1)
-               else '' for i in row]
-        return clr
-
-    def color_if(row):
-        clr = ['background-color:magenta'
-               if (row.name in cs_high and i < 0.8) or
-                  (row.name in cs_low and i > 0.2)
-               else '' for i in row]
-        return clr
-
-    def color_ratios(row):
-        clr = ['background-color:magenta'
-               if (row.name in ratios and not 0.8 < i < 1.2)
-               else '' for i in row]
-        return clr
-
-    styled = df.style.set_caption(caption
-                                  ).apply(color_diff, axis=1
-                                  ).apply(color_ratios, axis=1
-                                  ).apply(color_if, axis=1)
-    # Correct management of metric difference has yet to be determined for
-    #   regression functions. Add style to o.o.r. difference for binary
-    #   classification only
-    if "MSE Ratio" not in measures:
-        styled.apply(color_diff, axis=1)
-    # return pandas styler if requested
-    if as_styler:
-        return styled
-    else:
-        return HTML(styled.render())
+    return __Flagger().apply_flag(df, caption, as_styler)
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
@@ -883,4 +833,123 @@ def __clean_names(col):
     else:
         display_name = col
     return display_name
+
+
+class __Flagger():
+    """
+    """
+    diffs = ["auc difference" , "balanced accuracy difference",
+            "equalized odds difference", "positive predictive parity difference",
+            "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
+    ratios = ["balanced accuracy ratio", "disparate impact ratio ",
+                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+    stats_high = ["consistency score"]
+    stats_low =["between-group gen. entropy error"]
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.df = None
+        self.labels = None
+        self.label_type = None
+        self.flag_type = "background-color"
+        self.flag_color = "magenta"
+
+    def color_diff(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lbls = self.df.loc[idx['Group Fairness',
+                        [c.lower() in self.diffs for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lbls and not -0.1 < i < 0.1)
+                    else '' for i in s]
+        else:
+            lbls = self.diffs
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name.lower() in lbls and not -0.1 < i < 0.1)
+                    else '' for i in s]
+        return clr
+
+    def color_st(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lb_high = self.df.loc[idx['Individual Fairness',
+                        [c.lower() in self.stats_high
+                        for c in self.labels]], :].index
+            lb_low = self.df.loc[idx['Individual Fairness',
+                        [c.lower() in self.stats_low
+                                for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lb_high and i < 0.8)
+                        or (s.name  in lb_low and i > 0.2)
+                    else '' for i in s]
+        else:
+            lb_high = self.stats_high
+            lb_low = self.stats_low
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name.lower() in lb_high and i < 0.8)
+                        or (s.name.lower() in lb_low and i > 0.2)
+                    else '' for i in s]
+        return clr
+
+    def color_ratio(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lbls = self.df.loc[idx['Group Fairness',
+                        [c.lower() in self.ratios for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lbls and not 0.8 < i < 1.2)
+                    else '' for i in s]
+        else:
+            lbls = self.ratios
+            clr = [f'{self.flag_type}:{self.flag_color}'
+               if (s.name.lower() in lbls and not 0.8 < i < 1.2)
+               else '' for i in s]
+        return clr
+
+    def set_measure_labels(self, df):
+        try:
+            labels = df.index.get_level_values(1)
+            label_type = "index"
+        except:
+            labels = df.columns.tolist()
+            label_type = "columns"
+        return df, labels, label_type
+
+    def apply_flag(self, df, caption="", as_styler=True):
+        """ Generates embedded html pandas styler table containing a highlighted
+            version of a model comparison dataframe
+        Args:
+            df (pandas dataframe): Model comparison dataframe (see)
+            caption (str, optional): Optional caption for table. Defaults to "".
+            as_styler (bool, optional): If True, returns a pandas Styler of the
+                highlighted table (to which other styles/highlights can be added).
+                Otherwise, returns the table as an embedded HTML object. Defaults
+                to False .
+        Returns:
+            Embedded html or pandas.io.formats.style.Styler
+        """
+        if caption is None:
+            caption = "Fairness Measures"
+        #
+        self.reset()
+        self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        if self.label_type == "index":
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=1
+                                    ).apply(self.color_ratio, axis=1
+                                    ).apply(self.color_st, axis=1)
+        else:
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=0
+                                    ).apply(self.color_ratio, axis=0
+                                    ).apply(self.color_st, axis=0)
+        # return pandas styler if requested
+        if as_styler:
+            return styled
+        else:
+            return HTML(styled.render())
+
+
 
