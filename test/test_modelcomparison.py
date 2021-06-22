@@ -8,25 +8,18 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 import pandas as pd
+from .__utils import synth_dataset
 
-
-@pytest.fixture(scope="module")
-def synth_dataset():
-    df = pd.DataFrame({'A': [1, 2, 50, 3, 45, 32, 23],
-                       'B': [34, 26, 44, 2, 1, 1, 12],
-                       'C': [32, 23, 34, 22, 65, 27, 11],
-                       'gender': [0, 1, 0, 1, 1, 0, 0],
-                       'age': [0, 1, 1, 1, 1, 0, 1],
-                       'target': [1, 0, 0, 1, 0, 1, 0]
-                       })
-    return df
 
 
 @pytest.fixture(scope="class")
 def load_data(synth_dataset, request):
     df = synth_dataset
     X = df[['A', 'B', 'C', 'gender', 'age']]
-    y = df[['target']]
+    targ_data = [0, 0, 1, 1, 0, 0, 1, 1]
+    idx = list(range(0, len(df)))
+    y = pd.Series(targ_data, index=idx, name="y")
+
     splits = train_test_split(X, y, test_size=0.75, random_state=36)
     X_train, X_test, y_train, y_test = splits
 

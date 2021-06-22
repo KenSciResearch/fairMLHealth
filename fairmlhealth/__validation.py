@@ -9,7 +9,7 @@ ITER_TYPES = (list, tuple, set, dict, OrderedDict)
 
 
 
-def validate_prtc_attr(arr, expected_len=0):
+def validate_prtc_attr(arr, expected_len:int=0):
     if arr is None:
         raise ValueError("No protected attribute found.")
     __validate_type(arr)
@@ -18,7 +18,7 @@ def validate_prtc_attr(arr, expected_len=0):
     __validate_length(arr, "protected attribute", expected_len)
 
 
-def validate_targets(arr, expected_len=0):
+def validate_targets(arr, expected_len:int=0):
     if arr is None:
         raise ValueError("No targets found.")
     __validate_type(arr)
@@ -27,7 +27,7 @@ def validate_targets(arr, expected_len=0):
     __validate_length(arr, "targets", expected_len)
 
 
-def validate_preds(arr, expected_len=0):
+def validate_preds(arr, expected_len:int=0):
     if arr is None:
         raise ValueError("No predictions found.")
     __validate_type(arr)
@@ -36,24 +36,27 @@ def validate_preds(arr, expected_len=0):
     __validate_length(arr, "predictions", expected_len)
 
 
-def validate_priv_grp(priv_grp):
+def validate_priv_grp(priv_grp:int=None):
     if priv_grp is None:
         raise ValueError("No privileged group found.")
     if not isinstance(priv_grp, int):
         raise TypeError("priv_grp must be an integer")
 
 
-def validate_probs(arr, expected_len=0):
+def validate_probs(arr, expected_len:int=0):
     if arr is None:
         raise ValueError("No probabilities found.")
     __validate_oneDArray(arr)
+    __validate_length(arr, "probabilities", expected_len)
 
 
-def validate_X(data):
+def validate_X(data, name="input data", expected_len:int=None):
     if data is None:
         raise ValueError("No input data found.")
+    if expected_len is None:
+        expected_len = data.shape[0]
     __validate_type(data)
-    __validate_length(data, "input data", data.shape[0])
+    __validate_length(data, name, expected_len)
 
 
 def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
@@ -86,7 +89,7 @@ class ValidationError(Exception):
     pass
 
 
-def __validate_binVal(arr, name="array", fuzzy=True):
+def __validate_binVal(arr, name:str="array", fuzzy:bool=True):
     """ Verifies that the array is binary valued.
 
     Args:
@@ -117,7 +120,7 @@ def __validate_binVal(arr, name="array", fuzzy=True):
     return None
 
 
-def __validate_oneDArray(arr, name="array"):
+def __validate_oneDArray(arr, name:str="array"):
     """ Validates that the array is one-dimensional
 
     Args:
@@ -133,7 +136,7 @@ def __validate_oneDArray(arr, name="array"):
         raise ValidationError(err)
 
 
-def __validate_length(data, name="array", expected_len=0):
+def __validate_length(data, name:str="array", expected_len:int=0):
     """ Verifies that the data meet the minimum length criteria and have the
         number of observations expected.
 
@@ -159,7 +162,7 @@ def __validate_length(data, name="array", expected_len=0):
                               + f" Only {N} found in {name}")
 
 
-def __validate_type(data, name="array"):
+def __validate_type(data, name:str="array"):
     """ Verifies that the data are of a type that can be processed by this
         library
 

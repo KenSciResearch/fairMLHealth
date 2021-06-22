@@ -121,18 +121,18 @@ def flag(df, caption="", as_styler=True):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", flag_oor=False, priv_grp=1):
+                pred_type="classification", flag_oor=False, **kwargs):
     """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_bias_report(X, y_true, y_pred, features, priv_grp)
+        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        # df = __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+        # df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -278,12 +278,13 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                        priv_grp, **kwargs)
+        df = __classification_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
+                                      y_pred=y_pred, y_prob=y_prob,
+                                        priv_grp=priv_grp, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #df = __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+        #df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred, priv_grp=priv_grp, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -524,11 +525,12 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
 
 
 @iterate_cohorts
-def __classification_bias_report(X, y_true, y_pred, features:list=None,
-                                 priv_grp=1):
+def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -574,10 +576,12 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
 
 
 @iterate_cohorts
-def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
+def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -621,10 +625,13 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
 
 
 @iterate_cohorts
-def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
+def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
                              priv_grp=1, **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
+
     Args:
         X (array-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
@@ -779,10 +786,13 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
 
 
 @iterate_cohorts
-def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
+def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=None,
                          **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
+
     Args:
         X (array-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
@@ -914,10 +924,14 @@ class __Flagger():
     def set_measure_labels(self, df):
         try:
             labels = df.index.get_level_values(1)
-            label_type = "index"
+            if type(labels) == pd.core.indexes.numeric.Int64Index:
+                label_type = "columns"
+            else:
+                label_type = "index"
         except:
-            labels = df.columns.tolist()
             label_type = "columns"
+        if label_type == "columns":
+            labels = df.columns.tolist()
         return df, labels, label_type
 
     def apply_flag(self, df, caption="", as_styler=True):

@@ -7,45 +7,34 @@ from fairmlhealth import reports
 import numpy as np
 import pytest
 import pandas as pd
+from .__utils import synth_dataset
 np.random.seed(547)
 
 
-def synth_dataset():
-    df = pd.DataFrame({'A': np.random.randint(1, 4, 8),
-                       'B': np.random.randint(1, 8, 8),
-                       'C': np.random.randint(1, 16, 8),
-                       'D': np.random.uniform(-10, 10, 8),
-                       'prtc_attr': [0, 0, 0, 0, 1, 1, 1, 1]
-                       })
-    return df
-
-
 @pytest.fixture(scope="class")
-def load_classification_data(request):
-    idx = list(range(0, 8))
+def load_classification_data(synth_dataset, request):
+    df = synth_dataset
     targ_data = [0, 0, 1, 1, 0, 0, 1, 1]
-    y = pd.Series(targ_data, index=idx, name="y")
-    prfct_fair = pd.Series(targ_data, index=idx, name="prfct")
-    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=idx, name="avg")
+    y = pd.Series(targ_data, index=df.index, name="y")
+    prfct_fair = pd.Series(targ_data, index=df.index, name="prfct")
+    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=df.index, name="avg")
     #
-    df = synth_dataset()
-    df = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
-    request.cls.df = df
+    output = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
+    request.cls.df = output
     yield
 
 
 @pytest.fixture(scope="class")
-def load_regression_data(request):
-    idx = list(range(0, 8))
+def load_regression_data(synth_dataset, request):
+    df = synth_dataset
     targ_data = np.random.uniform(-10, 10, 8)
-    y = pd.Series(targ_data, index=idx, name="y")
-    prfct_fair = pd.Series(targ_data, index=idx, name="prfct")
-    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=idx, name="avg")
+    y = pd.Series(targ_data, index=df.index, name="y")
+    prfct_fair = pd.Series(targ_data, index=df.index, name="prfct")
+    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=df.index, name="avg")
     avg_fair[avg_fair.eq(1)] = targ_data
     #
-    df = synth_dataset()
-    df = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
-    request.cls.df = df
+    output = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
+    request.cls.df = output
     yield
 
 

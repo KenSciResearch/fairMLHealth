@@ -133,6 +133,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
         y_pred = prep_preds(y_pred, y_col, prtc_attr)
     if y_prob is not None:
         y_prob = prep_probs(y_prob, y_col, prtc_attr)
+    #
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
@@ -162,6 +163,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     X, _, y_true, y_pred, y_prob = \
         standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                            y_prob=y_prob)
+
     # Attach y variables and subset to expected columns
     yt, yh, yp = y_cols()['col_names'].values()
     df = X.copy()
@@ -178,7 +180,10 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     if features is None:
         features = X.columns.tolist()
     stratified_features = [f for f in features if f not in pred_cols]
-    df = df.loc[:, stratified_features + pred_cols]
+    try:
+        df = df.loc[:, stratified_features + pred_cols]
+    except:
+        import pdb; pdb.set_trace()
     #
     over_max_vals = []
     for f in stratified_features:

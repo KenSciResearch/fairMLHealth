@@ -1,10 +1,13 @@
 from contextlib import suppress
-from urllib3.exceptions import InsecureRequestWarning
-import warnings
+import numpy as np
 import os
+import pandas as pd
+import pytest
 import regex as re
 import requests
 from time import sleep
+from urllib3.exceptions import InsecureRequestWarning
+import warnings
 
 
 def get_urls(text_string):
@@ -104,6 +107,18 @@ def is_url_valid(url):
         is_valid = None
     return is_valid
 
+
+@pytest.fixture(scope="module")
+def synth_dataset():
+    df = pd.DataFrame({'A': np.random.randint(1, 4, 8),
+                       'B': np.random.randint(1, 8, 8),
+                       'C': np.random.randint(1, 16, 8),
+                       'D': np.random.uniform(-10, 10, 8),
+                       'gender': [0, 1, 0, 1, 1, 0, 0, 1],
+                       'age': [0, 1, 1, 1, 1, 0, 1, 1],
+                       'prtc_attr': [0, 0, 0, 0, 1, 1, 1, 1]
+                       })
+    return df
 
 class URLError(requests.exceptions.BaseHTTPError):
     pass

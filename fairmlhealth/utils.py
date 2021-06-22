@@ -3,7 +3,7 @@ Back-end functions used throughout the library
 '''
 from importlib.util import find_spec
 import pandas as pd
-from .__preprocessing import prep_X
+from . import __preprocessing as prep
 from .__validation import validate_X, ValidationError
 from warnings import warn
 
@@ -78,21 +78,41 @@ def iterate_cohorts(func):
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
-    def wrapper(*args, cohorts=None, **kwargs):
-        if len(args) > 0:
-            args = [*args]
-            X = args.pop(0)
+    def subset(data, idxs):
+        if data is not None:
+            return data.loc[idxs,]
         else:
-            X = kwargs.pop('X', None)
+            return None
+
+    def wrapper(cohorts=None, **kwargs):
+        # Run preprocessing to facilitate subsetting
+        X = kwargs.pop('X', None)
+        y_true = kwargs.get('y_true', None)
+        y_pred = kwargs.get('y_pred', None)
+        y_prob = kwargs.get('y_prob', None)
+        prtc_attr = kwargs.get('prtc_attr', None)
+        X, prtc_attr, y_true, y_pred, y_prob = \
+            prep.standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob)
         #
         if cohorts is not None:
-            validate_X(cohorts)
-            cohorts = prep_X(cohorts)
-            cols = cohorts.columns
+            #
+            validate_X(cohorts, name="cohorts", expected_len=X.shape[0])
+            cohorts = prep.prep_X(cohorts)
+            #
+            cix = cohorts.index
+            cols = cohorts.columns.tolist()
             cgrp = cohorts.groupby(cols)
             results = []
             for k in cgrp.groups.keys():
-                df = func(X.iloc[cgrp.groups[k].values, :], *args, **kwargs)
+                ixs = cix.astype('int64').isin(cgrp.groups[k])
+                yt = subset(y_true, ixs)
+                yh = subset(y_pred, ixs)
+                yp = subset(y_prob, ixs)
+                pa = subset(prtc_attr, ixs)
+                new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
+                sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
+                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yh,
+                          prtc_attr=pa, **sub_args)
                 vals = cgrp.get_group(k)[cols].head(1).values[0]
                 ix = [(c, vals[i]) for i, c in enumerate(cols)]
                 df = prepend_index(df, ix)
@@ -100,7 +120,7 @@ def iterate_cohorts(func):
             output = pd.concat(results, axis=0)
             return output
         else:
-            return func(X, *args, **kwargs)
+            return func(X=X, **kwargs)
 
     return wrapper
 
