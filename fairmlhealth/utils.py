@@ -111,7 +111,7 @@ def iterate_cohorts(func):
                 pa = subset(prtc_attr, ixs)
                 new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yh,
+                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
                           prtc_attr=pa, **sub_args)
                 vals = cgrp.get_group(k)[cols].head(1).values[0]
                 ix = [(c, vals[i]) for i, c in enumerate(cols)]
