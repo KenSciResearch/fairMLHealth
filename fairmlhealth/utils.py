@@ -72,9 +72,11 @@ def format_errwarn(func):
 
 def iterate_cohorts(func):
     def prepend_index(df, new_ix):
-        idx = df.index.to_frame()
+        dx = df.index.to_frame().rename(columns={0:'__index'})
         for l, i in enumerate(new_ix):
             idx.insert(l, i[0], i[1])
+        if '__index' in idx.columns:
+            idx.drop('__index', axis=1, inplace=True)
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
