@@ -72,11 +72,11 @@ class TestStandardRegressionReports:
 
     def __dev_test_regression_performance_report(self):
         _ = reports.performance_report(self.df, self.df['y'], self.df['avg'],
-                                  pred_type="regression")
+                                       pred_type="regression")
 
     def __dev_test_regression_bias_report(self):
         _ = reports.bias_report(self.df, self.df['y'], self.df['avg'],
-                            pred_type="regression")
+                                pred_type="regression")
 
 
 @pytest.mark.usefixtures("load_regression_data")
