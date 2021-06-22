@@ -91,7 +91,6 @@ def regression_performance(y_true, y_pred):
     yh = y_cols()['disp_names']['yh']
     report[f'{y} Mean'] = np.mean(y_true)
     report[f'{yh} Mean'] = np.mean(y_pred)
-    report['scMAE'] = pmtrc.scMAE(y_true, y_pred)
     report['MSE'] = mean_squared_error(y_true, y_pred)
     report['MAE'] = mean_absolute_error(y_true, y_pred)
     report['Rsqrd'] = r2_score(y_true, y_pred)
@@ -128,11 +127,11 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
+        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+                                          features=features, **kwargs)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        # df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
+        df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+                                      features=features, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -246,9 +245,8 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
         return __classification_performance_report(X, y_true, y_pred, y_prob,
                                                    features, add_overview)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_performance_report(X, y_true, y_pred, features, add_overview)
+        return __regression_performance_report(X, y_true, y_pred,
+                                               features, add_overview)
 
 
 def sort_report(report):
@@ -282,9 +280,8 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
                                       y_pred=y_pred, y_prob=y_prob,
                                         priv_grp=priv_grp, **kwargs)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred, priv_grp=priv_grp, **kwargs)
+        df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
+                                  y_pred=y_pred, priv_grp=priv_grp, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -492,7 +489,6 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
                 f'{_yh} Std. Dev.': x[yh].std(),
                 'Error Mean': (x[yh] - x[y]).mean(),
                 'Error Std. Dev.': (x[yh] - x[y]).std(),
-                'scMAE': pmtrc.scMAE(x[y], x[yh]),
                 'MAE': mean_absolute_error(x[y], x[yh]),
                 'MSE': mean_squared_error(x[y], x[yh])
                 }
@@ -760,9 +756,6 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     gf_vals['Mean Prediction Ratio'] = \
         aif.ratio(pdmean, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Ratio'] = \
-        aif.ratio(pmtrc.scMAE, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = \
         aif.ratio(mean_absolute_error, y_true, y_pred,
                   prot_attr=pa_name, priv_group=priv_grp)
@@ -772,9 +765,6 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     # Differences
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Difference'] = \
-        aif.difference(pmtrc.scMAE, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
