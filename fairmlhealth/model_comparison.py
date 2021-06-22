@@ -127,6 +127,7 @@ class FairCompare(ABC):
         self.priv_grp = priv_grp
         self.y = target_data
         self.pred_type = pred_type
+        self.sig_fig = 4
 
         # The user is forced to pass either models or predictions as None to
         # simplify attribute management. If models are passed, they will be used
@@ -169,7 +170,7 @@ class FairCompare(ABC):
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
-                    output = flag(output)
+                    output = flag(output, sig_fig=4)
             else:
                 output = None
             return output
@@ -200,6 +201,7 @@ class FairCompare(ABC):
                                  self.preds[model_name],
                                  self.probs[model_name],
                                  pred_type=self.pred_type,
+                                 sig_fig=self.sig_fig,
                                  **kwargs)
             return res
 
