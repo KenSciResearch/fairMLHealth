@@ -18,22 +18,21 @@ def validate_prtc_attr(arr, expected_len:int=0):
     __validate_length(arr, "protected attribute", expected_len)
 
 
-def validate_targets(arr, expected_len:int=0):
+def validate_binary_target(arr, name="targets", expected_len:int=0):
     if arr is None:
-        raise ValueError("No targets found.")
+        raise ValueError(f"No {name} found.")
     __validate_type(arr)
-    __validate_oneDArray(arr, "targets")
-    __validate_binVal(arr, "targets", fuzzy=True)
-    __validate_length(arr, "targets", expected_len)
+    __validate_oneDArray(arr, name)
+    __validate_binVal(arr, name, fuzzy=True)
+    __validate_length(arr, name, expected_len)
 
 
-def validate_preds(arr, expected_len:int=0):
+def validate_y(arr, name="targets", expected_len:int=0):
     if arr is None:
-        raise ValueError("No predictions found.")
+        raise ValueError(f"No {name} found.")
     __validate_type(arr)
-    __validate_oneDArray(arr)
-    __validate_binVal(arr, "predictions", fuzzy=True)
-    __validate_length(arr, "predictions", expected_len)
+    __validate_oneDArray(arr, name)
+    __validate_length(arr, name, expected_len)
 
 
 def validate_priv_grp(priv_grp:int=None):
@@ -41,13 +40,6 @@ def validate_priv_grp(priv_grp:int=None):
         raise ValueError("No privileged group found.")
     if not isinstance(priv_grp, int):
         raise TypeError("priv_grp must be an integer")
-
-
-def validate_probs(arr, expected_len:int=0):
-    if arr is None:
-        raise ValueError("No probabilities found.")
-    __validate_oneDArray(arr)
-    __validate_length(arr, "probabilities", expected_len)
 
 
 def validate_X(data, name="input data", expected_len:int=None):
@@ -74,13 +66,13 @@ def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
     """
     validate_X(X)
     if y_true is not None:
-        validate_targets(y_true, X.shape[0])
+        validate_y(y_true, name="targets", expected_len=X.shape[0])
     if y_pred is not None:
-        validate_preds(y_pred, X.shape[0])
+        validate_y(y_pred, name="predictions", expected_len=X.shape[0])
     if y_prob is not None:
-        validate_probs(y_prob, X.shape[0])
+        validate_y(y_prob, name="probabilities", expected_len=X.shape[0])
     if prtc_attr is not None:
-        validate_prtc_attr(prtc_attr, X.shape[0])
+        validate_prtc_attr(prtc_attr, expected_len=X.shape[0])
     validate_priv_grp(priv_grp)
     return True
 

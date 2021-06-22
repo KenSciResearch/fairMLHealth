@@ -24,7 +24,8 @@ from .__validation import ValidationError
 
 
 def measure_model(test_data, targets, protected_attr, model=None,
-                  predictions=None, probabilities=None, flag_oor=False):
+                  predictions=None, probabilities=None,
+                  pred_type="classification", flag_oor=False):
     """ Generates a report of fairness measures for the model
 
     Args:
@@ -47,7 +48,7 @@ def measure_model(test_data, targets, protected_attr, model=None,
         pandas dataframe of fairness measures for the model
     """
     comp = FairCompare(test_data, targets, protected_attr, model,
-                       predictions, probabilities, verboseMode=True)
+                       predictions, probabilities, pred_type, verboseMode=True)
     model_name = list(comp.models.keys())[0]
     table = comp.measure_model(model_name, flag_oor=flag_oor,
                                skip_performance=True)
@@ -55,7 +56,8 @@ def measure_model(test_data, targets, protected_attr, model=None,
 
 
 def compare_models(test_data, targets, protected_attr, models=None,
-                   predictions=None, probabilities=None, flag_oor=False):
+                   predictions=None, probabilities=None,
+                   pred_type="classification", flag_oor=False):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -81,8 +83,7 @@ def compare_models(test_data, targets, protected_attr, models=None,
         pandas dataframe of fairness and performance measures for each model
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
-                       predictions, probabilities, flag_oor=flag_oor,
-                       verboseMode=True)
+                       predictions, probabilities, pred_type, verboseMode=True)
     table = comp.compare_measures(flag_oor=flag_oor)
     return table
 
@@ -91,7 +92,8 @@ class FairCompare(ABC):
     """
 
     def __init__(self, test_data, target_data, protected_attr=None,
-                 models=None, preds=None, probs=None, priv_grp=1, **kwargs):
+                 models=None, preds=None, probs=None,
+                 pred_type="classification", priv_grp=1,  **kwargs):
         """ Generates fairness comparisons
 
         Args:
@@ -124,6 +126,7 @@ class FairCompare(ABC):
         self.prtc_attr = protected_attr
         self.priv_grp = priv_grp
         self.y = target_data
+        self.pred_type = pred_type
 
         # The user is forced to pass either models or predictions as None to
         # simplify attribute management. If models are passed, they will be used
@@ -196,7 +199,7 @@ class FairCompare(ABC):
                                  self.y[model_name],
                                  self.preds[model_name],
                                  self.probs[model_name],
-                                 pred_type="classification",
+                                 pred_type=self.pred_type,
                                  **kwargs)
             return res
 

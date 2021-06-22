@@ -14,8 +14,8 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
-                             precision_score, roc_auc_score,
-                             balanced_accuracy_score, classification_report)
+                             precision_score,balanced_accuracy_score,
+                             classification_report)
 from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
@@ -89,8 +89,8 @@ def regression_performance(y_true, y_pred):
     report = {}
     y = y_cols()['disp_names']['yt']
     yh = y_cols()['disp_names']['yh']
-    report[f'{y} Mean'] = np.mean(y_true)
-    report[f'{yh} Mean'] = np.mean(y_pred)
+    report[f'{y} Mean'] = np.mean(y_true.values)
+    report[f'{yh} Mean'] = np.mean(y_pred.values)
     report['MSE'] = mean_squared_error(y_true, y_pred)
     report['MAE'] = mean_absolute_error(y_true, y_pred)
     report['Rsqrd'] = r2_score(y_true, y_pred)
@@ -231,7 +231,6 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
         rprt = results
     rprt = sort_report(rprt)
     return rprt
-
 
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -667,13 +666,6 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         gf_vals['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
                                                         prtc_attr=pa_name)
 
-        if helpers.is_kdd_tutorial():
-            gf_vals['Average Odds Difference'] = \
-                aif.average_odds_difference(y_true, y_pred, prot_attr=pa_name)
-            gf_vals['Equal Opportunity Difference'] = \
-                aif.equal_opportunity_difference(y_true, y_pred,
-                                                    prot_attr=pa_name)
-
         # Precision
         gf_vals['Positive Predictive Parity Difference'] = \
             aif.difference(precision_score, y_true,
@@ -687,7 +679,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         if y_prob is not None:
             try:
                 gf_vals['AUC Difference'] = \
-                    aif.difference(roc_auc_score, y_true, y_prob,
+                    aif.difference(pmtrc.roc_auc_score, y_true, y_prob,
                                     prot_attr=pa_name, priv_group=priv_grp)
             except:
                 pass
@@ -748,20 +740,17 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
 
 
 def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
-    def pdmean(y_true, y_pred, *args): return y_pred.mean()
-    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
+    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
+    def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
     #
     gf_vals = {}
     # Ratios
     gf_vals['Mean Prediction Ratio'] = \
-        aif.ratio(pdmean, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Ratio'] = \
-        aif.ratio(mean_absolute_error, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Ratio'] = \
-        aif.ratio(meanerr, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
+        aif.ratio(pdmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
+                                     prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['R2 Ratio'] = aif.ratio(r2_score, y_true, y_pred,
+                                    prot_attr=pa_name, priv_group=priv_grp)
     # Differences
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
@@ -769,8 +758,8 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Difference'] = \
-        aif.difference(meanerr, y_true, y_pred,
+    gf_vals['R2 Difference'] = \
+        aif.difference(r2_score, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -800,7 +789,6 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
     #
-    bias_df = pd.concat([y_true.reset_index(), y_pred], axis=1)
     gf_vals = __regression_bias(y_true, y_pred, pa_name, priv_grp=priv_grp)
     #
     if not kwargs.pop('skip_if', False):
@@ -822,20 +810,6 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
     return df
-
-
-def __clean_names(col):
-    ''' If the column is a hidden variable, replaces the variable with a
-        display name
-    '''
-    yvars = y_cols()
-    if col in yvars['col_names'].values():
-        idx = list(yvars['col_names'].values()).index(col)
-        key = list(yvars['col_names'].keys())[idx]
-        display_name = yvars['disp_names'][key]
-    else:
-        display_name = col
-    return display_name
 
 
 class __Flagger():
