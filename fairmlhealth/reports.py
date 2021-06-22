@@ -13,8 +13,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
-                             precision_score,balanced_accuracy_score,
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                             precision_score, balanced_accuracy_score,
                              classification_report)
 from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
@@ -57,7 +57,8 @@ def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
 
 ''' Mini Reports '''
 
-def classification_performance(y_true, y_pred, target_labels=None):
+def classification_performance(y_true, y_pred, target_labels=None,
+                               sig_fig:int=4):
     """ Returns a pandas dataframe of the scikit-learn classification report,
         formatted for use in fairMLHealth tools
     Args:
@@ -75,10 +76,11 @@ def classification_performance(y_true, y_pred, target_labels=None):
     accuracy = report.loc['accuracy', :]
     report.drop('accuracy', inplace=True)
     report.loc['accuracy', 'accuracy'] = accuracy[0]
+    report = report.round(sig_fig)
     return report
 
 
-def regression_performance(y_true, y_pred):
+def regression_performance(y_true, y_pred, sig_fig:int=4):
     """ Returns a pandas dataframe of the regression performance metrics,
         similar to scikit's classification_performance
     Args:
@@ -93,9 +95,10 @@ def regression_performance(y_true, y_pred):
     report[f'{yh} Mean'] = np.mean(y_pred.values)
     report['MSE'] = mean_squared_error(y_true, y_pred)
     report['MAE'] = mean_absolute_error(y_true, y_pred)
-    report['Rsqrd'] = r2_score(y_true, y_pred)
+    report['Rsqrd'] = pmtrc.r_squared(y_true, y_pred)
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
+    report = report.round(sig_fig)
     return report
 
 
@@ -103,7 +106,7 @@ def regression_performance(y_true, y_pred):
 ''' Main Reports '''
 
 
-def flag(df, caption="", as_styler=True):
+def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
     Args:
@@ -116,11 +119,11 @@ def flag(df, caption="", as_styler=True):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    return __Flagger().apply_flag(df, caption, as_styler)
+    return __Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
-def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", flag_oor=False, **kwargs):
+def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
+                sig_fig:int=4, flag_oor=False, **kwargs):
     """
     """
     validtypes = ["classification", "regression"]
@@ -132,12 +135,16 @@ def bias_report(X, y_true, y_pred, features:list=None,
     elif pred_type == "regression":
         df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred,
                                       features=features, **kwargs)
+    #
     if flag_oor:
-        df = flag(df)
+        df = flag(df, sig_fig=sig_fig)
+    else:
+        df = df.round(sig_fig)
     return df
 
 
-def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
+def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
+                sig_fig:int=4):
     """
     Generates a table of stratified data metrics
 
@@ -229,23 +236,29 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
         rprt = pd.concat([overview, results], axis=0, ignore_index=True)
     else:
         rprt = results
+    #
     rprt = sort_report(rprt)
+    rprt = rprt.round(sig_fig)
     return rprt
 
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
-                      pred_type="classification", add_overview=True):
+                      pred_type="classification", sig_fig:int=4,
+                      add_overview=True):
     """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_performance_report(X, y_true, y_pred, y_prob,
+        df = __classification_performance_report(X, y_true, y_pred, y_prob,
                                                    features, add_overview)
     elif pred_type == "regression":
-        return __regression_performance_report(X, y_true, y_pred,
+        df = __regression_performance_report(X, y_true, y_pred,
                                                features, add_overview)
+    #
+    df = df.round(sig_fig)
+    return df
 
 
 def sort_report(report):
@@ -268,7 +281,8 @@ def sort_report(report):
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
-                   pred_type="classification", priv_grp=1, **kwargs):
+                   pred_type="classification", priv_grp=1, sig_fig:int=4,
+                   **kwargs):
     """
     """
     validtypes = ["classification", "regression"]
@@ -281,8 +295,11 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     elif pred_type == "regression":
         df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
                                   y_pred=y_pred, priv_grp=priv_grp, **kwargs)
+    #
     if flag_oor:
-        df = flag(df)
+        df = flag(df, sig_fig=sig_fig)
+    else:
+        df = df.round(sig_fig)
     return df
 
 
@@ -749,7 +766,7 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
         aif.ratio(pdmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
                                      prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['R2 Ratio'] = aif.ratio(r2_score, y_true, y_pred,
+    gf_vals['R2 Ratio'] = aif.ratio(pmtrc.r_squared, y_true, y_pred,
                                     prot_attr=pa_name, priv_group=priv_grp)
     # Differences
     gf_vals['Mean Prediction Difference'] = \
@@ -759,7 +776,7 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
         aif.difference(mean_absolute_error, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['R2 Difference'] = \
-        aif.difference(r2_score, y_true, y_pred,
+        aif.difference(pmtrc.r_squared, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -818,8 +835,10 @@ class __Flagger():
     diffs = ["auc difference" , "balanced accuracy difference",
             "equalized odds difference", "positive predictive parity difference",
             "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
+            # flag not yet enabled for: "r2 difference"
     ratios = ["balanced accuracy ratio", "disparate impact ratio ",
-                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+              "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+            # flag not yet enabled for: "mean prediction ratio", "mae ratio", "r2 ratio"
     stats_high = ["consistency score"]
     stats_low =["between-group gen. entropy error"]
 
@@ -898,7 +917,7 @@ class __Flagger():
             labels = df.columns.tolist()
         return df, labels, label_type
 
-    def apply_flag(self, df, caption="", as_styler=True):
+    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
@@ -913,9 +932,13 @@ class __Flagger():
         """
         if caption is None:
             caption = "Fairness Measures"
+        # bools are treated as a subclass of int, so must test for both
+        if not isinstance(sig_fig, int) or isinstance(sig_fig, bool):
+            raise ValueError(f"Invalid value of significant figure: {sig_fig}")
         #
         self.reset()
         self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        #
         if self.label_type == "index":
             styled = self.df.style.set_caption(caption
                                     ).apply(self.color_diff, axis=1
@@ -926,6 +949,8 @@ class __Flagger():
                                     ).apply(self.color_diff, axis=0
                                     ).apply(self.color_ratio, axis=0
                                     ).apply(self.color_st, axis=0)
+        # Styler will reset precision to 6 sig figs
+        styled = styled.set_precision(sig_fig)
         # return pandas styler if requested
         if as_styler:
             return styled

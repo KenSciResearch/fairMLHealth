@@ -133,6 +133,13 @@ def pr_auc_score(y_true, y_pred):
     return check_result(res, "PR AUC Score")
 
 
+def r_squared(y_true, y_pred):
+    res = sk_metric.r2_score(y_true, y_pred)
+    if not -1 <= res <= 1:
+        res = np.nan
+    return check_result(res, "R Squared Score")
+
+
 def precision(y_true, y_pred): # aka. PPV
     rprt =  binary_prediction_results(y_true, y_pred)
     res = ratio(rprt['TP'], rprt['TP'] + rprt['FP'])
