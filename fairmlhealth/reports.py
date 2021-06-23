@@ -891,21 +891,25 @@ class __Flagger():
 
 
     def color_diff(self, s):
+        def is_oor(i): return bool(not -0.1 < i < 0.1 and not np.isnan(i))
         if self.label_type == "index":
             idx = pd.IndexSlice
             lbls = self.df.loc[idx['Group Fairness',
                         [c.lower() in self.diffs for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lbls and not -0.1 < i < 0.1)
-                    else '' for i in s]
+                   if (s.name in lbls and is_oor(i)) else '' for i in s]
         else:
             lbls = self.diffs
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name.lower() in lbls and not -0.1 < i < 0.1)
-                    else '' for i in s]
+                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
         return clr
 
     def color_st(self, s):
+        def is_oor(n, i):
+            res = bool(not np.isnan(i) and
+                       ((n in lb_low and i > 0.2) or (n in lb_high and i < 0.8))
+                       )
+            return res
         if self.label_type == "index":
             idx = pd.IndexSlice
             lb_high = self.df.loc[idx['Individual Fairness',
@@ -915,31 +919,26 @@ class __Flagger():
                         [c.lower() in self.stats_low
                                 for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lb_high and i < 0.8)
-                        or (s.name  in lb_low and i > 0.2)
-                    else '' for i in s]
+                    if is_oor(s.name, i) else '' for i in s]
         else:
             lb_high = self.stats_high
             lb_low = self.stats_low
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name.lower() in lb_high and i < 0.8)
-                        or (s.name.lower() in lb_low and i > 0.2)
-                    else '' for i in s]
+                   if is_oor(s.name.lower(), i) else '' for i in s]
         return clr
 
     def color_ratio(self, s):
         if self.label_type == "index":
+            def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
             idx = pd.IndexSlice
             lbls = self.df.loc[idx['Group Fairness',
                         [c.lower() in self.ratios for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lbls and not 0.8 < i < 1.2)
-                    else '' for i in s]
+                   if (s.name in lbls and is_oor(i)) else '' for i in s]
         else:
             lbls = self.ratios
             clr = [f'{self.flag_type}:{self.flag_color}'
-               if (s.name.lower() in lbls and not 0.8 < i < 1.2)
-               else '' for i in s]
+                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
         return clr
 
     def reset(self):
