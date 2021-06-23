@@ -102,7 +102,27 @@ def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
 
 def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
                 sig_fig:int=4, flag_oor=False, **kwargs):
-    """
+    """ Generates a table of stratified bias metrics
+
+    Args:
+        X (array-like): Sample features
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        flag_oor (bool): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range). Defaults to False.
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas Data Frame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -135,6 +155,8 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
             Defaults to None (i.e. all columns).
         targets (list): columns in Y to be assessed if not all columns.
             Defaults to None (i.e. all columns).
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -223,7 +245,25 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
                       pred_type="classification", sig_fig:int=4,
                       add_overview=True):
-    """
+    """ Generates a table of stratified performance metrics
+
+    Args:
+        X (pandas dataframe or compatible object): sample data to be assessed
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas DataFrame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -261,7 +301,29 @@ def sort_report(report):
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
                    pred_type="classification", priv_grp=1, sig_fig:int=4,
                    **kwargs):
-    """
+    """ Generates a summary of fairness measures for a set of predictions
+    relative to their input data
+
+    Args:
+        X (array-like): Sample features
+        prtc_attr (array-like, named): Values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        flag_oor (bool): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range). Defaults to False.
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas DataFrame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -639,6 +701,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
                                         priv_grp=1):
         """ Returns a dictionary containing group fairness measures specific
             to binary classification problems
+
         Args:
             X (pandas DataFrame): Sample features
             pa_name (str):

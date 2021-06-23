@@ -99,6 +99,15 @@ def format_errwarn(func):
 
 
 def iterate_cohorts(func):
+    """ Runs the function for each cohort subset
+
+    Args:
+        func (function): the function to iterate
+
+    Returns:
+        cohort-iterated version of the output
+
+    """
     def prepend_cohort(df, new_ix):
         idx = df.index.to_frame().rename(columns={0:'__index'})
         for l, i in enumerate(new_ix):
@@ -115,6 +124,15 @@ def iterate_cohorts(func):
             return None
 
     def wrapper(cohorts=None, **kwargs):
+        """ Iterates for each cohort subset
+
+        Args:
+            cohorts (array-like or dataframe, optional): Groups by which to
+                subset the data. Defaults to None.
+
+        Returns:
+            pandas DataFrame
+        """
         # Run preprocessing to facilitate subsetting
         X = kwargs.pop('X', None)
         y_true = kwargs.get('y_true', None)

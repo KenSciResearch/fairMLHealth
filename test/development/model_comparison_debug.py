@@ -9,7 +9,6 @@ from fairmlhealth import model_comparison as fhmc
 from fairmlhealth.reports import flag
 import logging
 import pandas as pd
-import pdb
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier

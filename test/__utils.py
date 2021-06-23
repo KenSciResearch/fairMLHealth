@@ -109,6 +109,15 @@ def is_url_valid(url):
 
 
 def synth_dataset(N:int=16):
+    """ Synthesizes a set of random data with multiple "predictions"
+
+    Args:
+        N (int, optional): Desired size of the dataset. Defaults to 16.
+
+    Returns:
+        pandas DataFrame
+
+    """
     np.random.seed(506)
     # If N is not divisible by 8 this will break
     N = int(N)
