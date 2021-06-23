@@ -71,10 +71,12 @@ def format_errwarn(func):
 
 
 def iterate_cohorts(func):
-    def prepend_index(df, new_ix):
-        idx = df.index.to_frame()
+    def prepend_cohort(df, new_ix):
+        idx = df.index.to_frame().rename(columns={0:'__index'})
         for l, i in enumerate(new_ix):
             idx.insert(l, i[0], i[1])
+        if '__index' in idx.columns:
+            idx.drop('__index', axis=1, inplace=True)
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
@@ -115,7 +117,7 @@ def iterate_cohorts(func):
                           prtc_attr=pa, **sub_args)
                 vals = cgrp.get_group(k)[cols].head(1).values[0]
                 ix = [(c, vals[i]) for i, c in enumerate(cols)]
-                df = prepend_index(df, ix)
+                df = prepend_cohort(df, ix)
                 results.append(df)
             output = pd.concat(results, axis=0)
             return output
