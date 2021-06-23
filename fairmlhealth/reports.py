@@ -34,27 +34,6 @@ filterwarnings('ignore', module='pandas')
 filterwarnings('ignore', module='sklearn')
 
 
-''' Deprecated Public Functions '''
-
-def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
-                            priv_grp=1, **kwargs):
-    warn(
-            "classification_fairness function will be deprecated in version " +
-            "2.0. Use summary_report instead.",
-            PendingDeprecationWarning
-        )
-    return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                    priv_grp, **kwargs)
-
-
-def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
-    warn(
-            "regression_fairness function will be deprecated in version " +
-            "2.0. Use summary_report instead.", PendingDeprecationWarning
-        )
-    return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
-
-
 ''' Mini Reports '''
 
 def classification_performance(y_true, y_pred, target_labels=None,
