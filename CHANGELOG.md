@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.14] - 2021-06-23
+### Cohorting
+- Adds cohorting wrapper which iterates to create separate reports by group
+
+
 ## [0.1.13] - 2021-06-23
 ### Flagging Updates
 - Add flagging functionality for stratified reports (bias_report, performance_report, data_report)

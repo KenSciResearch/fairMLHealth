@@ -180,10 +180,8 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     if features is None:
         features = X.columns.tolist()
     stratified_features = [f for f in features if f not in pred_cols]
-    try:
-        df = df.loc[:, stratified_features + pred_cols]
-    except:
-        import pdb; pdb.set_trace()
+    df = df.loc[:, stratified_features + pred_cols]
+
     #
     over_max_vals = []
     for f in stratified_features:
