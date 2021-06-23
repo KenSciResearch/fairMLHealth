@@ -39,9 +39,9 @@ def measure_model(test_data, targets, protected_attr, model=None,
         probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
-        flag_oor (boolean): if true, will apply flagging function to highlight
+        flag_oor (bool): if true, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range)
+            (Out Of Range). Defaults to False.
 
     Returns:
         pandas dataframe of fairness measures for the model
@@ -73,9 +73,9 @@ def compare_models(test_data, targets, protected_attr, models=None,
         probabilities (1D array-like): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
-        flag_oor (boolean): if true, will apply flagging function to highlight
+        flag_oor (bool): if true, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range)
+            (Out Of Range). Defaults to False.
 
     Returns:
         pandas dataframe of fairness and performance measures for each model
@@ -146,6 +146,11 @@ class FairCompare(ABC):
     def compare_measures(self, flag_oor=False):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
+
+        Args:
+            flag_oor (bool): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range)
         """
         # Model objects are assumed to be held in a dict
         if not is_dictlike(self.models):

@@ -4,8 +4,14 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+
+## [0.1.13] - 2021-06-23
+### Flagging Updates
+- Add flagging functionality for stratified reports (bias_report, performance_report, data_report)
+- Update flagging function s.t. it can be called as an argument in the model_comparison or bias_report functions
+
 ## [0.1.12] - 2021-06-17
-### Validation Updates
+### Stratified Report Updates
 - data_report now accepts y as a data frame, enabling stratified analysis across multiple targets.
 - "Overview" column evaluating all features as one unit ("ALL_FEATURES") is now optional via add_overview argument
 
