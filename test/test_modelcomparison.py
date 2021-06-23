@@ -13,14 +13,11 @@ from .__utils import synth_dataset
 
 
 @pytest.fixture(scope="class")
-def load_data(synth_dataset, request):
-    df = synth_dataset
-    X = df[['A', 'B', 'C', 'gender', 'age']]
-    targ_data = [0, 0, 1, 1, 0, 0, 1, 1]
-    idx = list(range(0, len(df)))
-    y = pd.Series(targ_data, index=idx, name="y")
-
-    splits = train_test_split(X, y, test_size=0.75, random_state=36)
+def load_data(request):
+    df = synth_dataset(24)
+    X = df[['A', 'B', 'C', 'D', 'E', 'prtc_attr']]
+    y = df['binary_target'].rename('y')
+    splits = train_test_split(X, y, test_size=0.75, random_state=506)
     X_train, X_test, y_train, y_test = splits
 
     # Train models
@@ -32,7 +29,7 @@ def load_data(synth_dataset, request):
     # Set test attributes
     request.cls.X = X_test
     request.cls.y = y_test
-    request.cls.prtc_attr = X_test['gender']
+    request.cls.prtc_attr = X_test['prtc_attr']
     request.cls.model_dict = {0: model_1, 1: model_2, 2: model_3}
     yield
 

@@ -8,22 +8,24 @@ import numpy as np
 import pytest
 import pandas as pd
 from .__utils import synth_dataset
-np.random.seed(547)
+np.random.seed(506)
 
 
 
 @pytest.fixture(scope="class")
-def load_classification_data(synth_dataset, request):
-    df = synth_dataset
-    targ_data = [0, 0, 1, 1, 0, 0, 1, 1]
-    y = pd.Series(targ_data, index=df.index, name="y")
-    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=df.index, name="avg")
+def load_classification_data(request):
+    N = 32
+    df = synth_dataset(N)
+    X = df[['A', 'B', 'C', 'D', 'prtc_attr', 'other']]
+    y = df['binary_target'].rename('y')
+    avg_fair = df['avg_binary_pred'].rename('avg')
     #
-
-    df = pd.concat([df, y, avg_fair], axis=1)
-    df = df.append(df).reset_index(drop=True)
-    cohorts = pd.Series(np.random.randint(0, 2, 16), index=df.index, name="coh")
-    request.cls.df = df
+    data = pd.concat([X, y, avg_fair], axis=1)
+    cohorts = pd.DataFrame({0:np.random.randint(0, 2, N),
+                            1:np.random.randint(0, 2, N)}
+                           )
+    #
+    request.cls.df = data
     request.cls.cohorts = cohorts
     yield
 
@@ -38,6 +40,11 @@ class TestCohorts:
                                    self.df['avg'], pred_type="classification")
 
     def test_one_cohort(self):
+        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+                                   self.df['avg'], pred_type="classification",
+                                   cohorts=self.cohorts[0])
+
+    def test_multi_cohort(self):
         _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="classification",
                                    cohorts=self.cohorts)

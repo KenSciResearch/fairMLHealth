@@ -862,12 +862,43 @@ class __Flagger():
     def __init__(self):
         self.reset()
 
-    def reset(self):
-        self.df = None
-        self.labels = None
-        self.label_type = None
-        self.flag_type = "background-color"
-        self.flag_color = "magenta"
+    def apply_flag(self, df, caption="", as_styler=True):
+        """ Generates embedded html pandas styler table containing a highlighted
+            version of a model comparison dataframe
+        Args:
+            df (pandas dataframe): Model comparison dataframe (see)
+            caption (str, optional): Optional caption for table. Defaults to "".
+            as_styler (bool, optional): If True, returns a pandas Styler of the
+                highlighted table (to which other styles/highlights can be added).
+                Otherwise, returns the table as an embedded HTML object. Defaults
+                to False .
+        Returns:
+            Embedded html or pandas.io.formats.style.Styler
+        """
+        if caption is None:
+            caption = "Fairness Measures"
+        #
+        self.reset()
+        self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        if self.label_type == "index":
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=1
+                                    ).apply(self.color_ratio, axis=1
+                                    ).apply(self.color_st, axis=1)
+        else:
+            # styler cannot handle non-unique index
+            if len(self.df.index.unique()) <  len(self.df):
+                self.df.reset_index(inplace=True)
+            styled = self.df.style.set_caption(caption
+                                ).apply(self.color_diff, axis=0
+                                ).apply(self.color_ratio, axis=0
+                                ).apply(self.color_st, axis=0)
+        # return pandas styler if requested
+        if as_styler:
+            return styled
+        else:
+            return HTML(styled.render())
+
 
     def color_diff(self, s):
         if self.label_type == "index":
@@ -921,6 +952,13 @@ class __Flagger():
                else '' for i in s]
         return clr
 
+    def reset(self):
+        self.df = None
+        self.labels = None
+        self.label_type = None
+        self.flag_type = "background-color"
+        self.flag_color = "magenta"
+
     def set_measure_labels(self, df):
         try:
             labels = df.index.get_level_values(1)
@@ -934,39 +972,6 @@ class __Flagger():
             labels = df.columns.tolist()
         return df, labels, label_type
 
-    def apply_flag(self, df, caption="", as_styler=True):
-        """ Generates embedded html pandas styler table containing a highlighted
-            version of a model comparison dataframe
-        Args:
-            df (pandas dataframe): Model comparison dataframe (see)
-            caption (str, optional): Optional caption for table. Defaults to "".
-            as_styler (bool, optional): If True, returns a pandas Styler of the
-                highlighted table (to which other styles/highlights can be added).
-                Otherwise, returns the table as an embedded HTML object. Defaults
-                to False .
-        Returns:
-            Embedded html or pandas.io.formats.style.Styler
-        """
-        if caption is None:
-            caption = "Fairness Measures"
-        #
-        self.reset()
-        self.df, self.labels, self.label_type = self.set_measure_labels(df)
-        if self.label_type == "index":
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=1
-                                    ).apply(self.color_ratio, axis=1
-                                    ).apply(self.color_st, axis=1)
-        else:
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=0
-                                    ).apply(self.color_ratio, axis=0
-                                    ).apply(self.color_st, axis=0)
-        # return pandas styler if requested
-        if as_styler:
-            return styled
-        else:
-            return HTML(styled.render())
 
 
 

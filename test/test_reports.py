@@ -12,29 +12,26 @@ np.random.seed(547)
 
 
 @pytest.fixture(scope="class")
-def load_classification_data(synth_dataset, request):
-    df = synth_dataset
-    targ_data = [0, 0, 1, 1, 0, 0, 1, 1]
-    y = pd.Series(targ_data, index=df.index, name="y")
-    prfct_fair = pd.Series(targ_data, index=df.index, name="prfct")
-    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=df.index, name="avg")
+def load_classification_data(request):
+    df = synth_dataset(32)
+    X = df[['A', 'B', 'C', 'D', 'prtc_attr', 'other']]
+    y = df['binary_target'].rename('y')
+    avg_fair = df['avg_binary_pred'].rename('avg')
     #
-    output = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
-    request.cls.df = output
+    data = pd.concat([X, y, avg_fair], axis=1)
+    request.cls.df = data
     yield
 
 
 @pytest.fixture(scope="class")
-def load_regression_data(synth_dataset, request):
-    df = synth_dataset
-    targ_data = np.random.uniform(-10, 10, 8)
-    y = pd.Series(targ_data, index=df.index, name="y")
-    prfct_fair = pd.Series(targ_data, index=df.index, name="prfct")
-    avg_fair = pd.Series([0, 1, 0, 1, 0, 1, 0, 1], index=df.index, name="avg")
-    avg_fair[avg_fair.eq(1)] = targ_data
+def load_regression_data(request):
+    df = synth_dataset(32)
+    X = df[['A', 'B', 'C', 'D', 'E', 'prtc_attr', 'other']]
+    y = df['continuous_target'].rename('y')
+    avg_fair = df['avg_cont_pred'].rename('avg')
     #
-    output = pd.concat([df, y, prfct_fair, avg_fair], axis=1)
-    request.cls.df = output
+    data = pd.concat([X, y, avg_fair], axis=1)
+    request.cls.df = data
     yield
 
 
