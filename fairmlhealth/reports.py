@@ -952,9 +952,8 @@ class __Flagger():
 
     def color_st(self, s):
         def is_oor(n, i):
-            res = bool(not np.isnan(i) and
-                       ((n in lb_low and i > 0.2) or (n in lb_high and i < 0.8))
-                       )
+            res = bool((n in lb_low and i > 0.2)
+                        or (n in lb_high and i < 0.8) and not np.isnan(i))
             return res
         if self.label_type == "index":
             idx = pd.IndexSlice
@@ -974,8 +973,8 @@ class __Flagger():
         return clr
 
     def color_ratio(self, s):
+        def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
         if self.label_type == "index":
-            def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
             idx = pd.IndexSlice
             lbls = self.df.loc[idx['Group Fairness',
                         [c.lower() in self.ratios for c in self.labels]], :].index
