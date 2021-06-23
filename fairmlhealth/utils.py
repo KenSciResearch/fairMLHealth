@@ -2,6 +2,7 @@
 Back-end functions used throughout the library
 '''
 from importlib.util import find_spec
+import numpy as np
 import pandas as pd
 from . import __preprocessing as prep
 from .__validation import validate_X, ValidationError
@@ -26,6 +27,33 @@ def cb_round(series, base=5, sig_dec=0):
     result = series.apply(lambda x: round(base * round(float(x)/base), sig_dec))
     return result
 
+
+def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
+    """ Applies bootstrapping to evaluate the statistical difference between
+    two samples. Returns True (significant) if the p-value is less than alpha
+    for at least P=1-alpha percent of trials.
+
+    Args:
+        a (array-like): statistical sample
+        b (array-like): statistical sample for comparison
+        func (function): any statistical test returning it's p-value as the
+            second member of a tuple
+        alpha (float, optional): Maximum p-value indicating significance.
+            Defaults to 0.05.
+        n_samples (int, optional): Number of samples to use for each trial.
+            Defaults to 50.
+        n_trials (int, optional): Number of trials to run. Defaults to 100.
+
+    Returns:
+        bool: difference is statistically significant
+    """
+    sr = []
+    for i in range( 0, n_trials):
+        sr += [func(np.random.choice(a, size=n_samples, replace=True),
+                    np.random.choice(b, size=n_samples, replace=True))[1]]
+    sr = [int(v <= alpha) for v in sr]
+    result = bool(np.mean(sr) >= (1-alpha))
+    return result
 
 
 def format_errwarn(func):
