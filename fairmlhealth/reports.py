@@ -394,6 +394,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
                     warns[f] = w
             grp_res = pd.DataFrame(grp_res, index=[0])
             grp_res.insert(0, 'Feature Name', f)
+            grp_res.insert(1, 'Feature Value', v)
             res.append(grp_res)
     if len(res) == 0:
         results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
