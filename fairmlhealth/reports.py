@@ -81,7 +81,6 @@ def regression_performance(y_true, y_pred, sig_fig:int=4):
     return report
 
 
-
 ''' Main Reports '''
 
 
@@ -283,6 +282,7 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
 
 
 ''' Private Functions '''
+
 
 @format_errwarn
 def __apply_featureGroups(features, df, func, *args):
