@@ -33,12 +33,14 @@ def load_data(synth_dataset, request):
     # Train models
     model_1 = BernoulliNB().fit(X_train, y_train)
     model_2 = DecisionTreeClassifier().fit(X_train, y_train)
+    model_3 = DecisionTreeClassifier().fit(X_train.to_numpy(),
+                                           y_train.to_numpy())
 
     # Set test attributes
     request.cls.X = X_test
     request.cls.y = y_test
     request.cls.prtc_attr = X_test['gender']
-    request.cls.model_dict = {0: model_1, 1: model_2}
+    request.cls.model_dict = {0: model_1, 1: model_2, 2: model_3}
     yield
 
 
@@ -51,12 +53,12 @@ class TestCompModFunction:
         if not isinstance(result, pd.DataFrame) and result.shape[0] > 0:
             raise AssertionError("Invalid Result")
 
-    def test_valid_inputs(self):
+    def test_single_dataInputs(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
                                      self.model_dict)
         self.is_result_valid(result)
 
-    def test_model_as_array(self):
+    def test_model_list(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
                                      [self.model_dict[0]])
         self.is_result_valid(result)

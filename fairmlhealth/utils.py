@@ -2,6 +2,7 @@
 Back-end functions used throughout the library
 '''
 from importlib.util import find_spec
+from .__validation import ValidationError
 
 
 def cb_round(series, base=5, sig_dec=0):
@@ -41,5 +42,3 @@ def validate_notebook_requirements():
     else:
         pass
 
-class ValidationError(Exception):
-    pass
