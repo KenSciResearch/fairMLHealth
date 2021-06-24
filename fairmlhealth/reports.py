@@ -179,7 +179,7 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
         reformat those data into quantiles
     """
     #
-    def entrp(x):
+    def entropy(x):
         ''' Calculates the entropy of a series '''
         return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
 
@@ -230,7 +230,7 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     n_missing = X_df[strat_feats].replace('nan', np.nan
                                 ).isna().sum().reset_index()
     n_missing.columns = ['Feature Name', 'Missing Values']
-    entropy = X_df[strat_feats].apply(axis=0, func=entrp).reset_index()
+    entropy = X_df[strat_feats].apply(axis=0, func=entropy).reset_index()
     entropy.columns = ['Feature Name', 'Entropy']
     results = results.merge(n_missing, how='left', on='Feature Name'
                     ).merge(entropy, how='left', on='Feature Name')
