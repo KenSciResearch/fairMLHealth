@@ -809,10 +809,6 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
         aif.ratio(pdmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
                                      prot_attr=pa_name, priv_group=priv_grp)
-    '''
-    gf_vals['R2 Ratio'] = aif.ratio(pmtrc.r_squared, y_true, y_pred,
-                                    prot_attr=pa_name, priv_group=priv_grp)
-    '''
     # Differences
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
@@ -820,11 +816,6 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    '''
-    gf_vals['R2 Difference'] = \
-        aif.difference(pmtrc.r_squared, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    '''
     return gf_vals
 
 

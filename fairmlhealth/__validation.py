@@ -18,15 +18,6 @@ def validate_prtc_attr(arr, expected_len:int=0):
     __validate_length(arr, "protected attribute", expected_len)
 
 
-def validate_binary_target(arr, name="targets", expected_len:int=0):
-    if arr is None:
-        raise ValueError(f"No {name} found.")
-    __validate_type(arr)
-    __validate_oneDArray(arr, name)
-    __validate_binVal(arr, name, fuzzy=True)
-    __validate_length(arr, name, expected_len)
-
-
 def validate_y(arr, name="targets", expected_len:int=0):
     if arr is None:
         raise ValueError(f"No {name} found.")
