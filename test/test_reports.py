@@ -90,13 +90,16 @@ class TestStandardRegressionReports:
                             pred_type="regression")
 
 
-@pytest.mark.usefixtures("load_classification_data")
+@pytest.mark.usefixtures("load_regression_data")
 class TestDataReport:
     """ Developmental class to validate that non-standard inputs are processed
         as expected. Will be finalized for release of V2.0
     """
     # ToDo: Add more robust testing
-    def __dev_test_without_y(self):
+    def test_missing_y(self):
         with pytest.raises(Exception):
-                _ = reports.data_report(self.df)
+            _ = reports.data_report(self.df, None)
 
+    def test_y_as_df(self):
+        _ = reports.data_report(self.df, self.df,
+                                features=['A', 'B', 'C'], targets=['C','D'])

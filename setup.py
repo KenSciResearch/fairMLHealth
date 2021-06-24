@@ -23,8 +23,8 @@ def _get_version():
 os_deps = ['pypiwin32; platform_system == "Windows"',
            'pywin32; platform_system == "Windows"'
             ]
-test_deps = ["pytest==5.4.2", "ipython", "nbformat", "nbconvert", "regex"
-            ] + os_deps
+test_deps = ["pytest==5.4.2", "ipython", "ipyparallel", "nbformat", "nbconvert",
+             "regex"] + os_deps
 
 # Requirements for running tutorial notebooks
 tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',

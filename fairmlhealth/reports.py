@@ -7,12 +7,12 @@ Contributors:
 
 
 import aif360.sklearn.metrics as aif
+from functools import reduce
 from IPython.display import HTML
 import logging
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
+
 from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
                              precision_score, roc_auc_score,
                              balanced_accuracy_score, classification_report)
@@ -25,7 +25,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from . import tutorial_helpers as helpers
-from .__validation import format_feedback, ValidationError
+from .__validation import format_errwarn, ValidationError
 
 
 
@@ -45,24 +45,22 @@ def flag_suspicious(df, caption="", as_styler=False):
 
 
 def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
-                            priv_grp=1, sig_dec=4, **kwargs):
+                            priv_grp=1, **kwargs):
     warn(
             "classification_fairness function will be deprecated in version " +
             "2.0. Use summary_report instead.",
             PendingDeprecationWarning
         )
     return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                    priv_grp, sig_dec, **kwargs)
+                                    priv_grp, **kwargs)
 
 
-def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, sig_dec=4,
-                        **kwargs):
+def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
     warn(
             "regression_fairness function will be deprecated in version " +
             "2.0. Use summary_report instead.", PendingDeprecationWarning
         )
-    return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, sig_dec,
-                                **kwargs)
+    return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
 
 
 ''' Mini Reports '''
@@ -181,29 +179,33 @@ def flag(df, caption="", as_styler=False):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", priv_grp=1, sig_dec=4):
+                pred_type="classification", priv_grp=1):
     """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_bias_report(X, y_true, y_pred, features)
+        return __classification_bias_report(X, y_true, y_pred, features, priv_grp)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features)
+        #return __regression_bias_report(X, y_true, y_pred, features, priv_grp)
 
 
-def data_report(X, y_true, features:list=None):
+def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     """
     Generates a table of stratified data metrics
 
     Args:
-        df (pandas dataframe or compatible object): sample data to be assessed
-        y_true (1D array-like): Sample target true values
-        features (list): columns in df to be assessed if not all columns.
-            Defaults to None.
+        X (pandas dataframe or compatible object): sample data to be assessed
+        Y (pandas dataframe or compatible object): sample targets to be
+            assessed. Note that any observations with missing targets will be
+            ignored.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        targets (list): columns in Y to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -211,70 +213,116 @@ def data_report(X, y_true, features:list=None):
         reformat those data into quantiles
     """
     #
-    def entr(x):
+    def entropy(x):
         ''' Calculates the entropy of a series '''
         return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
 
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
-        name = __clean_names(col)
         if not x[col].isna().all():
-            res[f'{name} Mean'] = x[col].mean()
-            res[f'{name} Median'] = x[col].median()
-            res[f'{name} Std. Dev.'] = x[col].std()
-            res[f'{name} Min'] = x[col].min()
-            res[f'{name} Max'] = x[col].max()
+            res[col + " Mean"] = x[col].mean()
+            res[col + " Median"] = x[col].median()
+            res[col + " Std. Dev."] = x[col].std()
+        else:
+            # Force addition of second column to ensure proper formatting
+            # as pandas series
+            for c in [col + " Mean", col + " Median", col + " Std. Dev."]:
+                res[c] = np.nan
         return res
     #
-    df = stratified_preprocess(X, y_true, features=features)
-    yt, _, _ = y_cols(df)['col_names'].values()
-    stratified_features = [f for f in df.columns.tolist() if f != yt]
-    if yt is None:
-        raise ValidationError("Cannot generate report with undefined targets")
+    X_df = stratified_preprocess(X=X, features=features)
+    Y_df = stratified_preprocess(X=Y, features=targets)
+    if X_df.shape[0] != Y_df.shape[0]:
+        raise ValidationError("Number of observations mismatch between X and Y")
     #
-    results = __apply_toFeatures(stratified_features, df, __data_dict, yt)
+    if features is None:
+        features = X_df.columns.tolist()
+    strat_feats = [f for f in features if f in X_df.columns]
     #
-    results['Value Prevalence'] = results['Obs.']/df.shape[0]
-    n_missing = df.replace('nan', np.nan).notnull().count().reset_index()
-    n_missing.columns = ['Feature Name', 'Feature Missing Values']
-    entropy = df.apply(axis=0, func=entr).reset_index()
-    entropy.columns = ['Feature Name', 'Feature Entropy']
-    results= results.merge(n_missing, how='left', on='Feature Name'
-                   ).merge(entropy, how='left', on='Feature Name')
+    if targets is None:
+        targets = Y_df.columns.tolist()
+    strat_targs = [t for t in targets if t in Y_df.columns]
     #
-    N_feat = len(stratified_features)
-    N_missing = n_missing['Feature Missing Values'].sum()
-    N_obs = df.shape[0]
-    overview = {'Feature Name': "ALL FEATURES",
-                'Feature Value': "ALL VALUES",
-                'Missing Values': N_missing,
-                'Value Prevalence': (N_obs*N_feat - N_missing)/(N_obs*N_feat)
-                }
-    ov_dict = __data_dict(df, yt)
-    for k, v in ov_dict.items():
-        overview[k] = v
-    overview_df = pd.DataFrame(overview, index=[0])
-    # Combine and format
-    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    res = []
+    # "Obs."" included in index for ease of calculation
+    ix_cols = ['Feature Name', 'Feature Value', 'Obs.']
+    for t in strat_targs:
+        X_df[t] = Y_df[t]
+        feat_subset = [f for f in strat_feats if f != t]
+        if not any(feat_subset):
+            continue
+        res_t = __apply_featureGroups(feat_subset, X_df, __data_dict, t)
+        # convert id columns to strings to work around bug in pd.concat
+        for m in ix_cols:
+            res_t[m] = res_t[m].astype(str)
+        res.append(res_t.set_index(ix_cols))
+    results = pd.concat(res, axis=1).reset_index()
+    #
+    results['Obs.'] = results['Obs.'].astype(float).astype(int)
+    results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
+    n_missing = X_df[strat_feats].replace('nan', np.nan
+                                ).isna().sum().reset_index()
+    n_missing.columns = ['Feature Name', 'Missing Values']
+    entropy = X_df[strat_feats].apply(axis=0, func=entropy).reset_index()
+    entropy.columns = ['Feature Name', 'Entropy']
+    results = results.merge(n_missing, how='left', on='Feature Name'
+                    ).merge(entropy, how='left', on='Feature Name')
+    #
+    if add_overview:
+        res = []
+        for i, t in enumerate(strat_targs):
+            res_t = pd.DataFrame(__data_dict(X_df, t), index=[0])
+            res.append(res_t.set_index('Obs.'))
+        overview = pd.concat(res, axis=1).reset_index()
+        N_feat = len(strat_feats)
+        N_missing = n_missing['Missing Values'].sum()
+        N_obs = X_df.shape[0]
+        overview['Feature Name'] = "ALL FEATURES"
+        overview['Feature Value'] = "ALL VALUES"
+        overview['Missing Values'] = N_missing,
+        overview['Value Prevalence'] = (N_obs*N_feat-N_missing)/(N_obs*N_feat)
+        rprt = pd.concat([overview, results], axis=0, ignore_index=True)
+    else:
+        rprt = results
     rprt = sort_report(rprt)
     return rprt
 
 
+
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
-                      pred_type="classification", priv_grp=1, sig_dec=4):
+                      pred_type="classification", add_overview=True):
     """
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_performance_report(X, y_true, y_pred,
-                                                   y_prob, features)
+        return __classification_performance_report(X, y_true, y_pred, y_prob,
+                                                   features, add_overview)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_performance_report(X, y_true, y_pred, features)
+        #return __regression_performance_report(X, y_true, y_pred, features, add_overview)
+
+
+def sort_report(report):
+    """ Sorts columns in standardized order
+
+    Args:
+        report (pd.DataFrame): any of the stratified reports produced by this
+        module
+
+    Returns:
+        pd.DataFrame: sorted report
+    """
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
+    head_names = ['Feature Name', 'Feature Value', 'Obs.',
+                 f'{yname} Mean', f'{yhname} Mean']
+    head_cols = [c for c in head_names if c in report.columns]
+    tail_cols = sorted([c for c in report.columns if c not in head_cols])
+    return report[head_cols + tail_cols]
 
 
 def sort_report(report):
@@ -297,8 +345,7 @@ def sort_report(report):
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
-                      pred_type="classification", priv_grp=1, sig_dec=4,
-                      **kwargs):
+                   pred_type="classification", priv_grp=1, **kwargs):
     """
     """
     validtypes = ["classification", "regression"]
@@ -306,23 +353,22 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
         return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                        priv_grp, sig_dec, **kwargs)
+                                        priv_grp, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp,
-        #                           sig_dec, **kwargs)
+        #return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
 
 
 ''' Private Functions '''
 
-@format_feedback
-def __apply_toFeatures(stratified_features, df, func, *args):
+@format_errwarn
+def __apply_featureGroups(features, df, func, *args):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
 
     Args:
-        stratified_features (list): columns of df to be iteratively analyzed
+        features (list): columns of df to be iteratively analyzed
         df (pd.DataFrame): data to be analyzed
         func (function): a function accepting *args and returning a dictionary
 
@@ -333,13 +379,8 @@ def __apply_toFeatures(stratified_features, df, func, *args):
     errs = {}
     warns = {}
     res = []
-    for f in stratified_features:
-        #
-        if df[f].nunique() == 1:
-            warns[f] = "Cannot assess bias for a single value."
-            continue
+    for f in features:
         # Data are expected in string format
-        assert df[f].astype(str).eq(df[f]).all()
         with catch_warnings(record=True) as w:
             simplefilter("always")
             try:
@@ -357,21 +398,20 @@ def __apply_toFeatures(stratified_features, df, func, *args):
         results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
     else:
         results = pd.concat(res, ignore_index=True)
-    results = pd.concat(res, ignore_index=True)
     return results, errs, warns
 
 
-@format_feedback
-def __apply_toValues(stratified_features, df, func, yt, yh):
+@format_errwarn
+def __apply_biasGroups(features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing.
 
     Args:
-        stratified_features (list): columns of df to be iteratively analyzed
+        features (list): columns of df to be iteratively analyzed
         df (pd.DataFrame): data to be analyzed
         func (function): a function accepting two array arguments for comparison
             (selected from df as yt and yh), as well as a pa_name (str) and
-            priv_grp (int) which will be set by __apply_toValues. This function
+            priv_grp (int) which will be set by __apply_biasGroups. This function
             must return a dictionary.
         yt (string): name of column found in df containing target values
         yh (string): name of column found in df containing predicted values
@@ -384,11 +424,9 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
     warns = {}
     pa_name = 'prtc_attr'
     res = []
-    for f in stratified_features:
+    for f in features:
+        df[f] = df[f].astype(str)
         vals = sorted(df[f].unique().tolist())
-        if len(vals) == 1:
-            warns[f] = "Cannot assess bias for a single value."
-            continue
         # AIF360 can't handle float types
         for v in vals:
             df[pa_name] = 0
@@ -399,12 +437,12 @@ def __apply_toValues(stratified_features, df, func, yt, yh):
             if df[pa_name].nunique() == 1:
                 continue
             # Data are expected in string format
-            assert df[f].astype(str).eq(df[f]).all()
             with catch_warnings(record=True) as w:
                 simplefilter("always")
-                try:
-                    subset = df.loc[df[pa_name].notnull(),
+                subset = df.loc[df[pa_name].notnull(),
                                     [pa_name, yt, yh]].set_index(pa_name)
+                try:
+                    #
                     grp_res = func(subset[yt], subset[yh], pa_name, priv_grp=1)
                 except BaseException as e:
                     errs[f] = e
@@ -430,13 +468,15 @@ def __class_prevalence(y_true, priv_grp):
                 group. Defaults to 1.
     """
     dt_vals = {}
-    dt_vals['Prevalence of Privileged Class (%)'] = \
-        round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
+    prev = round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
+    if not isinstance(prev, float):
+        prev = prev[0]
+    dt_vals['Prevalence of Privileged Class (%)'] = prev
     return dt_vals
 
 
 def __classification_performance_report(X, y_true, y_pred, y_prob=None,
-                                        features:list=None):
+                                        features:list=None, add_overview=True):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -474,26 +514,27 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toFeatures(stratified_features, df,
-                                  __perf_rep, yt, yh, yp)
-    #
-    overview = {'Feature Name': "ALL FEATURES",
-                'Feature Value': "ALL VALUES"}
-    ov_dict = __perf_rep(df, yt, yh, yp)
-    for k, v in ov_dict.items():
-        overview[k] = v
-    overview_df = pd.DataFrame(overview, index=[0])
-    # Combine and format
-    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
+    if add_overview:
+        overview = {'Feature Name': "ALL FEATURES",
+                    'Feature Value': "ALL VALUES"}
+        ov_dict = __perf_rep(df, yt, yh, yp)
+        for k, v in ov_dict.items():
+            overview[k] = v
+        overview_df = pd.DataFrame(overview, index=[0])
+        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    else:
+        rprt = results
     rprt = sort_report(rprt)
     return rprt
 
 
-def __regression_performance_report(X, y_true, y_pred, features:list=None):
+def __regression_performance_report(X, y_true, y_pred, features:list=None,
+                                    add_overview=True):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -534,20 +575,21 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None):
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toFeatures(stratified_features, df, __perf_rep, yt, yh)
-    #
-    overview = {'Feature Name': "ALL FEATURES",
-                'Feature Value': "ALL VALUES"}
-    ov_dict = __perf_rep(df, yt, yh)
-    for k, v in ov_dict.items():
-        overview[k] = v
-    overview_df = pd.DataFrame(overview, index=[0])
-    #
-    rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
+    if add_overview:
+        overview = {'Feature Name': "ALL FEATURES",
+                    'Feature Value': "ALL VALUES"}
+        ov_dict = __perf_rep(df, yt, yh)
+        for k, v in ov_dict.items():
+            overview[k] = v
+        overview_df = pd.DataFrame(overview, index=[0])
+        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    else:
+        rprt = results
     rprt = sort_report(rprt)
     return rprt
 
@@ -592,11 +634,11 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toValues(stratified_features, df, __bias_rep, yt, yh)
+    results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
     rprt = sort_report(results)
     return rprt
 
@@ -621,12 +663,11 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     yt, yh, yp = y_cols(df)['col_names'].values()
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    stratified_features = [f for f in df.columns.tolist() if f not in pred_cols]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
     #
-    results = __apply_toValues(stratified_features, df,
-                               __regression_bias, yt, yh)
+    results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
     rprt = sort_report(results)
     return rprt
 
@@ -649,7 +690,7 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
 
 
 def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
-                                  priv_grp=1, sig_dec=4, **kwargs):
+                             priv_grp=1, **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
     Args:
@@ -661,8 +702,6 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
         y_prob (array-like, 1-D): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
-        sig_dec (int): number of significant decimals to which to round
-            measure values. Defaults to 4.
     """
     #
     def __summary(X, pa_name, y_true, y_pred, y_prob=None,
@@ -733,12 +772,9 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
             res['PR_AUC'] = pmtrc.pr_auc_score(y, yp)
         return res
     #
-    #
     # Validate and Format Arguments
     if not isinstance(priv_grp, int):
         raise ValueError("priv_grp must be an integer value")
-    if not isinstance(sig_dec, int):
-        raise ValueError("sig_dec must be an integer value")
     X, prtc_attr, y_true, y_pred, y_prob = \
         standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
@@ -766,7 +802,6 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
     df = pd.DataFrame.from_dict(mv_dict, orient="index").stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
-    df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     # Fix the order in which the metrics appear
     metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
     df.reset_index(inplace=True)
@@ -813,7 +848,7 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
 
 
 def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
-                               sig_dec=4, **kwargs):
+                         **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
     Args:
@@ -824,15 +859,11 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
         y_pred (array-like, 1-D): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
-        sig_dec (int): number of significant decimals to which to round
-            measure values. Defaults to 4.
     """
     #
     # Validate and Format Arguments
     if not isinstance(priv_grp, int):
         raise ValueError("priv_grp must be an integer value")
-    if not isinstance(sig_dec, int):
-        raise ValueError("sig_dec must be an integer value")
     X, prtc_attr, y_true, y_pred, _ = \
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
@@ -858,7 +889,6 @@ def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
     df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
-    df.loc[:, 'Value'] = df['Value'].astype(float).round(sig_dec)
     return df
 
 

@@ -26,7 +26,9 @@ def binary_prediction_results(y_true, y_pred):
             objects holding the ground truth and predictions (respectively),
             on which validation has already been run.
     """
-    tn, fp, fn, tp = sk_metric.confusion_matrix(y_true, y_pred).ravel()
+    # include labels below to avoid errant results where y_true==y_pred
+    tn, fp, fn, tp = sk_metric.confusion_matrix(y_true, y_pred,
+                                                labels=[0, 1]).ravel()
     counts = {'TP':tp, 'FP':fp, 'TN':tn, 'FN':fn}
     return counts
 
@@ -123,8 +125,11 @@ def roc_auc_score(y_true, y_pred):
 
 
 def pr_auc_score(y_true, y_pred):
-    prc, rec, _ = sk_metric.precision_recall_curve(y_true, y_pred)
-    res = sk_metric.auc(prc, rec)
+    try:
+        prc, rec, _ = sk_metric.precision_recall_curve(y_true, y_pred)
+        res = sk_metric.auc(prc, rec)
+    except ValueError:
+        res = np.nan
     return check_result(res, "PR AUC Score")
 
 
