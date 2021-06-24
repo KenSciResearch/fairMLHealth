@@ -40,7 +40,7 @@ The term "discrimination" typically evokes direct or deliberate action to disadv
 
 Disparate impact in a machine learning model originates from bias in either the data or the algorithms. A popular example is the prejudicially biased data used for recidivism prediction. Due to disparate socioeconomic factors and systemic racism in the United States, blacks have historically been (and continue to be) incarcerated at higher rates than whites [[NAACP]](#naacp).  Not coincidentally, blacks are also exonerated due to wrongful accusation at a considerably higher rate than whites [[NAACP]](#naacp).  A recidivism model that fails to adjust for circumstances such as these will predict a higher rate of recidivism among blacks.
 
-Machine learning models can also be a source of disparate impact in their implementation, through unconscious human biases that affect the fair interpretation or use of the model's results. This reference does not cover measurement of fairness at implementation. However, if you are interested in fair implementation, we recommend looking at Google's [Fairness Indicators](https://github.com/tensorflow/fairness-indicators).
+Machine learning models can also be a source of disparate impact in their implementation, through unconscious human biases that affect the fair interpretation or use of the model's results. This reference does not cover measurement of fairness at implementation. However, if you are interested in fair implementation, we recommend looking at Google's [Fairness Indicators](https://www.tensorflow.org/tfx/guide/fairness_indicators).
 
 ## Harms
 
@@ -84,7 +84,7 @@ There are six common metrics for determining whether a model is considered "fair
 
 | Category | Metric | Definition | Weakness | References |
 |------|------|------|------|------|
-| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups. <img src="https://render.githubusercontent.com/render/math?math=\dfrac{P(\hat{y} = 1 \lvert unprivileged)}{P(\hat{y} = 1 \rvert privileged)}"> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
+| Group Fairness |**Demographic Parity**| A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all protected attribute groups. <img src="https://render.githubusercontent.com/render/math?math=\dfrac{P(\hat{y}=1\lvert%20unprivileged)}{P(\hat{y}=1\rvert%20privileged)}"> <br> Harms Addressed: Allocative| Historical biases present in the data are not addressed and may still bias the model. | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||**Equalized Odds**| Odds are equalized if P(+) is approximately the same for all protected attribute groups.<br>  **Equal Opportunity** is a special case of equalized odds specifying that P(+\|y=1) is approximately the same across groups. <br> Harms Addressed: Allocative, Representational | Historical biases present in the data  are not addressed and may still bias the model. | [Hardt *et al* (2016)](#hardt2016_ref) |
 ||**Predictive Parity**| This parity exists where the Positive Predictive Value is approximately the same for all protected attribute groups. <br> Harms Addressed: Allocative, Representational | Historical biases present in the data are not addressed and may still bias the model.  | [Zafar *et al* (2017)](#zafar2017_ref) |
 ||||||
@@ -184,7 +184,7 @@ Measures of individual fairness determine if "similar" individuals are likely to
 
 ### Consistency Scores <a id="consistency_score"></a>
 Consistency scores measure the similarity between specific predictions and the predictions of like individuals. They are not specific to a particular attribute, but rather they evaluate the generally equal treatment of equal individuals. In [AIF360](https://github.com/IBM/AIF360), the consistency score is calculated as the compliment of the mean distance to the score of the mean nearest neighbor, using Scikit-Learn's Nearest Neighbors algorithm (default: 5 neighbors determined by the Ball Tree algorithm). For this measure, values closer to 1 indicate greater consistency, and those closer to zero indicate less consistency. More information about consistency scores is available in [[Zemel (2013)]](#zemel2013_ref).
-> <img src="https://render.githubusercontent.com/render/math?math=consistency\_score = 1 - \frac{1}{n\cdot\text{n_neighbors}}\sum_{i = 1}^n |\hat{y}_i - \sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)} \hat{y}_j|">
+> <img src="https://render.githubusercontent.com/render/math?math=consistency\_score%20=%201%20-%20\frac{1}{n\cdot\text{n_neighbors}}\sum_{i%20=%201}^n%20|\hat{y}_i%20-%20\sum_{j\in\mathcal{N}_{\text{n_neighbors}}(x_i)}%20\hat{y}_j|">
 
 
 ### The Generalized Entropy Index and Related Measures
@@ -193,17 +193,17 @@ The *Generalized Entropy (GE) Index* was proposed as a metric for income inequal
 
 #### Special Cases
 The *Theil Index* occurs where the <img src="https://render.githubusercontent.com/render/math?math=GE"> alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1.
-> <img src="https://render.githubusercontent.com/render/math?math=Theil Index = GE(\alpha = 1)">
+> <img src="https://render.githubusercontent.com/render/math?math=Theil%20Index%20=%20GE(\alpha%20=%201)">
 
 The *Coefficient  of  Variation* is two times the square root of the <img src="https://render.githubusercontent.com/render/math?math=GE"> where alpha is equal to 2.
-> <img src="https://render.githubusercontent.com/render/math?math=Coefficient of Variation = 2*\sqrt{GE(\alpha = 2)}">
+> <img src="https://render.githubusercontent.com/render/math?math=Coefficient%20of%20Variation%20=%202*\sqrt{GE(\alpha%20=%202)}">
 
 #### Generalized Entropy of Error
 *Generalized Entropy Error* is the Generalized Entropy Index of the prediction error. Like the Consistency Score above, this measure is dimensionless; however, it does not provide specific information to allow discernment between groups.
-> <img src="https://render.githubusercontent.com/render/math?math=GE(Error, \alpha = 2) = GE(\hat{y}_i - y_i + 1)">
+> <img src="https://render.githubusercontent.com/render/math?math=GE(Error,%20\alpha%20=%202)%20=%20GE(\hat{y}_i%20-%20y_i%20+%201)">
 
 *Between Group Generalized Entropy Error* is the Generalized Entropy Index for the weighted means of group-specific errors. More information is available in [Speicher (2013)](#speicher2018_ref).
-> <img src="https://render.githubusercontent.com/render/math?math=GE(Error_{group}, \alpha = 2) = GE( [N_{unprivileged}*mean(Error_{unprivileged}), N_{privileged}*mean(Error_{privileged})] )">
+> <img src="https://render.githubusercontent.com/render/math?math=GE(Error_{group},%20\alpha%20=%202)%20=%20GE(%20[N_{unprivileged}*mean(Error_{unprivileged}),%20N_{privileged}*mean(Error_{privileged})]%20)">
 
 
 ## Comparing Similarity-Based Measures
@@ -309,7 +309,7 @@ For more examples of fairness measurement using the FairMLHealth tool, see the [
 
 ## Additional Resources and Tutorials <a id="additional_resources"></a>
 
-[Fairness Indicators](https://www.tensorflow.org/tfx/fairness_indicators) - A TensorFlow-enabled suite designed for simulation of long-term effects caused by the implementation of a machine learning model.
+[Fairness Indicators](https://www.tensorflow.org/tfx/guide/fairness_indicators) - A TensorFlow-enabled suite designed for simulation of long-term effects caused by the implementation of a machine learning model.
 
 ["A Tutorial on Fairness in Machine Learning" by Ziyuan Zhong](https://towardsdatascience.com/a-tutorial-on-fairness-in-machine-learning-3ff8ba1040cb) - A popular reference with additional background on fairness metrics.
 
@@ -329,7 +329,7 @@ Agarwal, A., Dudik, M., & Wu, Z. S. (2019, May). Fair regression: Quantitative d
 Bantilan N (2018). Themis-ml: A fairness-aware machine learning interface for end-to-end discrimination discovery and mitigation. Journal of Technology in Human Services, 36(1), 15-30. Retrieved from [https://www.tandfonline.com/doi/abs/10.1080/15228835.2017.1416512](https://www.tandfonline.com/doi/abs/10.1080/15228835.2017.1416512)
 
 <a id="barocas2016_ref"></a>
-Barocas S, & Selbst AD (2016). Big data's disparate impact. California Law Review, 104, 671. Retrieved from [http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf](http://www.californialawreview.org/wp-content/uploads/2016/06/2Barocas-Selbst.pdf)
+Barocas S, & Selbst AD (2016). Big data's disparate impact. California Law Review, 104, 671. Retrieved from [https://www.cs.yale.edu/homes/jf/BarocasDisparateImpact.pdf](https://www.cs.yale.edu/homes/jf/BarocasDisparateImpact.pdf)
 
 Bellamy RK, Dey K, Hind M, Hoffman SC, Houde S, Kannan K, ... & Nagar S (2018). AI Fairness 360: An extensible toolkit for detecting, understanding, and mitigating unwanted algorithmic bias. arXiv Preprint. [arXiv:1810.01943.](https://arxiv.org/abs/1810.01943). See Also [AIF360 Documentation](http://aif360.mybluemix.net/)
 
@@ -345,7 +345,7 @@ Equal Employment Opportunity Commission, & Civil Service Commission, Department 
 Hardt M, Price E, & Srebro N (2016). Equality of opportunity in supervised learning. In Advances in neural information processing systems (pp. 3315-3323). Retrieved from [http://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning.pdf](http://papers.nips.cc/paper/6374-equality-of-opportunity-in-supervised-learning.pdf)
 
 <a id="hcup_ref"></a>
-Healthcare Cost and Utilization Project (HCUP) (2017, March). HCUP CCS. Agency for Healthcare Research and Quality, Rockville, MD. Retrieved from [www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp)
+Healthcare Cost and Utilization Project (HCUP) (2017, March). HCUP CCS. Agency for Healthcare Research and Quality, Rockville, MD. Retrieved from [https://www.hcup-us.ahrq.gov](https://www.hcup-us.ahrq.gov)
 
 Johnson AEW, Pollard TJ, Shen L, Lehman L, Feng M, Ghassemi M, Moody B, Szolovits P, Celi LA, & Mark RG (2016). Scientific Data. MIMIC-III, a freely accessible critical care database. DOI: 10.1038/sdata.2016.35. Retrieved from [http://www.nature.com/articles/sdata201635](http://www.nature.com/articles/sdata201635)
 
@@ -356,7 +356,7 @@ Kearns, M., Neel, S., Roth, A., & Wu, Z. S. (2018, July). Preventing fairness ge
 Kim M, Reingol O, & Rothblum G (2018). Fairness through computationally-bounded awareness. In Advances in Neural Information Processing Systems (pp. 4842-4852). Retrieved from [https://arxiv.org/pdf/1803.03239.pdf](https://arxiv.org/pdf/1803.03239.pdf)
 
 <a id="naacp"></a>
-National Association for the Advancement of Colored People (NAACP) (2012). Criminal Justice Fact Sheet. NAACP. Retrieved from http://www.naacp.org/pages/criminal-justice-fact-sheet.
+National Association for the Advancement of Colored People (NAACP) (2012). Criminal Justice Fact Sheet. NAACP. Retrieved from https://naacp.org/resources/criminal-justice-fact-sheet.
 
 <a id="romei2014_ref"></a>
 Romei, A., & Ruggieri, S. (2014). A multidisciplinary survey on discrimination analysis. The Knowledge Engineering Review, 29(5), 582-638. Retrieved from [https://www.cambridge.org/core/journals/knowledge-engineering-review/article/multidisciplinary-survey-on-discrimination-analysis/D69E925AC96CDEC643C18A07F2A326D7](https://www.cambridge.org/core/journals/knowledge-engineering-review/article/multidisciplinary-survey-on-discrimination-analysis/D69E925AC96CDEC643C18A07F2A326D7)

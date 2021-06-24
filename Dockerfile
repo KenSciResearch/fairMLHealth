@@ -5,14 +5,9 @@ RUN apt-get install -y libgomp1 gcc g++
 
 WORKDIR /kensci
 COPY . .
-# ARG PIP_EXTRA_INDEX_URL
-RUN python3 -m pip install --upgrade wheel setuptools pip
-RUN python3 setup.py install
-RUN python3 -m pip install -U pytest
 
-# ensure that python3 kernel is avialble
-ENV IS_CICD=true
-RUN python3 -m pytest
+# Call script that sets up and runs test environment
+RUN /bin/bash build_test.sh
 
 # create artifacts folder for built package.
 RUN mkdir /artifacts
