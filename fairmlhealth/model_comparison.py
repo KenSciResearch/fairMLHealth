@@ -25,7 +25,7 @@ from .__validation import ValidationError
 
 def measure_model(test_data, targets, protected_attr, model=None,
                   predictions=None, probabilities=None,
-                  pred_type="classification", flag_oor=False):
+                  pred_type="classification", flag_oor=True):
     """ Generates a report of fairness measures for the model
 
     Args:
@@ -57,7 +57,7 @@ def measure_model(test_data, targets, protected_attr, model=None,
 
 def compare_models(test_data, targets, protected_attr, models=None,
                    predictions=None, probabilities=None,
-                   pred_type="classification", flag_oor=False):
+                   pred_type="classification", flag_oor=True):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
