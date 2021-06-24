@@ -15,6 +15,11 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Validation added to check http & https URLs in notebooks and markdown documents.
 - Windows added as agent to CI pipeline (to test on multiple OS)
 
+## [0.1.10] - 2021-06-08
+### Testing Updates
+- Validation added to check http & https URLs in notebooks and markdown documents.
+- Windows added as agent to CI pipeline (to test on multiple OS)
+
 ## [0.1.9] - 2021-04-19
 ### Reporting Updates
 - Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
