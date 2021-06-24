@@ -2,7 +2,6 @@
 from aif360.sklearn.metrics import difference, ratio
 import pandas as pd
 from sklearn.metrics import precision_score
-from sklearn.exceptions import UndefinedMetricWarning
 import warnings
 
 from .__performance_metrics import (
