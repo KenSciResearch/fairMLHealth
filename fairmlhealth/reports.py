@@ -25,7 +25,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from . import tutorial_helpers as helpers
-from .__validation import format_errwarn, validate_targets, validate_preds, ValidationError
+from .__validation import format_errwarn, ValidationError
 
 
 
@@ -304,6 +304,25 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
         #return __regression_performance_report(X, y_true, y_pred, features, add_overview)
+
+
+def sort_report(report):
+    """ Sorts columns in standardized order
+
+    Args:
+        report (pd.DataFrame): any of the stratified reports produced by this
+        module
+
+    Returns:
+        pd.DataFrame: sorted report
+    """
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
+    head_names = ['Feature Name', 'Feature Value', 'Obs.',
+                 f'{yname} Mean', f'{yhname} Mean']
+    head_cols = [c for c in head_names if c in report.columns]
+    tail_cols = sorted([c for c in report.columns if c not in head_cols])
+    return report[head_cols + tail_cols]
 
 
 def sort_report(report):
