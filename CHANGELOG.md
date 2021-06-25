@@ -6,7 +6,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 
 ## [0.1.14] - 2021-06-25
-### Flag Update
+### Cohorting Feature
 - Adds cohorting wrapper which iterates to create separate reports by group
 
 ## [0.1.13] - 2021-06-25
