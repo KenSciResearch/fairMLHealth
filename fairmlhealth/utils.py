@@ -153,6 +153,8 @@ def iterate_cohorts(func):
             cix = cohorts.index
             cols = cohorts.columns.tolist()
             cgrp = cohorts.groupby(cols)
+            limit_alert(cgrp, "permutations of cohorts", 8)
+            #
             results = []
             for k in cgrp.groups.keys():
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
@@ -180,6 +182,17 @@ def is_dictlike(obj):
     dictlike = all([callable(getattr(obj, "keys", None)),
                     not hasattr(obj, "size")])
     return dictlike
+
+
+def limit_alert(items:list=None, item_name="", limit:int=100,
+                issue:str="This may slow processing time."):
+    """ Warns the user if there are too many items due to potentially slowed
+        processing time
+    """
+    if any(items):
+        if len(items) > limit:
+            msg = f"More than {limit} {item_name} detected. {issue}"
+            warn(msg)
 
 
 def validate_notebook_requirements():
