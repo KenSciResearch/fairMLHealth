@@ -101,7 +101,7 @@ def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
 
 
 def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
-                sig_fig:int=4, flag_oor=False, **kwargs):
+                sig_fig:int=4, flag_oor=True, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
@@ -217,8 +217,7 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
     #
     results['Obs.'] = results['Obs.'].astype(float).astype(int)
     results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
-    n_missing = X_df[strat_feats].replace('nan', np.nan
-                                ).isna().sum().reset_index()
+    n_missing = X_df[strat_feats].replace('nan', np.nan).isna().sum().reset_index()
     n_missing.columns = ['Feature Name', 'Missing Values']
     entropy = X_df[strat_feats].apply(axis=0, func=entropy).reset_index()
     entropy.columns = ['Feature Name', 'Entropy']
@@ -303,7 +302,7 @@ def sort_report(report):
     return report[head_cols + tail_cols]
 
 
-def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
+def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
                    pred_type="classification", priv_grp=1, sig_fig:int=4,
                    **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
