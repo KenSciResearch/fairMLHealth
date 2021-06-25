@@ -165,8 +165,13 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
     """
     #
     def entropy(x):
-        ''' Calculates the entropy of a series '''
-        return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
+        # use float type for x to avoid boolean interpretation issues if any
+        #   pd.NA (integer na) values are prent
+        try:
+            _x = x.astype(float)
+        except ValueError: # convert strings to numeric categories
+            _x = pd.Categorical(x).codes
+        return stats.entropy(np.unique(_x, return_counts=True)[1], base=2)
 
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
