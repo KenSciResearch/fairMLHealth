@@ -189,11 +189,13 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
             over_max_vals.append(f)
         else:
             pass
+    ''' #ToDo: do we want to keep this alert?
     if any(over_max_vals):
         print(f"USER ALERT! The following features have more than {max_cats}",
               "values, which will slow processing time. Consider reducing to",
               f"bins or quantiles: {over_max_vals}")
-    elif len(df.columns) == 0:
+    '''
+    if len(df.columns) == 0:
         raise ValidationError("Error during preprocessing")
     return df
 
