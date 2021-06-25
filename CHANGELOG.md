@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.15] - 2021-06-25
+### Cohorting Feature
+- Enables regression versions of reporting functions, with basic measures added for the regression version of bias_report.
+- Adds tutorial, template, and example notebooks for regression features
+- Improves management of significant figures as required to enable flagging of regression outputs
+
+
 ## [0.1.14] - 2021-06-25
 ### Cohorting Feature
 - Adds cohorting wrapper which iterates to create separate reports by group
