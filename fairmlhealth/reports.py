@@ -26,7 +26,7 @@ from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from . import tutorial_helpers as helpers
 from .__validation import ValidationError
-from .utils import format_errwarn, iterate_cohorts
+from .utils import format_errwarn, iterate_cohorts, limit_alert
 
 
 # ToDo: find better solution for these warnings
@@ -205,10 +205,13 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     if features is None:
         features = X_df.columns.tolist()
     strat_feats = [f for f in features if f in X_df.columns]
+    limit_alert(strat_feats, item_name="features")
     #
     if targets is None:
         targets = Y_df.columns.tolist()
     strat_targs = [t for t in targets if t in Y_df.columns]
+    limit_alert(strat_targs, item_name="targets", limit=3,
+                issue="This may make the output difficult to read.")
     #
     res = []
     # "Obs."" included in index for ease of calculation
@@ -508,6 +511,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
     if add_overview:
@@ -569,6 +573,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
     if add_overview:
@@ -630,6 +635,7 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
     rprt = sort_report(results)
@@ -662,6 +668,7 @@ def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs)
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
     rprt = sort_report(results)
