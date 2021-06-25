@@ -604,8 +604,13 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
         reformat those data into quantiles
     """
     #
+    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
+
     def __bias_rep(y_true, y_pred, pa_name, priv_grp=1):
         gf_vals = {}
+        gf_vals['Selection Ratio'] = aif.ratio(pdmean, y_true, y_pred,
+                                               prot_attr=pa_name,
+                                               priv_group=priv_grp)
         gf_vals['PPV Ratio'] = \
             fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Ratio'] =  \
@@ -613,6 +618,9 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
         gf_vals['FPR Ratio'] =  \
             fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
         #
+        gf_vals['Selection Diff'] = aif.difference(pdmean, y_true, y_pred,
+                                                    prot_attr=pa_name,
+                                                    priv_group=priv_grp)
         gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
