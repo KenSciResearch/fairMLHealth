@@ -147,7 +147,7 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self, flag_oor=False):
+    def compare_measures(self, flag_oor=True):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
 
