@@ -47,12 +47,15 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
     Returns:
         bool: difference is statistically significant
     """
-    sr = []
+    pvals = []
+    # Create a list of p-values for each of n_trials
     for i in range( 0, n_trials):
-        sr += [func(np.random.choice(a, size=n_samples, replace=True),
-                    np.random.choice(b, size=n_samples, replace=True))[1]]
-    sr = [int(v <= alpha) for v in sr]
-    result = bool(np.mean(sr) >= (1-alpha))
+        pvals += [func(np.random.choice(a, size=n_samples, replace=True),
+                       np.random.choice(b, size=n_samples, replace=True))[1]
+                  ]
+    # calculate the proportion of trials for which p < alpha
+    pvals = [int(v <= alpha) for v in pvals]
+    result = bool(np.mean(pvals) >= (1-alpha))
     return result
 
 
