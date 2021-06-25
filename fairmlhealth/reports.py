@@ -121,8 +121,8 @@ def flag(df, caption="", as_styler=True):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", flag_oor=False, **kwargs):
-    """\Generates a table of stratified bias metrics
+                pred_type="classification", flag_oor=True, **kwargs):
+    """ Generates a table of stratified bias metrics
 
     Args:
         X (array-like): Sample features
@@ -309,7 +309,7 @@ def sort_report(report):
     return report[head_cols + tail_cols]
 
 
-def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
+def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
                    pred_type="classification", priv_grp=1, **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
     relative to their input data

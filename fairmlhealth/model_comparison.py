@@ -164,7 +164,7 @@ class FairCompare(ABC):
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
-                res = self.measure_model(model_name)
+                res = self.measure_model(model_name, flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
