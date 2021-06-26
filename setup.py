@@ -4,11 +4,6 @@
 from setuptools import setup, find_packages
 
 
-# Set strings that should be defined elsewhere. ToDo: define elsewhere
-long_description = ("A library facilitating fairness measurement" +
-                    " and deployment of fairness-aware ML algorithms")
-
-
 def _get_version():
     import json
     import os
@@ -19,17 +14,28 @@ def _get_version():
     )
     return json.load(open(version_file))['version']
 
-#
+
+# Set strings that should be defined elsewhere. ToDo: define elsewhere
+long_description = ("A library facilitating fairness measurement" +
+                    " and deployment of fairness-aware ML algorithms")
+
+
+# OS-specific dependencies required to set up the test environment
 os_deps = ['pypiwin32; platform_system == "Windows"',
            'pywin32; platform_system == "Windows"'
             ]
+
+
+# Requirements for the test environment
 test_deps = ["pytest==5.4.2", "ipython", "ipyparallel", "nbformat", "nbconvert",
              "regex"] + os_deps
+
 
 # Requirements for running tutorial notebooks
 tutorial_deps = ['fairlearn>=0.4.6', 'lightgbm', 'matplotlib', 'seaborn',
                  'xgboost'
                  ]
+
 
 setup(
     name='fairmlhealth',

@@ -36,14 +36,6 @@ filterwarnings('ignore', module='sklearn')
 
 ''' Deprecated Public Functions '''
 
-def flag_suspicious(df, caption="", as_styler=False):
-    warn(
-            "flag_suspicious function will be deprecated in version 2.0" +
-            " Use flag instead.", PendingDeprecationWarning
-        )
-    return flag(df, caption="", as_styler=False)
-
-
 def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
                             priv_grp=1, **kwargs):
     warn(
@@ -112,7 +104,7 @@ def regression_performance(y_true, y_pred):
 ''' Main Reports '''
 
 
-def flag(df, caption="", as_styler=False):
+def flag(df, caption="", as_styler=True):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
     Args:
@@ -125,77 +117,49 @@ def flag(df, caption="", as_styler=False):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    if caption is None:
-        caption = "Fairness Measures"
-    #
-    idx = pd.IndexSlice
-    measures = df.index.get_level_values(1)
-    ratios = df.loc[idx['Group Fairness',
-                    [c.lower().endswith("ratio") for c in measures]], :].index
-    difference = df.loc[idx['Group Fairness',
-                        [c.lower().endswith("difference")
-                         for c in measures]], :].index
-    cs_high = df.loc[idx['Individual Fairness',
-                     [c.lower().replace(" ", "_") == "consistency_score"
-                      for c in measures]], :].index
-    cs_low = df.loc[idx['Individual Fairness',
-                        [c.lower().replace(" ", "_")
-                            == "generalized_entropy_error"
-                         for c in measures]], :].index
-    #
-    def color_diff(row):
-        clr = ['color:magenta'
-               if (row.name in difference and not -0.1 < i < 0.1)
-               else '' for i in row]
-        return clr
-
-    def color_if(row):
-        clr = ['color:magenta'
-               if (row.name in cs_high and i < 0.8) or
-                  (row.name in cs_low and i > 0.2)
-               else '' for i in row]
-        return clr
-
-    def color_ratios(row):
-        clr = ['color:magenta'
-               if (row.name in ratios and not 0.8 < i < 1.2)
-               else '' for i in row]
-        return clr
-
-    styled = df.style.set_caption(caption
-                                  ).apply(color_diff, axis=1
-                                  ).apply(color_ratios, axis=1
-                                  ).apply(color_if, axis=1)
-    # Correct management of metric difference has yet to be determined for
-    #   regression functions. Add style to o.o.r. difference for binary
-    #   classification only
-    if "MSE Ratio" not in measures:
-        styled.apply(color_diff, axis=1)
-    # return pandas styler if requested
-    if as_styler:
-        return styled
-    else:
-        return HTML(styled.render())
+    return __Flagger().apply_flag(df, caption, as_styler)
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", priv_grp=1):
-    """
+                pred_type="classification", flag_oor=True, priv_grp=1):
+    """ Generates a table of stratified bias metrics
+
+    Args:
+        X (array-like): Sample features
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        flag_oor (bool): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range). Defaults to False.
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas Data Frame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_bias_report(X, y_true, y_pred, features, priv_grp)
+        df = __classification_bias_report(X, y_true, y_pred, features, priv_grp)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+        # df = __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+    if flag_oor:
+        df = flag(df)
+    return df
 
 
 def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
-    """
-    Generates a table of stratified data metrics
+    """ Generates a table of stratified data metrics
 
     Args:
         X (pandas dataframe or compatible object): sample data to be assessed
@@ -206,6 +170,8 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
             Defaults to None (i.e. all columns).
         targets (list): columns in Y to be assessed if not all columns.
             Defaults to None (i.e. all columns).
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -292,7 +258,25 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
 
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
                       pred_type="classification", add_overview=True):
-    """
+    """ Generates a table of stratified performance metrics
+
+     Args:
+        X (pandas dataframe or compatible object): sample data to be assessed
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas DataFrame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
@@ -325,39 +309,45 @@ def sort_report(report):
     return report[head_cols + tail_cols]
 
 
-def sort_report(report):
-    """ Sorts columns in standardized order
+def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
+                   pred_type="classification", priv_grp=1, **kwargs):
+    """ Generates a summary of fairness measures for a set of predictions
+    relative to their input data
 
     Args:
-        report (pd.DataFrame): any of the stratified reports produced by this
-        module
+        X (array-like): Sample features
+        prtc_attr (array-like, named): Values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        flag_oor (bool): if true, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range). Defaults to False.
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+
+    Raises:
+        ValueError
 
     Returns:
-        pd.DataFrame: sorted report
-    """
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
-    head_names = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
-    head_cols = [c for c in head_names if c in report.columns]
-    tail_cols = sorted([c for c in report.columns if c not in head_cols])
-    return report[head_cols + tail_cols]
-
-
-def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None,
-                   pred_type="classification", priv_grp=1, **kwargs):
-    """
+        pandas DataFrame
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
+        df = __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
                                         priv_grp, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+        #df = __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+    if flag_oor:
+        df = flag(df)
+    return df
 
 
 ''' Private Functions '''
@@ -693,6 +683,7 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
                              priv_grp=1, **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
+
     Args:
         X (array-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
@@ -708,6 +699,7 @@ def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
                                         priv_grp=1):
         """ Returns a dictionary containing group fairness measures specific
             to binary classification problems
+
         Args:
             X (pandas DataFrame): Sample features
             pa_name (str):
@@ -904,4 +896,123 @@ def __clean_names(col):
     else:
         display_name = col
     return display_name
+
+
+class __Flagger():
+    """
+    """
+    diffs = ["auc difference" , "balanced accuracy difference",
+            "equalized odds difference", "positive predictive parity difference",
+            "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
+    ratios = ["balanced accuracy ratio", "disparate impact ratio ",
+                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+    stats_high = ["consistency score"]
+    stats_low =["between-group gen. entropy error"]
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.df = None
+        self.labels = None
+        self.label_type = None
+        self.flag_type = "background-color"
+        self.flag_color = "magenta"
+
+    def color_diff(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lbls = self.df.loc[idx['Group Fairness',
+                        [c.lower() in self.diffs for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lbls and not -0.1 < i < 0.1)
+                    else '' for i in s]
+        else:
+            lbls = self.diffs
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name.lower() in lbls and not -0.1 < i < 0.1)
+                    else '' for i in s]
+        return clr
+
+    def color_st(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lb_high = self.df.loc[idx['Individual Fairness',
+                        [c.lower() in self.stats_high
+                        for c in self.labels]], :].index
+            lb_low = self.df.loc[idx['Individual Fairness',
+                        [c.lower() in self.stats_low
+                                for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lb_high and i < 0.8)
+                        or (s.name  in lb_low and i > 0.2)
+                    else '' for i in s]
+        else:
+            lb_high = self.stats_high
+            lb_low = self.stats_low
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name.lower() in lb_high and i < 0.8)
+                        or (s.name.lower() in lb_low and i > 0.2)
+                    else '' for i in s]
+        return clr
+
+    def color_ratio(self, s):
+        if self.label_type == "index":
+            idx = pd.IndexSlice
+            lbls = self.df.loc[idx['Group Fairness',
+                        [c.lower() in self.ratios for c in self.labels]], :].index
+            clr = [f'{self.flag_type}:{self.flag_color}'
+                    if (s.name in lbls and not 0.8 < i < 1.2)
+                    else '' for i in s]
+        else:
+            lbls = self.ratios
+            clr = [f'{self.flag_type}:{self.flag_color}'
+               if (s.name.lower() in lbls and not 0.8 < i < 1.2)
+               else '' for i in s]
+        return clr
+
+    def set_measure_labels(self, df):
+        try:
+            labels = df.index.get_level_values(1)
+            label_type = "index"
+        except:
+            labels = df.columns.tolist()
+            label_type = "columns"
+        return df, labels, label_type
+
+    def apply_flag(self, df, caption="", as_styler=True):
+        """ Generates embedded html pandas styler table containing a highlighted
+            version of a model comparison dataframe
+        Args:
+            df (pandas dataframe): Model comparison dataframe (see)
+            caption (str, optional): Optional caption for table. Defaults to "".
+            as_styler (bool, optional): If True, returns a pandas Styler of the
+                highlighted table (to which other styles/highlights can be added).
+                Otherwise, returns the table as an embedded HTML object. Defaults
+                to False .
+        Returns:
+            Embedded html or pandas.io.formats.style.Styler
+        """
+        if caption is None:
+            caption = "Fairness Measures"
+        #
+        self.reset()
+        self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        if self.label_type == "index":
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=1
+                                    ).apply(self.color_ratio, axis=1
+                                    ).apply(self.color_st, axis=1)
+        else:
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=0
+                                    ).apply(self.color_ratio, axis=0
+                                    ).apply(self.color_st, axis=0)
+        # return pandas styler if requested
+        if as_styler:
+            return styled
+        else:
+            return HTML(styled.render())
+
+
 

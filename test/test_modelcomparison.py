@@ -55,43 +55,47 @@ class TestCompModFunction:
 
     def test_single_dataInputs(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
-                                     self.model_dict)
+                                     self.model_dict, flag_oor=False)
         self.is_result_valid(result)
 
     def test_model_list(self):
         result = fhmc.compare_models(self.X, self.y, self.prtc_attr,
-                                     [self.model_dict[0]])
+                                     [self.model_dict[0]], flag_oor=False)
         self.is_result_valid(result)
 
     def test_mixed_groupings(self):
         result = fhmc.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
-                                     [self.model_dict[0], self.model_dict[1]])
+                                     [self.model_dict[0], self.model_dict[1]],
+                                     flag_oor=False)
         self.is_result_valid(result)
 
     def test_with_protected_attributes(self):
         result = fhmc.compare_models([self.X, self.X], [self.y, self.y],
                                      [self.prtc_attr, self.prtc_attr],
-                                     [self.model_dict[0], self.model_dict[1]])
+                                     [self.model_dict[0], self.model_dict[1]],
+                                     flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_not_models(self):
         result = fhmc.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
-                                     predictions=[self.y, self.y])
+                                     predictions=[self.y, self.y],
+                                     flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_and_probs(self):
         result = fhmc.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      predictions=[self.y, self.y],
-                                     probabilities=[self.y, self.y])
+                                     probabilities=[self.y, self.y],
+                                     flag_oor=False)
         self.is_result_valid(result)
 
     def test_multiple_calls(self):
         args = (self.X, self.y, self.prtc_attr, self.model_dict[0])
-        _ = fhmc.compare_models(*args)
-        result = fhmc.compare_models(*args)
+        _ = fhmc.compare_models(*args, flag_oor=False)
+        result = fhmc.compare_models(*args, flag_oor=False)
         self.is_result_valid(result)
 
 
@@ -104,53 +108,61 @@ class TestCompModValidations:
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {1: self.prtc_attr},
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
 
     def test_missing_models(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
-                                {0: None, 1: None})
+                                {0: None, 1: None},
+                                flag_oor=False)
 
     def test_invalid_X_member(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
-                                {0: self.y, 1: self.y})
+                                {0: self.y, 1: self.y},
+                                flag_oor=False)
 
     def test_invalid_y_member(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: None},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
 
     def test_invalid_prtc_member(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: None},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
 
     def test_invalid_model_member(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: None},
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
 
     def test_differing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
 
     def test_missing_keys(self):
         with pytest.raises(Exception):
             fhmc.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 None,
-                                self.model_dict)
+                                self.model_dict,
+                                flag_oor=False)
