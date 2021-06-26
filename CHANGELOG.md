@@ -9,32 +9,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 ### Cohorting Feature
 - Adds cohorting wrapper which iterates to create separate reports by group
 
-## [0.1.13] - 2021-06-25
-### Flag Update
-- Adds flagging functionality for stratified reports (bias_report, performance_report, data_report)
-- Updates flagging function s.t. it can be called as an argument in the model_comparison or bias_report functions
-
-## [0.1.12] - 2021-06-17
-### Stratified Report Updates
-- data_report now accepts y as a data frame, enabling stratified analysis across multiple targets.
-- "Overview" column evaluating all features as one unit ("ALL_FEATURES") is now optional via add_overview argument
-
-## [0.1.11] - 2021-06-17
-### Validation Updates
-- Validation and preprocessing are now in individual modules to reduce redundancy and improve readability
-- Bugs in validation addressed
-
-
-## [0.1.10] - 2021-06-08
-### Testing Updates
-- Validation added to check http & https URLs in notebooks and markdown documents.
-- Windows added as agent to CI pipeline (to test on multiple OS)
-
-## [0.1.14] - 2021-06-23
-### Cohorting
-- Adds cohorting wrapper which iterates to create separate reports by group
-
-
 ## [0.1.13] - 2021-06-23
 ### Flagging Updates
 - Add flagging functionality for stratified reports (bias_report, performance_report, data_report)
