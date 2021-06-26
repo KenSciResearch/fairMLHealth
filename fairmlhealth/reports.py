@@ -930,7 +930,7 @@ class __Flagger():
                                     ).apply(self.color_ratio, axis=1
                                     ).apply(self.color_st, axis=1)
         else:
-            # styler cannot handle non-unique index
+            # pd.Styler doesn't support non-unique indices
             if len(self.df.index.unique()) <  len(self.df):
                 self.df.reset_index(inplace=True)
             styled = self.df.style.set_caption(caption
@@ -944,7 +944,6 @@ class __Flagger():
             return styled
         else:
             return HTML(styled.render())
-
 
     def color_diff(self, s):
         def is_oor(i): return bool(not -0.1 < i < 0.1 and not np.isnan(i))
