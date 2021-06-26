@@ -10,7 +10,7 @@ Resolves: (issue # or AB#)
 [Add special instructions for the reviewers. Delete if not applicable.]
 
 ## Integration Issues
-[Include detail about any breakages or dependencies, as needed]
+[Include detail about any breakages or dependencies, as needed. Delete if not applicable.]
 
 ## Checklist
 - [] I have read the [Contributing](https://github.com/KenSciResearch/docs/code_contributions/CONTRIBUTING.md) guidelines

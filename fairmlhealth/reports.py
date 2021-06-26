@@ -13,9 +13,9 @@ import logging
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score,
-                             precision_score, roc_auc_score,
-                             balanced_accuracy_score, classification_report)
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                             precision_score, balanced_accuracy_score,
+                             classification_report)
 from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
@@ -34,30 +34,10 @@ filterwarnings('ignore', module='pandas')
 filterwarnings('ignore', module='sklearn')
 
 
-''' Deprecated Public Functions '''
-
-def classification_fairness(X, prtc_attr, y_true, y_pred, y_prob=None,
-                            priv_grp=1, **kwargs):
-    warn(
-            "classification_fairness function will be deprecated in version " +
-            "2.0. Use summary_report instead.",
-            PendingDeprecationWarning
-        )
-    return __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                    priv_grp, **kwargs)
-
-
-def regression_fairness(X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
-    warn(
-            "regression_fairness function will be deprecated in version " +
-            "2.0. Use summary_report instead.", PendingDeprecationWarning
-        )
-    return __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
-
-
 ''' Mini Reports '''
 
-def classification_performance(y_true, y_pred, target_labels=None):
+def classification_performance(y_true, y_pred, target_labels=None,
+                               sig_fig:int=4):
     """ Returns a pandas dataframe of the scikit-learn classification report,
         formatted for use in fairMLHealth tools
     Args:
@@ -75,10 +55,11 @@ def classification_performance(y_true, y_pred, target_labels=None):
     accuracy = report.loc['accuracy', :]
     report.drop('accuracy', inplace=True)
     report.loc['accuracy', 'accuracy'] = accuracy[0]
+    report = report.round(sig_fig)
     return report
 
 
-def regression_performance(y_true, y_pred):
+def regression_performance(y_true, y_pred, sig_fig:int=4):
     """ Returns a pandas dataframe of the regression performance metrics,
         similar to scikit's classification_performance
     Args:
@@ -89,22 +70,21 @@ def regression_performance(y_true, y_pred):
     report = {}
     y = y_cols()['disp_names']['yt']
     yh = y_cols()['disp_names']['yh']
-    report[f'{y} Mean'] = np.mean(y_true)
-    report[f'{yh} Mean'] = np.mean(y_pred)
-    report['scMAE'] = pmtrc.scMAE(y_true, y_pred)
+    report[f'{y} Mean'] = np.mean(y_true.values)
+    report[f'{yh} Mean'] = np.mean(y_pred.values)
     report['MSE'] = mean_squared_error(y_true, y_pred)
     report['MAE'] = mean_absolute_error(y_true, y_pred)
-    report['Rsqrd'] = r2_score(y_true, y_pred)
+    report['Rsqrd'] = pmtrc.r_squared(y_true, y_pred)
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
+    report = report.round(sig_fig)
     return report
-
 
 
 ''' Main Reports '''
 
 
-def flag(df, caption="", as_styler=True):
+def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
     Args:
@@ -117,11 +97,11 @@ def flag(df, caption="", as_styler=True):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    return __Flagger().apply_flag(df, caption, as_styler)
+    return __Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
-def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", flag_oor=True, **kwargs):
+def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
+                sig_fig:int=4, flag_oor=True, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
@@ -148,18 +128,23 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
+        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+                                          features=features, **kwargs)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        # df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
+        df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+                                      features=features, **kwargs)
+    #
     if flag_oor:
-        df = flag(df)
+        df = flag(df, sig_fig=sig_fig)
+    else:
+        df = df.round(sig_fig)
     return df
 
 
-def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
-    """ Generates a table of stratified data metrics
+def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
+                sig_fig:int=4):
+    """
+    Generates a table of stratified data metrics
 
     Args:
         X (pandas dataframe or compatible object): sample data to be assessed
@@ -180,8 +165,13 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     """
     #
     def entropy(x):
-        ''' Calculates the entropy of a series '''
-        return stats.entropy(np.unique(x, return_counts=True)[1], base=2)
+        # use float type for x to avoid boolean interpretation issues if any
+        #   pd.NA (integer na) values are prent
+        try:
+            _x = x.astype(float)
+        except ValueError: # convert strings to numeric categories
+            _x = pd.Categorical(x).codes
+        return stats.entropy(np.unique(_x, return_counts=True)[1], base=2)
 
     def __data_dict(x, col):
         ''' Generates a dictionary of statistics '''
@@ -230,8 +220,7 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     #
     results['Obs.'] = results['Obs.'].astype(float).astype(int)
     results['Value Prevalence'] = results['Obs.']/X_df.shape[0]
-    n_missing = X_df[strat_feats].replace('nan', np.nan
-                                ).isna().sum().reset_index()
+    n_missing = X_df[strat_feats].replace('nan', np.nan).isna().sum().reset_index()
     n_missing.columns = ['Feature Name', 'Missing Values']
     entropy = X_df[strat_feats].apply(axis=0, func=entropy).reset_index()
     entropy.columns = ['Feature Name', 'Entropy']
@@ -254,16 +243,18 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
         rprt = pd.concat([overview, results], axis=0, ignore_index=True)
     else:
         rprt = results
+    #
     rprt = sort_report(rprt)
+    rprt = rprt.round(sig_fig)
     return rprt
 
 
-
 def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
-                      pred_type="classification", add_overview=True):
+                      pred_type="classification", sig_fig:int=4,
+                      add_overview=True):
     """ Generates a table of stratified performance metrics
 
-     Args:
+    Args:
         X (pandas dataframe or compatible object): sample data to be assessed
         y_true (array-like, 1-D): Sample targets
         y_pred (array-like, 1-D): Sample target predictions
@@ -285,12 +276,14 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        return __classification_performance_report(X, y_true, y_pred, y_prob,
+        df = __classification_performance_report(X, y_true, y_pred, y_prob,
                                                    features, add_overview)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #return __regression_performance_report(X, y_true, y_pred, features, add_overview)
+        df = __regression_performance_report(X, y_true, y_pred,
+                                               features, add_overview)
+    #
+    df = df.round(sig_fig)
+    return df
 
 
 def sort_report(report):
@@ -313,7 +306,8 @@ def sort_report(report):
 
 
 def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
-                   pred_type="classification", priv_grp=1, **kwargs):
+                   pred_type="classification", priv_grp=1, sig_fig:int=4,
+                   **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
     relative to their input data
 
@@ -346,15 +340,18 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
                                       y_pred=y_pred, y_prob=y_prob,
                                         priv_grp=priv_grp, **kwargs)
     elif pred_type == "regression":
-        msg = "Regression reporting will be available in version 2.0"
-        raise ValueError(msg)
-        #df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred, priv_grp=priv_grp, **kwargs)
+        df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
+                                  y_pred=y_pred, priv_grp=priv_grp, **kwargs)
+    #
     if flag_oor:
-        df = flag(df)
+        df = flag(df, sig_fig=sig_fig)
+    else:
+        df = df.round(sig_fig)
     return df
 
 
 ''' Private Functions '''
+
 
 @format_errwarn
 def __apply_featureGroups(features, df, func, *args):
@@ -445,6 +442,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
                     warns[f] = w
             grp_res = pd.DataFrame(grp_res, index=[0])
             grp_res.insert(0, 'Feature Name', f)
+            grp_res.insert(1, 'Feature Value', v)
             res.append(grp_res)
     if len(res) == 0:
         results = pd.DataFrame(columns=['Feature Name', 'Feature Value'])
@@ -557,7 +555,6 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
                 f'{_yh} Std. Dev.': x[yh].std(),
                 'Error Mean': (x[yh] - x[y]).mean(),
                 'Error Std. Dev.': (x[yh] - x[y]).std(),
-                'scMAE': pmtrc.scMAE(x[y], x[yh]),
                 'MAE': mean_absolute_error(x[y], x[yh]),
                 'MSE': mean_squared_error(x[y], x[yh])
                 }
@@ -611,8 +608,13 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
         reformat those data into quantiles
     """
     #
+    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
+
     def __bias_rep(y_true, y_pred, pa_name, priv_grp=1):
         gf_vals = {}
+        gf_vals['Selection Ratio'] = aif.ratio(pdmean, y_true, y_pred,
+                                               prot_attr=pa_name,
+                                               priv_group=priv_grp)
         gf_vals['PPV Ratio'] = \
             fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Ratio'] =  \
@@ -620,6 +622,9 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
         gf_vals['FPR Ratio'] =  \
             fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
         #
+        gf_vals['Selection Diff'] = aif.difference(pdmean, y_true, y_pred,
+                                                    prot_attr=pa_name,
+                                                    priv_group=priv_grp)
         gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
         gf_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
@@ -740,13 +745,6 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         gf_vals['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
                                                         prtc_attr=pa_name)
 
-        if helpers.is_kdd_tutorial():
-            gf_vals['Average Odds Difference'] = \
-                aif.average_odds_difference(y_true, y_pred, prot_attr=pa_name)
-            gf_vals['Equal Opportunity Difference'] = \
-                aif.equal_opportunity_difference(y_true, y_pred,
-                                                    prot_attr=pa_name)
-
         # Precision
         gf_vals['Positive Predictive Parity Difference'] = \
             aif.difference(precision_score, y_true,
@@ -760,7 +758,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         if y_prob is not None:
             try:
                 gf_vals['AUC Difference'] = \
-                    aif.difference(roc_auc_score, y_true, y_prob,
+                    aif.difference(pmtrc.roc_auc_score, y_true, y_prob,
                                     prot_attr=pa_name, priv_group=priv_grp)
             except:
                 pass
@@ -821,35 +819,21 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
 
 
 def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
-    def pdmean(y_true, y_pred, *args): return y_pred.mean()
-    def meanerr(y_true, y_pred, *args): return (y_pred - y_true).mean()
+    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
+    def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
     #
     gf_vals = {}
     # Ratios
     gf_vals['Mean Prediction Ratio'] = \
-        aif.ratio(pdmean, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Ratio'] = \
-        aif.ratio(pmtrc.scMAE, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Ratio'] = \
-        aif.ratio(mean_absolute_error, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Ratio'] = \
-        aif.ratio(meanerr, y_true, y_pred,
-                  prot_attr=pa_name, priv_group=priv_grp)
+        aif.ratio(pdmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
+    gf_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
+                                     prot_attr=pa_name, priv_group=priv_grp)
     # Differences
     gf_vals['Mean Prediction Difference'] = \
         aif.difference(pdmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['scMAE Difference'] = \
-        aif.difference(pmtrc.scMAE, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
     gf_vals['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['Mean Error Difference'] = \
-        aif.difference(meanerr, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
     return gf_vals
 
@@ -879,7 +863,6 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
     #
-    bias_df = pd.concat([y_true.reset_index(), y_pred], axis=1)
     gf_vals = __regression_bias(y_true, y_pred, pa_name, priv_grp=priv_grp)
     #
     if not kwargs.pop('skip_if', False):
@@ -903,35 +886,23 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     return df
 
 
-def __clean_names(col):
-    ''' If the column is a hidden variable, replaces the variable with a
-        display name
-    '''
-    yvars = y_cols()
-    if col in yvars['col_names'].values():
-        idx = list(yvars['col_names'].values()).index(col)
-        key = list(yvars['col_names'].keys())[idx]
-        display_name = yvars['disp_names'][key]
-    else:
-        display_name = col
-    return display_name
-
-
 class __Flagger():
-    """
+    """ Manages flag functionality
     """
     diffs = ["auc difference" , "balanced accuracy difference",
             "equalized odds difference", "positive predictive parity difference",
             "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
+            # flag not yet enabled for: "r2 difference"
     ratios = ["balanced accuracy ratio", "disparate impact ratio ",
-                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+              "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
+            # flag not yet enabled for: "mean prediction ratio", "mae ratio", "r2 ratio"
     stats_high = ["consistency score"]
     stats_low =["between-group gen. entropy error"]
 
     def __init__(self):
         self.reset()
 
-    def apply_flag(self, df, caption="", as_styler=True):
+    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
@@ -946,45 +917,53 @@ class __Flagger():
         """
         if caption is None:
             caption = "Fairness Measures"
+        # bools are treated as a subclass of int, so must test for both
+        if not isinstance(sig_fig, int) or isinstance(sig_fig, bool):
+            raise ValueError(f"Invalid value of significant figure: {sig_fig}")
         #
         self.reset()
         self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        #
         if self.label_type == "index":
             styled = self.df.style.set_caption(caption
                                     ).apply(self.color_diff, axis=1
                                     ).apply(self.color_ratio, axis=1
                                     ).apply(self.color_st, axis=1)
         else:
-            # styler cannot handle non-unique index
+            # pd.Styler doesn't support non-unique indices
             if len(self.df.index.unique()) <  len(self.df):
                 self.df.reset_index(inplace=True)
             styled = self.df.style.set_caption(caption
-                                ).apply(self.color_diff, axis=0
-                                ).apply(self.color_ratio, axis=0
-                                ).apply(self.color_st, axis=0)
+                                    ).apply(self.color_diff, axis=0
+                                    ).apply(self.color_ratio, axis=0
+                                    ).apply(self.color_st, axis=0)
+        # Styler will reset precision to 6 sig figs
+        styled = styled.set_precision(sig_fig)
         # return pandas styler if requested
         if as_styler:
             return styled
         else:
             return HTML(styled.render())
 
-
     def color_diff(self, s):
+        def is_oor(i): return bool(not -0.1 < i < 0.1 and not np.isnan(i))
         if self.label_type == "index":
             idx = pd.IndexSlice
             lbls = self.df.loc[idx['Group Fairness',
                         [c.lower() in self.diffs for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lbls and not -0.1 < i < 0.1)
-                    else '' for i in s]
+                   if (s.name in lbls and is_oor(i)) else '' for i in s]
         else:
             lbls = self.diffs
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name.lower() in lbls and not -0.1 < i < 0.1)
-                    else '' for i in s]
+                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
         return clr
 
     def color_st(self, s):
+        def is_oor(n, i):
+            res = bool((n in lb_low and i > 0.2)
+                        or (n in lb_high and i < 0.8) and not np.isnan(i))
+            return res
         if self.label_type == "index":
             idx = pd.IndexSlice
             lb_high = self.df.loc[idx['Individual Fairness',
@@ -994,31 +973,26 @@ class __Flagger():
                         [c.lower() in self.stats_low
                                 for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lb_high and i < 0.8)
-                        or (s.name  in lb_low and i > 0.2)
-                    else '' for i in s]
+                    if is_oor(s.name, i) else '' for i in s]
         else:
             lb_high = self.stats_high
             lb_low = self.stats_low
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name.lower() in lb_high and i < 0.8)
-                        or (s.name.lower() in lb_low and i > 0.2)
-                    else '' for i in s]
+                   if is_oor(s.name.lower(), i) else '' for i in s]
         return clr
 
     def color_ratio(self, s):
+        def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
         if self.label_type == "index":
             idx = pd.IndexSlice
             lbls = self.df.loc[idx['Group Fairness',
                         [c.lower() in self.ratios for c in self.labels]], :].index
             clr = [f'{self.flag_type}:{self.flag_color}'
-                    if (s.name in lbls and not 0.8 < i < 1.2)
-                    else '' for i in s]
+                   if (s.name in lbls and is_oor(i)) else '' for i in s]
         else:
             lbls = self.ratios
             clr = [f'{self.flag_type}:{self.flag_color}'
-               if (s.name.lower() in lbls and not 0.8 < i < 1.2)
-               else '' for i in s]
+                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
         return clr
 
     def reset(self):
