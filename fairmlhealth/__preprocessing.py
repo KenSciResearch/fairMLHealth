@@ -133,6 +133,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
         y_pred = prep_preds(y_pred, y_col, prtc_attr)
     if y_prob is not None:
         y_prob = prep_probs(y_prob, y_col, prtc_attr)
+    #
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
@@ -157,8 +158,6 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
         quantiles
     """
     #
-    max_cats = 11
-    #
     X, _, y_true, y_pred, y_prob = \
         standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                            y_prob=y_prob)
@@ -180,17 +179,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     stratified_features = [f for f in features if f not in pred_cols]
     df = df.loc[:, stratified_features + pred_cols]
     #
-    over_max_vals = []
-    for f in stratified_features:
-        if df[f].nunique() > max_cats:
-            over_max_vals.append(f)
-        else:
-            pass
-    if any(over_max_vals):
-        print(f"USER ALERT! The following features have more than {max_cats}",
-              "values, which will slow processing time. Consider reducing to",
-              f"bins or quantiles: {over_max_vals}")
-    elif len(df.columns) == 0:
+    if len(df.columns) == 0:
         raise ValidationError("Error during preprocessing")
     return df
 

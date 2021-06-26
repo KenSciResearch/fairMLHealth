@@ -25,8 +25,8 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from . import tutorial_helpers as helpers
-from .__validation import format_errwarn, ValidationError
-
+from .__validation import ValidationError
+from .utils import format_errwarn, iterate_cohorts, limit_alert
 
 
 # ToDo: find better solution for these warnings
@@ -121,7 +121,7 @@ def flag(df, caption="", as_styler=True):
 
 
 def bias_report(X, y_true, y_pred, features:list=None,
-                pred_type="classification", flag_oor=True, priv_grp=1):
+                pred_type="classification", flag_oor=True, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
@@ -148,11 +148,11 @@ def bias_report(X, y_true, y_pred, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_bias_report(X, y_true, y_pred, features, priv_grp)
+        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        # df = __regression_bias_report(X, y_true, y_pred, features, priv_grp)
+        # df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred, features=features, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -205,10 +205,13 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True):
     if features is None:
         features = X_df.columns.tolist()
     strat_feats = [f for f in features if f in X_df.columns]
+    limit_alert(strat_feats, item_name="features")
     #
     if targets is None:
         targets = Y_df.columns.tolist()
     strat_targs = [t for t in targets if t in Y_df.columns]
+    limit_alert(strat_targs, item_name="targets", limit=3,
+                issue="This may make the output difficult to read.")
     #
     res = []
     # "Obs."" included in index for ease of calculation
@@ -339,12 +342,13 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
     if pred_type not in validtypes:
         raise ValueError(f"Summary report type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_summary(X, prtc_attr, y_true, y_pred, y_prob,
-                                        priv_grp, **kwargs)
+        df = __classification_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
+                                      y_pred=y_pred, y_prob=y_prob,
+                                        priv_grp=priv_grp, **kwargs)
     elif pred_type == "regression":
         msg = "Regression reporting will be available in version 2.0"
         raise ValueError(msg)
-        #df = __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp, **kwargs)
+        #df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred, priv_grp=priv_grp, **kwargs)
     if flag_oor:
         df = flag(df)
     return df
@@ -507,6 +511,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
     if add_overview:
@@ -568,6 +573,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
     if add_overview:
@@ -584,11 +590,13 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     return rprt
 
 
-def __classification_bias_report(X, y_true, y_pred, features:list=None,
-                                 priv_grp=1):
+@iterate_cohorts
+def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -627,16 +635,20 @@ def __classification_bias_report(X, y_true, y_pred, features:list=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
     rprt = sort_report(results)
     return rprt
 
 
-def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
+@iterate_cohorts
+def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -656,6 +668,7 @@ def __regression_bias_report(X, y_true, y_pred, features:list=None, priv_grp=1):
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
         raise ValidationError("Cannot generate report with undefined targets")
+    limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
     rprt = sort_report(results)
@@ -679,10 +692,13 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
     return if_vals
 
 
-def __classification_summary(X, prtc_attr, y_true, y_pred, y_prob=None,
+@iterate_cohorts
+def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
                              priv_grp=1, **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         X (array-like): Sample features
@@ -838,11 +854,14 @@ def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
     return gf_vals
 
 
-
-def __regression_summary(X, prtc_attr, y_true, y_pred, priv_grp=1,
+@iterate_cohorts
+def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=None,
                          **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
+
+    Note: named arguments are enforced to enable use of iterate_cohorts
+
     Args:
         X (array-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
@@ -912,12 +931,43 @@ class __Flagger():
     def __init__(self):
         self.reset()
 
-    def reset(self):
-        self.df = None
-        self.labels = None
-        self.label_type = None
-        self.flag_type = "background-color"
-        self.flag_color = "magenta"
+    def apply_flag(self, df, caption="", as_styler=True):
+        """ Generates embedded html pandas styler table containing a highlighted
+            version of a model comparison dataframe
+        Args:
+            df (pandas dataframe): Model comparison dataframe (see)
+            caption (str, optional): Optional caption for table. Defaults to "".
+            as_styler (bool, optional): If True, returns a pandas Styler of the
+                highlighted table (to which other styles/highlights can be added).
+                Otherwise, returns the table as an embedded HTML object. Defaults
+                to False .
+        Returns:
+            Embedded html or pandas.io.formats.style.Styler
+        """
+        if caption is None:
+            caption = "Fairness Measures"
+        #
+        self.reset()
+        self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        if self.label_type == "index":
+            styled = self.df.style.set_caption(caption
+                                    ).apply(self.color_diff, axis=1
+                                    ).apply(self.color_ratio, axis=1
+                                    ).apply(self.color_st, axis=1)
+        else:
+            # styler cannot handle non-unique index
+            if len(self.df.index.unique()) <  len(self.df):
+                self.df.reset_index(inplace=True)
+            styled = self.df.style.set_caption(caption
+                                ).apply(self.color_diff, axis=0
+                                ).apply(self.color_ratio, axis=0
+                                ).apply(self.color_st, axis=0)
+        # return pandas styler if requested
+        if as_styler:
+            return styled
+        else:
+            return HTML(styled.render())
+
 
     def color_diff(self, s):
         if self.label_type == "index":
@@ -971,48 +1021,26 @@ class __Flagger():
                else '' for i in s]
         return clr
 
+    def reset(self):
+        self.df = None
+        self.labels = None
+        self.label_type = None
+        self.flag_type = "background-color"
+        self.flag_color = "magenta"
+
     def set_measure_labels(self, df):
         try:
             labels = df.index.get_level_values(1)
-            label_type = "index"
+            if type(labels) == pd.core.indexes.numeric.Int64Index:
+                label_type = "columns"
+            else:
+                label_type = "index"
         except:
-            labels = df.columns.tolist()
             label_type = "columns"
+        if label_type == "columns":
+            labels = df.columns.tolist()
         return df, labels, label_type
 
-    def apply_flag(self, df, caption="", as_styler=True):
-        """ Generates embedded html pandas styler table containing a highlighted
-            version of a model comparison dataframe
-        Args:
-            df (pandas dataframe): Model comparison dataframe (see)
-            caption (str, optional): Optional caption for table. Defaults to "".
-            as_styler (bool, optional): If True, returns a pandas Styler of the
-                highlighted table (to which other styles/highlights can be added).
-                Otherwise, returns the table as an embedded HTML object. Defaults
-                to False .
-        Returns:
-            Embedded html or pandas.io.formats.style.Styler
-        """
-        if caption is None:
-            caption = "Fairness Measures"
-        #
-        self.reset()
-        self.df, self.labels, self.label_type = self.set_measure_labels(df)
-        if self.label_type == "index":
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=1
-                                    ).apply(self.color_ratio, axis=1
-                                    ).apply(self.color_st, axis=1)
-        else:
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=0
-                                    ).apply(self.color_ratio, axis=0
-                                    ).apply(self.color_st, axis=0)
-        # return pandas styler if requested
-        if as_styler:
-            return styled
-        else:
-            return HTML(styled.render())
 
 
 

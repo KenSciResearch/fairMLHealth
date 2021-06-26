@@ -229,6 +229,7 @@ class FairCompare(ABC):
                     try:
                         y_pred = mdl.predict(self.X[mdl_name])
                     except BaseException as e:
+                        e = getattr(e, 'message') if 'message' in dir(e) else str(e)
                         msg = (f"Failure generating predictions for {mdl_name}"
                                " model. Verify if data are correctly formatted"
                                " for this model.") + e

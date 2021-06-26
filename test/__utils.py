@@ -1,10 +1,13 @@
 from contextlib import suppress
-from urllib3.exceptions import InsecureRequestWarning
-import warnings
+import numpy as np
 import os
+import pandas as pd
+import pytest
 import regex as re
 import requests
 from time import sleep
+from urllib3.exceptions import InsecureRequestWarning
+import warnings
 
 
 def get_urls(text_string):
@@ -104,6 +107,56 @@ def is_url_valid(url):
         is_valid = None
     return is_valid
 
+
+def synth_dataset(N:int=16):
+    """ Synthesizes a set of random data with multiple "predictions"
+
+    Args:
+        N (int, optional): Desired size of the dataset. Defaults to 16.
+
+    Returns:
+        pandas DataFrame
+
+    """
+    np.random.seed(506)
+    # If N is not divisible by 8 this will break
+    N = int(N)
+    if not N%8 == 0:
+        N += 8 - N%8
+    # Generate dataframe with ranodm information
+    df = pd.DataFrame({'A': np.random.randint(1, 4, N),
+                       'B': np.random.randint(1, int(N/2), N),
+                       'C': np.random.randint(1, N, N),
+                       'D': np.random.randint(1, int(2*N), N),
+                       'E': np.random.uniform(-10, 10, N),
+                       'prtc_attr': [0, 1]*int(N/2),
+                       'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
+                       'other': [1, 0, 0, 1]*int(N/4),
+                       'continuous_target': np.random.uniform(0, 8, N),
+                       'binary_target': np.random.randint(0, 2, N),
+                       })
+
+    # add predictions that are fair half of the time
+    half_correct = pd.Series([1, 1, 0, 0]*int(N/4))
+    df['avg_binary_pred'] = df['binary_target']
+    df.loc[half_correct.eq(0), 'avg_binary_pred'] = \
+        df['binary_target'].apply(lambda x: int(not x))
+    df['avg_cont_pred'] = df['continuous_target']
+    df.loc[half_correct.eq(0), 'avg_cont_pred'] = \
+        df['continuous_target'].apply(lambda x: x + np.random.uniform(-6, 6))
+
+    # add predictions that are biased in one direction or the other
+    against_0 = pd.Series([1, 1, 0, 1]*int(N/4))
+    df['binary_bias_against0'] = df['binary_target']
+    df.loc[against_0.eq(0), 'binary_bias_against0'] = \
+        df['binary_target'].apply(lambda x: int(not x))
+
+    toward_0 = pd.Series([1, 1, 1, 0]*int(N/4))
+    df['binary_bias_toward0'] = df['binary_target']
+    df.loc[toward_0.eq(0), 'binary_bias_toward0'] = \
+        df['binary_target'].apply(lambda x: int(not x))
+
+    return df
 
 class URLError(requests.exceptions.BaseHTTPError):
     pass
