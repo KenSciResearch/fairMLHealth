@@ -887,7 +887,7 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
 
 
 class __Flagger():
-    """
+    """ Manages flag functionality
     """
     diffs = ["auc difference" , "balanced accuracy difference",
             "equalized odds difference", "positive predictive parity difference",
