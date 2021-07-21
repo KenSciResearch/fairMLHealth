@@ -24,7 +24,6 @@ from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
-from . import tutorial_helpers as helpers
 from .__validation import ValidationError
 from .utils import format_errwarn, iterate_cohorts, limit_alert
 
