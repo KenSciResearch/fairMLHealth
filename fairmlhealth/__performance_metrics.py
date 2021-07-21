@@ -45,74 +45,95 @@ def epsilon():
     return np.finfo(np.float64).eps
 
 
-def ratio(num, den):
-    ''' Returns the ratio of num/den, avoiding division by zero errors
+def ratio(numerator, denominator):
+    ''' Returns numerator/denominator avoiding division-by-zero errors
     '''
     if den == 0:
-        return num/epsilon()
+        return numerator/epsilon()
     else:
-        return num/den
+        return numerator/denominator
 
 
 ''' Metrics '''
 
 
 def accuracy(y_true, y_pred):
+    """ Returns the accuracy value for the prediction
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     rprt =  binary_prediction_results(y_true, y_pred)
     res = ratio(rprt['TP'] + rprt['TN'], y_true.shape[0])
     return check_result(res, "Accuracy")
 
 
 def balanced_accuracy(y_true, y_pred):
+    """ Returns the balanced accuracy value for the prediction
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     sens = true_positive_rate(y_true, y_pred)
     spec = true_negative_rate(y_true, y_pred)
     res = ratio(sens + spec, 2)
     return check_result(res, "Balanced Accuracy")
 
 
-def false_negative_rate(y_true, y_pred): # Miss Rate
+def false_negative_rate(y_true, y_pred):
+    """ Returns the false negative rate (miss rate) value for the prediction
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     rprt =  binary_prediction_results(y_true, y_pred)
     res = ratio(rprt['FN'], rprt['FN'] + rprt['TP'])
     return check_result(res, "FNR")
 
 
-def false_positive_rate(y_true, y_pred): # False Alarm Rate
+def false_positive_rate(y_true, y_pred): 
+    """ Returns the false positive rate (false alarm rate) value for the prediction
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     rprt =  binary_prediction_results(y_true, y_pred)
     res = ratio(rprt['FP'], rprt['FP'] + rprt['TN'])
     return check_result(res, "FPR}")
 
 
 def f1_score(y_true, y_pred):
+    """ Returns the F1 Score value for the prediction
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     pre = precision(y_true, y_pred)
     rec = true_positive_rate(y_true, y_pred)
     res = 2*ratio(pre*rec, pre+rec)
     return check_result(res, "F1 Score")
 
 
-def scMAE(y_true, y_pred, y_range=None):
-    """ Scaled MAE, defined here as the MAE scaled by the range of true values.
-        Related metrics such as MAPE (Mean Absolute Percentage Error) or SMAPE
-        may be invalid for asymmetrical prediction ranges with negative values.
-
-        Using scaled MAE allows for a standardized "fair" range, rather than
-        re-defining this range for each individual regression problem.
-    """
-    if y_range is not None:
-        if not isinstance(y_range, (int, float)):
-            err = "Invalid y_range. Must be int or float describing true range."
-            raise ValueError(err)
-    else:
-        y_range = max(epsilon(), np.max(y_true) - np.min(y_true))
-    if y_range < 1:
-        scmae = np.mean(np.abs(y_true - y_pred))
-    else:
-        scmae = np.mean(np.abs(y_true - y_pred))/y_range
-    return scmae
-
-
 def negative_predictive_value(y_true, y_pred):
+    """ Returns the negative predictive value for the prediction: TN/(TN+FN)
+
+        Args:
+            y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+            objects holding the ground truth and predictions (respectively),
+            on which validation has already been run.
+    """
     rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TN'] + rprt['FN'], rprt['TN'] + rprt['FP'])
+    res = ratio(rprt['TN'], rprt['TN'] + rprt['FN'])
     return res
 
 
