@@ -21,8 +21,8 @@ from .utils import cb_round
 def load_icd_ccs_xwalk(code_type):
     """ Returns a pandas dataframe containing an ICD-9 to CCS crosswalk
 
-        Args:
-            code_type (str): key for file location (one of 'dx' or 'px')
+    Args:
+        code_type (str): key for file location (one of 'dx' or 'px')
     """
     urls = {'dx': "https://data.nber.org/ahrq/ccs/dxicd2ccsxw.csv",
             'px': "https://data.nber.org/ahrq/ccs/pricd2ccsxw.csv"
@@ -46,11 +46,11 @@ def load_mimic3_example(mimic_dirpath):
         If formatted data file exists, loads that file. Else, generates
         formatted data and saves in mimic_dirpath.
 
-        Args:
-            mimic_dirpath (str): valid path to downloaded MIMIC data
+    Args:
+        mimic_dirpath (str): valid path to downloaded MIMIC data
 
-        Returns:
-            pandas dataframe of formatted MIMIC-III data
+    Returns:
+        pandas dataframe of formatted MIMIC-III data
     """
     data_file = os.path.join(os.path.expanduser(mimic_dirpath),
                                 "kdd_tutorial_data.csv")

@@ -40,6 +40,7 @@ def classification_performance(y_true, y_pred, target_labels=None,
                                sig_fig:int=4):
     """ Returns a pandas dataframe of the scikit-learn classification report,
         formatted for use in fairMLHealth tools
+
     Args:
         y_true (array): Target values. Must be compatible with model.predict().
         y_pred (array): Prediction values. Must be compatible with
@@ -62,6 +63,7 @@ def classification_performance(y_true, y_pred, target_labels=None,
 def regression_performance(y_true, y_pred, sig_fig:int=4):
     """ Returns a pandas dataframe of the regression performance metrics,
         similar to scikit's classification_performance
+
     Args:
         y_true (array): Target values. Must be compatible with model.predict().
         y_pred (array): Prediction values. Must be compatible with
@@ -87,6 +89,7 @@ def regression_performance(y_true, y_pred, sig_fig:int=4):
 def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
+
     Args:
         df (pandas dataframe): Model comparison dataframe (see)
         caption (str, optional): Optional caption for table. Defaults to "".
@@ -94,6 +97,7 @@ def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
             highlighted table (to which other styles/highlights can be added).
             Otherwise, returns the table as an embedded HTML object. Defaults
             to False .
+
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
@@ -162,6 +166,9 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
         Each feature must be discrete to run stratified analysis. If any data
         are not discrete and there are more than 11 values, the reporter will
         reformat those data into quantiles
+
+    Returns:
+        pandas Data Frame
     """
     #
     def entropy(x):
@@ -294,7 +301,7 @@ def sort_report(report):
         module
 
     Returns:
-        pd.DataFrame: sorted report
+        pandas DataFrame: sorted report
     """
     yname = y_cols()['disp_names']['yt']
     yhname = y_cols()['disp_names']['yh']
@@ -364,7 +371,7 @@ def __apply_featureGroups(features, df, func, *args):
         func (function): a function accepting *args and returning a dictionary
 
     Returns:
-        pd.DataFrame: set of results for each feature-value
+        pandas DataFrame: set of results for each feature-value
     """
     #
     errs = {}
@@ -395,7 +402,7 @@ def __apply_featureGroups(features, df, func, *args):
 @format_errwarn
 def __apply_biasGroups(features, df, func, yt, yh):
     """ Iteratively applies a function across groups of each stratified feature,
-    collecting errors and warnings to be displayed succinctly after processing.
+        collecting errors and warnings to be displayed succinctly after processing.
 
     Args:
         features (list): columns of df to be iteratively analyzed
@@ -408,7 +415,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
         yh (string): name of column found in df containing predicted values
 
     Returns:
-        pd.DataFrame: set of results for each feature-value
+        pandas DataFrame: set of results for each feature-value
     """
     #
     errs = {}
@@ -452,8 +459,9 @@ def __apply_biasGroups(features, df, func, yt, yh):
 
 
 def __class_prevalence(y_true, priv_grp):
-    """Returns a dictionary of data metrics applicable to evaluation of
-    fairness
+    """ Returns a dictionary of data metrics applicable to evaluation of
+        fairness
+
     Args:
         y_true (pandas DataFrame): Sample targets
         priv_grp (int): Specifies which label indicates the privileged
@@ -469,9 +477,8 @@ def __class_prevalence(y_true, priv_grp):
 
 def __classification_performance_report(X, y_true, y_pred, y_prob=None,
                                         features:list=None, add_overview=True):
-    """
-    Generates a table of stratified performance metrics for each specified
-    feature
+    """Generates a table of stratified performance metrics for each specified
+        feature
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -481,6 +488,9 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
             to None.
         features (list): columns in df to be assessed if not all columns.
             Defaults to None.
+
+    Returns:
+        pandas DataFrame
     """
     #
     def __perf_rep(x, y, yh, yp):
@@ -589,11 +599,10 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
 
 @iterate_cohorts
 def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
-    """
-    Generates a table of stratified fairness metrics metrics for each specified
-    feature
+    """ Generates a table of stratified fairness metrics metrics for each specified
+        feature
 
-    Note: named arguments are enforced to enable use of iterate_cohorts
+        Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         df (pandas dataframe or compatible object): data to be assessed
@@ -681,7 +690,8 @@ def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs)
 
 
 def __similarity_measures(X, pa_name, y_true, y_pred):
-    # Generate dict of Similarity-Based Fairness measures
+    """ Returns dict of similarity-based fairness measures
+    """
     if_vals = {}
     # consistency_score raises error if null values are present in X
     if X.notnull().all().all():
@@ -703,7 +713,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     """ Returns a pandas dataframe containing fairness measures for the model
         results
 
-    Note: named arguments are enforced to enable use of iterate_cohorts
+        Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
         X (array-like): Sample features
@@ -819,6 +829,8 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
 
 
 def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
+    """ Returns dict of regression-specific fairness measures
+    """
     def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
     def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
     #
@@ -844,7 +856,7 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     """ Returns a pandas dataframe containing fairness measures for the model
         results
 
-    Note: named arguments are enforced to enable use of iterate_cohorts
+        Note: named arguments are enforced to enable @iterate_cohorts
 
     Args:
         X (array-like): Sample features
@@ -906,12 +918,12 @@ class __Flagger():
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
-            df (pandas dataframe): Model comparison dataframe (see)
+            df (pandas dataframe): model_comparison.compare_models or
+                model_comparison.measure_model dataframe
             caption (str, optional): Optional caption for table. Defaults to "".
             as_styler (bool, optional): If True, returns a pandas Styler of the
                 highlighted table (to which other styles/highlights can be added).
-                Otherwise, returns the table as an embedded HTML object. Defaults
-                to False .
+                Otherwise, returns the table as an embedded HTML object.
         Returns:
             Embedded html or pandas.io.formats.style.Styler
         """
@@ -922,7 +934,8 @@ class __Flagger():
             raise ValueError(f"Invalid value of significant figure: {sig_fig}")
         #
         self.reset()
-        self.df, self.labels, self.label_type = self.set_measure_labels(df)
+        self.df = df
+        self.labels, self.label_type = self.set_measure_labels(df)
         #
         if self.label_type == "index":
             styled = self.df.style.set_caption(caption
@@ -946,6 +959,9 @@ class __Flagger():
             return HTML(styled.render())
 
     def color_diff(self, s):
+        """ Returns a list containing the color settings for difference
+            measures found to be OOR
+        """
         def is_oor(i): return bool(not -0.1 < i < 0.1 and not np.isnan(i))
         if self.label_type == "index":
             idx = pd.IndexSlice
@@ -960,6 +976,9 @@ class __Flagger():
         return clr
 
     def color_st(self, s):
+        """ Returns a list containing the color settings for statistical
+            measures found to be OOR
+        """
         def is_oor(n, i):
             res = bool((n in lb_low and i > 0.2)
                         or (n in lb_high and i < 0.8) and not np.isnan(i))
@@ -982,6 +1001,9 @@ class __Flagger():
         return clr
 
     def color_ratio(self, s):
+        """ Returns a list containing the color settings for ratio
+            measures found to be OOR
+        """
         def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
         if self.label_type == "index":
             idx = pd.IndexSlice
@@ -996,6 +1018,8 @@ class __Flagger():
         return clr
 
     def reset(self):
+        """ Clears the __Flagger settings
+        """
         self.df = None
         self.labels = None
         self.label_type = None
@@ -1003,6 +1027,10 @@ class __Flagger():
         self.flag_color = "magenta"
 
     def set_measure_labels(self, df):
+        """ Determines the locations of the strings containing measure names
+            (within df); then reutrns a list of those measure names along
+            with their location (one of ["columns", "index"]).
+        """
         try:
             labels = df.index.get_level_values(1)
             if type(labels) == pd.core.indexes.numeric.Int64Index:
@@ -1013,7 +1041,7 @@ class __Flagger():
             label_type = "columns"
         if label_type == "columns":
             labels = df.columns.tolist()
-        return df, labels, label_type
+        return labels, label_type
 
 
 

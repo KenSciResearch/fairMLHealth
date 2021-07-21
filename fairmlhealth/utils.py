@@ -13,12 +13,12 @@ def cb_round(series, base=5, sig_dec=0):
     """ Returns the pandas series (or column) with values rounded per the
             custom base value
 
-        Args:
-            series (pd.Series): data to be rounded
-            base (float): base value to which data should be rounded (may be
-                decimal)
-            sig_dec (int): number of significant decimals for the
-                custom-rounded value
+    Args:
+        series (pd.Series): data to be rounded
+        base (float): base value to which data should be rounded (may be
+            decimal)
+        sig_dec (int): number of significant decimals for the
+            custom-rounded value
     """
     if not base >= 0.01:
         err = (f"cannot round with base {base}." +
@@ -45,7 +45,7 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
         n_trials (int, optional): Number of trials to run. Defaults to 100.
 
     Returns:
-        bool: difference is statistically significant
+        bool: whether difference is statistically significant
     """
     pvals = []
     # Create a list of p-values for each of n_trials
