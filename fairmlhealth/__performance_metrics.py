@@ -55,7 +55,7 @@ def epsilon():
 def ratio(numerator, denominator):
     ''' Returns numerator/denominator avoiding division-by-zero errors
     '''
-    if den == 0:
+    if denominator == 0:
         return numerator/epsilon()
     else:
         return numerator/denominator
