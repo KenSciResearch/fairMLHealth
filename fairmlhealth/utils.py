@@ -34,10 +34,10 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
     for at least P=1-alpha percent of trials.
 
     Args:
-        a (array-like): statistical sample
-        b (array-like): statistical sample for comparison
+        a (array-like): statistical sample.
+        b (array-like): statistical sample for comparison.
         func (function): any statistical test returning it's p-value as the
-            second member of a tuple
+            second member of a tuple.
         alpha (float, optional): Maximum p-value indicating significance.
             Defaults to 0.05.
         n_samples (int, optional): Number of samples to use for each trial.
@@ -53,7 +53,7 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
         pvals += [func(np.random.choice(a, size=n_samples, replace=True),
                        np.random.choice(b, size=n_samples, replace=True))[1]
                   ]
-    # calculate the proportion of trials for which p < alpha
+    # Calculate the proportion of trials for which p < alpha
     pvals = [int(v <= alpha) for v in pvals]
     result = bool(np.mean(pvals) >= (1-alpha))
     return result
