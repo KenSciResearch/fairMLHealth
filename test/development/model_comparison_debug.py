@@ -6,7 +6,7 @@ are missed by the linter before running the full set of unit tests.
 
 
 from fairmlhealth import model_comparison as fhmc
-from fairmlhealth.reports import flag
+from fairmlhealth.analyze import flag
 import logging
 import pandas as pd
 from sklearn.model_selection import train_test_split

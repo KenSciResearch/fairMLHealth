@@ -3,7 +3,7 @@
  # ToDo: Add more robust testing throughout
 
 
-from fairmlhealth import reports
+from fairmlhealth import analyze
 import numpy as np
 import pytest
 import pandas as pd
@@ -36,19 +36,19 @@ class TestCohorts:
     """ Validates that standard inputs are processed without error
     """
     def test_no_cohort(self):
-        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.summary(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="classification")
 
     def test_one_cohort(self):
-        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.summary(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="classification",
                                    cohorts=self.cohorts[0])
 
     def test_multi_cohort(self):
-        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.summary(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="classification",
                                    cohorts=self.cohorts)
 
     def test_cohort_stratified(self):
-        _ = reports.bias_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.bias(self.df, self.df['prtc_attr'], self.df['y'],
                                 pred_type="classification", cohorts=self.cohorts)

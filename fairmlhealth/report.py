@@ -9,18 +9,46 @@ Contributors:
 # Licensed under the MIT License.
 
 from abc import ABC
+import numpy as np
 import pandas as pd
+from sklearn import metric as sk_metric
 import warnings
 
 from .tools import is_dictlike
-from .reports import summary_report, flag
-from . import __validation as valid
+from .analyze import summary, flag
+from . import __performance_metrics as pmtrc, __validation as valid
 from .__validation import ValidationError
 
 
 """
     Model Comparison Tools
 """
+
+''' Mini Reports '''
+
+def classification_performance(y_true, y_pred, target_labels=None,
+                               sig_fig:int=4):
+    """ Returns a pandas dataframe of the scikit-learn classification report,
+        formatted for use in fairMLHealth tools
+
+    Args:
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with
+            model.predict().
+        target_labels (list of str): Optional labels for target values.
+    """
+    break #ToDo: run validation
+    if target_labels is None:
+        target_labels = [f"target = {t}" for t in set(y_true)]
+    report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
+                                             target_names=target_labels)
+    report = pd.DataFrame(report).transpose()
+    # Move accuracy to separate row
+    accuracy = report.loc['accuracy', :]
+    report.drop('accuracy', inplace=True)
+    report.loc['accuracy', 'accuracy'] = accuracy[0]
+    report = report.round(sig_fig)
+    return report
 
 
 def measure_model(test_data, targets, protected_attr, model=None,
@@ -86,6 +114,31 @@ def compare_models(test_data, targets, protected_attr, models=None,
                        predictions, probabilities, pred_type, verboseMode=True)
     table = comp.compare_measures(flag_oor=flag_oor)
     return table
+
+
+def regression_performance(y_true, y_pred, sig_fig:int=4):
+    """ Returns a pandas dataframe of the regression performance metrics,
+        similar to scikit's classification_performance
+
+    Args:
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with
+            model.predict().
+    """
+    break #ToDo: run validation
+    report = {}
+    y = y_cols()['disp_names']['yt']
+    yh = y_cols()['disp_names']['yh']
+    report[f'{y} Mean'] = np.mean(y_true.values)
+    report[f'{yh} Mean'] = np.mean(y_pred.values)
+    report['MSE'] = sk_metric.mean_squared_error(y_true, y_pred)
+    report['MAE'] = sk_metric.mean_absolute_error(y_true, y_pred)
+    report['Rsqrd'] = pmtrc.r_squared(y_true, y_pred)
+    report = pd.DataFrame().from_dict(report, orient='index'
+                          ).rename(columns={0: 'Score'})
+    report = report.round(sig_fig)
+    return report
+
 
 class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
@@ -200,7 +253,7 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary_report(self.X[model_name],
+            res = summary(self.X[model_name],
                                  self.prtc_attr[model_name],
                                  self.y[model_name],
                                  self.preds[model_name],
@@ -339,7 +392,7 @@ class FairCompare(ABC):
                 raise ValidationError(err)
             self.__set_dicts()
             for x in self.X.values():
-                valid.validate_report_input(x)
+                valid.validate_analytical_input(x)
             self.__check_models_predictions()
             for m in self.models.keys():
                 self.__validate(m)
@@ -362,7 +415,7 @@ class FairCompare(ABC):
             return None
         else:
             self.__check_models_predictions(enforce=False)
-            valid.validate_report_input(X=self.X[model_name],
+            valid.validate_analytical_input(X=self.X[model_name],
                                         y_true=self.y[model_name],
                                         y_pred=self.preds[model_name],
                                         y_prob=self.probs[model_name],

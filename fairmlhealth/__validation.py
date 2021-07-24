@@ -42,10 +42,10 @@ def validate_X(data, name="input data", expected_len:int=None):
     __validate_length(data, name, expected_len)
 
 
-def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
+def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
                             prtc_attr=None, priv_grp:int=1):
     """ Raises error if data are of incorrect type or size for processing by
-        the fairness or performance reporters
+        the fairness or performance tables
 
     Args:
         X (array-like): Sample features

@@ -40,7 +40,7 @@ For a functioning notebook of the usage examples below, see [Example-ToolUsage](
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc, reports
+from fairmlhealth import model_comparison as fhmc, analyze
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -70,13 +70,13 @@ model_dict = {'model_1': model_1, 'model_2': model_2}
 ### Measuring
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the measure_models and compare_models functions.
 
-Measure_model is designed to generate a report of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
+Measure_model is designed to generate an analysis table of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
 
 ``` python
 # Generate a pandas dataframe of measures
 fairness_measures = fhmc.measure_model(X_test, y_test, prtc_attr, model_1)
 # Display and color measures that are out of range
-reports.flag(fairness_measures)
+analyze.flag(fairness_measures)
 ```
 
 <img src="./docs/img/measure_model.png"
@@ -86,20 +86,20 @@ reports.flag(fairness_measures)
 
 ### Evaluating
 
-FairMLHealth now also includes stratified reporting features to aid in identifying the source of unfairness or other bias: a data_report, classification_performance report, and classification_fairness report. Note that these stratified reports can evaluate multiple features at once, and that there are two options for identifying which features to assess.
+FairMLHealth now also includes stratified table features to aid in identifying the source of unfairness or other bias: a data table, performance table, and bias table. Note that these stratified tables can evaluate multiple features at once, and that there are two options for identifying which features to assess.
 
-Note that the flag tool has not yet been updated to work with stratified reports.
+Note that the flag tool has not yet been updated to work with stratified tables.
 
 #### Stratified Data Reports
 
-The data reporter is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
+The data analysis table is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
 
 ```python
 # Arguments Option 1: pass full set of data, subsetting with *features* argument
-reports.data_report(X_test, y_test, features=['gender'])
+analyze.data(X_test, y_test, features=['gender'])
 
 # Arguments Option 2: pass the data subset of interest without using the *features* argument
-reports.data_report(X_test[['gender']], y_test)
+analyze.data(X_test[['gender']], y_test)
 ```
 
 <img src="./docs/img/data_report.png"
@@ -108,10 +108,10 @@ reports.data_report(X_test[['gender']], y_test)
 
 ### Stratified Performance Reports
 
-The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
+The stratified performance analysis table evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
 ```python
-reports.performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
+analyze.performance(X_test[['gender']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/performance_report.png"
@@ -120,14 +120,14 @@ reports.performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
 
 #### Stratified Fairness Reports
 
-The stratified classification_fairness reporter evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
+The stratified bias analysis table evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
 
-To simplify the report, fairness measures have been simplified to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
+To simplify the table, fairness measures have been simplified to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
 
 See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
 ```python
-reports.bias_report(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
+analyze.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/bias_report.png"
@@ -142,7 +142,7 @@ Below is an example output comparing the two example models defined above. Missi
 
 ```python
 comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
-reports.flag(comparison)
+analyze.flag(comparison)
 ```
 
 <img src="./docs/img/compare_models.png"
@@ -209,7 +209,7 @@ See also: [Publications](./docs/publications)
 * TCSS 593: *Research Seminar In Data Science* Spring 2021 Department of Computer Science, University of Washington Tacoma
 * EE 520: *Predictive Learning From Data Spring 2021* Department of Electrical Engineering, University of Washington Bothell
 * CSS 581: *Machine Learning Autumn 2020* Department of Computer Science, University of Washington Bothell
- 
+
 ## Key Contributors
 * [Muhammad Aurangzeb Ahmad](http://www.aurumahmad.com)
 * Christine Allen

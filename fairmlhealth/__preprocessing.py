@@ -84,8 +84,8 @@ def prep_probs(arr, y_col=None, prtc_attr=None):
         y_prob.columns = y_col
     return y_prob
 
-def report_labels(pred_type: str = "binary"):
-    """ Returns a dictionary of category labels used by reporting functions
+def analytical_labels(pred_type: str = "binary"):
+    """ Returns a dictionary of category labels used by analytical functions
     Args:
         pred_type (b): number of classes in the prediction problem
     """
@@ -93,17 +93,17 @@ def report_labels(pred_type: str = "binary"):
     if pred_type not in valid_pred_types:
         raise ValueError(f"pred_type must be one of {valid_pred_types}")
     c_note = "" if pred_type == "binary" else " (Weighted Avg)"
-    report_labels = {'gf_label': "Group Fairness",
+    lbls = {'gf_label': "Group Fairness",
                      'if_label': "Individual Fairness",
                      'mp_label': f"Model Performance{c_note}",
                      'dt_label': "Data Metrics"
                      }
-    return report_labels
+    return lbls
 
 
 def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
                         y_prob=None, priv_grp=1):
-    """ Formats data for use by fairness reporting functions.
+    """ Formats data for use by fairness analytical functions.
     Args:
         X (array-like): Sample features
         prtc_attr (named array-like): values for the protected attribute
@@ -117,7 +117,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     Returns:
         Tuple containing formatted versions of all passed args.
     """
-    valid.validate_report_input(X, y_true, y_pred, y_prob, prtc_attr, priv_grp)
+    valid.validate_analytical_input(X, y_true, y_pred, y_prob, prtc_attr, priv_grp)
 
     # Format inputs to required datatypes
     X = prep_X(X)
@@ -140,7 +140,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
 def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
                           features:list=None):
     """
-    Runs validation and formats data for use in stratified reports
+    Runs validation and formats data for use in stratified tables
 
     Args:
         df (pandas dataframe or compatible object): sample data to be assessed
@@ -154,7 +154,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     Requirements:
         - Each feature must be discrete to run stratified analysis, and must be
         binary to run the assessment. If any data are not discrete and there
-        are more than 11 values, the reporter will reformat those data into
+        are more than 11 values, the tool will reformat those data into
         quantiles
     """
     #
@@ -186,7 +186,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
 
 def y_cols(df=None):
     ''' Returns a dict of hidden column names for each
-        of the y values used in stratified reporting functions, the keys for
+        of the y values used in stratified table functions, the keys for
         which are as follows: "yt"="y true"; "yh"="y predicted";
         "yp"="y probabilities". This allows for consistent references that are
         not likely to be found among the actual columns of the data (e.g., so

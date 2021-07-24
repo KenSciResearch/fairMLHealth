@@ -12,7 +12,7 @@ from warnings import warn
 def format_errwarn(func):
     """ Wraps a function returning some result with dictionaries for errors and
         warnings, then formats those errors and warnings as grouped warnings.
-        Used for reporting functions to skip errors (and warnings) while
+        Used for analytical functions to skip errors (and warnings) while
         providing
 
     Args:

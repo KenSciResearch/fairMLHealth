@@ -3,7 +3,7 @@
  # ToDo: Add more robust testing throughout
 
 
-from fairmlhealth import reports
+from fairmlhealth import analyze
 import numpy as np
 import pytest
 import pandas as pd
@@ -40,18 +40,18 @@ class TestStandardCassificationReports:
     """ Validates that standard inputs are processed without error
     """
     def test_classification_summary(self):
-        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.summary(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="classification")
 
-    def test_classification_data_report(self):
-        _ = reports.data_report(self.df, self.df['y'])
+    def test_classification_data(self):
+        _ = analyze.data(self.df, self.df['y'])
 
-    def test_classification_performance_report(self):
-        _ = reports.performance_report(self.df, self.df['y'], self.df['avg'],
+    def test_classification_performance(self):
+        _ = analyze.performance(self.df, self.df['y'], self.df['avg'],
                                        pred_type="classification")
 
-    def test_classification_bias_report(self):
-        _ = reports.bias_report(self.df, self.df['y'], self.df['avg'],
+    def test_classification_bias(self):
+        _ = analyze.bias(self.df, self.df['y'], self.df['avg'],
                                 pred_type="classification")
 
 
@@ -61,18 +61,18 @@ class TestStandardRegressionReports:
         without error. Will be finalized for release of V2.0
     """
     def __dev_test_regression_summary(self):
-        _ = reports.summary_report(self.df, self.df['prtc_attr'], self.df['y'],
+        _ = analyze.summary(self.df, self.df['prtc_attr'], self.df['y'],
                                    self.df['avg'], pred_type="regression")
 
-    def __dev_test_regression_data_report(self):
-        _ = reports.data_report(self.df, self.df['y'])
+    def __dev_test_regression_data(self):
+        _ = analyze.data(self.df, self.df['y'])
 
-    def __dev_test_regression_performance_report(self):
-        _ = reports.performance_report(self.df, self.df['y'], self.df['avg'],
+    def __dev_test_regression_performance(self):
+        _ = analyze.performance(self.df, self.df['y'], self.df['avg'],
                                        pred_type="regression")
 
-    def __dev_test_regression_bias_report(self):
-        _ = reports.bias_report(self.df, self.df['y'], self.df['avg'],
+    def __dev_test_regression_bias(self):
+        _ = analyze.bias(self.df, self.df['y'], self.df['avg'],
                                 pred_type="regression")
 
 
@@ -84,8 +84,8 @@ class TestDataReport:
     # ToDo: Add more robust testing
     def test_missing_y(self):
         with pytest.raises(Exception):
-            _ = reports.data_report(self.df, None)
+            _ = analyze.data(self.df, None)
 
     def test_y_as_df(self):
-        _ = reports.data_report(self.df, self.df,
+        _ = analyze.data(self.df, self.df,
                                 features=['A', 'B', 'C'], targets=['C','D'])

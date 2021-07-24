@@ -7,23 +7,23 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
-- Enables regression versions of reporting functions, with basic measures added for the regression version of bias_report.
+- Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
 - Adds tutorial, template, and example notebooks for regression features
 - Improves management of significant figures as required to enable flagging of regression outputs
 
 
 ## [0.1.14] - 2021-06-25
 ### Cohorting Feature
-- Adds cohorting wrapper which iterates to create separate reports by group
+- Adds cohorting wrapper which iterates to create separate analysis tables by group
 
 ## [0.1.13] - 2021-06-23
 ### Flagging Updates
-- Add flagging functionality for stratified reports (bias_report, performance_report, data_report)
-- Update flagging function s.t. it can be called as an argument in the model_comparison or bias_report functions
+- Add flagging functionality for stratified tables (bias analysis table, performance analysis table, data analysis table)
+- Update flagging function s.t. it can be called as an argument in the model_comparison or bias analysis table functions
 
 ## [0.1.12] - 2021-06-17
-### Stratified Report Updates
-- data_report now accepts y as a data frame, enabling stratified analysis across multiple targets.
+### Stratified Table Updates
+- data analysis table now accepts y as a data frame, enabling stratified analysis across multiple targets.
 - "Overview" column evaluating all features as one unit ("ALL_FEATURES") is now optional via add_overview argument
 
 ## [0.1.11] - 2021-06-17
@@ -44,7 +44,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.9] - 2021-04-19
 ### Reporting Updates
-- Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
+- Both standard and stratified table functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression analysis tables
 
 
 ## [0.1.8] - 2021-04-19

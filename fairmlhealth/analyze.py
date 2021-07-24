@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Tools producing reports of fairness, bias, or model performance measures
+Tools producing analytical tables of fairness, bias, or model performance measures
 Contributors:
     camagallen <ca.magallen@gmail.com>
 """
@@ -14,8 +14,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
-                             precision_score, balanced_accuracy_score,
-                             classification_report)
+                             precision_score, balanced_accuracy_score)
 from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
@@ -23,7 +22,7 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
 from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
-                              report_labels, y_cols)
+                              analytical_labels, y_cols)
 from .__validation import ValidationError
 from .__utils import format_errwarn, iterate_cohorts, limit_alert, Flagger
 
@@ -33,77 +32,7 @@ filterwarnings('ignore', module='pandas')
 filterwarnings('ignore', module='sklearn')
 
 
-''' Mini Reports '''
-
-def classification_performance(y_true, y_pred, target_labels=None,
-                               sig_fig:int=4):
-    """ Returns a pandas dataframe of the scikit-learn classification report,
-        formatted for use in fairMLHealth tools
-
-    Args:
-        y_true (array): Target values. Must be compatible with model.predict().
-        y_pred (array): Prediction values. Must be compatible with
-            model.predict().
-        target_labels (list of str): Optional labels for target values.
-    """
-    if target_labels is None:
-        target_labels = [f"target = {t}" for t in set(y_true)]
-    report = classification_report(y_true, y_pred, output_dict=True,
-                                             target_names=target_labels)
-    report = pd.DataFrame(report).transpose()
-    # Move accuracy to separate row
-    accuracy = report.loc['accuracy', :]
-    report.drop('accuracy', inplace=True)
-    report.loc['accuracy', 'accuracy'] = accuracy[0]
-    report = report.round(sig_fig)
-    return report
-
-
-def regression_performance(y_true, y_pred, sig_fig:int=4):
-    """ Returns a pandas dataframe of the regression performance metrics,
-        similar to scikit's classification_performance
-
-    Args:
-        y_true (array): Target values. Must be compatible with model.predict().
-        y_pred (array): Prediction values. Must be compatible with
-            model.predict().
-    """
-    report = {}
-    y = y_cols()['disp_names']['yt']
-    yh = y_cols()['disp_names']['yh']
-    report[f'{y} Mean'] = np.mean(y_true.values)
-    report[f'{yh} Mean'] = np.mean(y_pred.values)
-    report['MSE'] = mean_squared_error(y_true, y_pred)
-    report['MAE'] = mean_absolute_error(y_true, y_pred)
-    report['Rsqrd'] = pmtrc.r_squared(y_true, y_pred)
-    report = pd.DataFrame().from_dict(report, orient='index'
-                          ).rename(columns={0: 'Score'})
-    report = report.round(sig_fig)
-    return report
-
-
-''' Main Reports '''
-
-
-def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
-    """ Generates embedded html pandas styler table containing a highlighted
-        version of a model comparison dataframe
-
-    Args:
-        df (pandas dataframe): Model comparison dataframe (see)
-        caption (str, optional): Optional caption for table. Defaults to "".
-        as_styler (bool, optional): If True, returns a pandas Styler of the
-            highlighted table (to which other styles/highlights can be added).
-            Otherwise, returns the table as an embedded HTML object. Defaults
-            to False .
-
-    Returns:
-        Embedded html or pandas.io.formats.style.Styler
-    """
-    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
-
-
-def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
+def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
                 sig_fig:int=4, flag_oor=True, **kwargs):
     """ Generates a table of stratified bias metrics
 
@@ -129,12 +58,12 @@ def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
-        raise ValueError(f"Summary report type must be one of {validtypes}")
+        raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+        df = __classification_bias(X=X, y_true=y_true, y_pred=y_pred,
                                           features=features, **kwargs)
     elif pred_type == "regression":
-        df = __regression_bias_report(X=X, y_true=y_true, y_pred=y_pred,
+        df = __regression_bias(X=X, y_true=y_true, y_pred=y_pred,
                                       features=features, **kwargs)
     #
     if flag_oor:
@@ -144,7 +73,7 @@ def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification
     return df
 
 
-def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
+def data(X, Y, features:list=None, targets:list=None, add_overview=True,
                 sig_fig:int=4):
     """
     Generates a table of stratified data metrics
@@ -163,7 +92,7 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
-        are not discrete and there are more than 11 values, the reporter will
+        are not discrete and there are more than 11 values, the tool will
         reformat those data into quantiles
 
     Returns:
@@ -250,12 +179,12 @@ def data_report(X, Y, features:list=None, targets:list=None, add_overview=True,
     else:
         rprt = results
     #
-    rprt = sort_report(rprt)
+    rprt = __sort(rprt)
     rprt = rprt.round(sig_fig)
     return rprt
 
 
-def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
+def performance(X, y_true, y_pred, y_prob=None, features:list=None,
                       pred_type="classification", sig_fig:int=4,
                       add_overview=True):
     """ Generates a table of stratified performance metrics
@@ -280,38 +209,19 @@ def performance_report(X, y_true, y_pred, y_prob=None, features:list=None,
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
-        raise ValueError(f"Summary report type must be one of {validtypes}")
+        raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_performance_report(X, y_true, y_pred, y_prob,
+        df = __classification_performance(X, y_true, y_pred, y_prob,
                                                    features, add_overview)
     elif pred_type == "regression":
-        df = __regression_performance_report(X, y_true, y_pred,
+        df = __regression_performance(X, y_true, y_pred,
                                                features, add_overview)
     #
     df = df.round(sig_fig)
     return df
 
 
-def sort_report(report):
-    """ Sorts columns in standardized order
-
-    Args:
-        report (pd.DataFrame): any of the stratified reports produced by this
-        module
-
-    Returns:
-        pandas DataFrame: sorted report
-    """
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
-    head_names = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
-    head_cols = [c for c in head_names if c in report.columns]
-    tail_cols = sorted([c for c in report.columns if c not in head_cols])
-    return report[head_cols + tail_cols]
-
-
-def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
+def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
                    pred_type="classification", priv_grp=1, sig_fig:int=4,
                    **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
@@ -340,7 +250,7 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
     """
     validtypes = ["classification", "regression"]
     if pred_type not in validtypes:
-        raise ValueError(f"Summary report type must be one of {validtypes}")
+        raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
         df = __classification_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
                                       y_pred=y_pred, y_prob=y_prob,
@@ -354,6 +264,24 @@ def summary_report(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
     else:
         df = df.round(sig_fig)
     return df
+
+
+def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
+    """ Generates embedded html pandas styler table containing a highlighted
+        version of a model comparison dataframe
+
+    Args:
+        df (pandas dataframe): Model comparison dataframe (see)
+        caption (str, optional): Optional caption for table. Defaults to "".
+        as_styler (bool, optional): If True, returns a pandas Styler of the
+            highlighted table (to which other styles/highlights can be added).
+            Otherwise, returns the table as an embedded HTML object. Defaults
+            to False .
+
+    Returns:
+        Embedded html or pandas.io.formats.style.Styler
+    """
+    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
 ''' Private Functions '''
@@ -474,7 +402,7 @@ def __class_prevalence(y_true, priv_grp):
     return dt_vals
 
 
-def __classification_performance_report(X, y_true, y_pred, y_prob=None,
+def __classification_performance(X, y_true, y_pred, y_prob=None,
                                         features:list=None, add_overview=True):
     """Generates a table of stratified performance metrics for each specified
         feature
@@ -517,7 +445,7 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot generate report with undefined targets")
+        raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
@@ -531,11 +459,11 @@ def __classification_performance_report(X, y_true, y_pred, y_prob=None,
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = sort_report(rprt)
+    rprt = __sort(rprt)
     return rprt
 
 
-def __regression_performance_report(X, y_true, y_pred, features:list=None,
+def __regression_performance(X, y_true, y_pred, features:list=None,
                                     add_overview=True):
     """
     Generates a table of stratified performance metrics for each specified
@@ -550,7 +478,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
-        are not discrete and there are more than 11 values, the reporter will
+        are not discrete and there are more than 11 values, the tool will
         reformat those data into quantiles
     """
     #
@@ -578,7 +506,7 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot generate report with undefined targets")
+        raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
@@ -592,12 +520,12 @@ def __regression_performance_report(X, y_true, y_pred, features:list=None,
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = sort_report(rprt)
+    rprt = __sort(rprt)
     return rprt
 
 
 @iterate_cohorts
-def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
+def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     """ Generates a table of stratified fairness metrics metrics for each specified
         feature
 
@@ -612,7 +540,7 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
-        are not discrete and there are more than 11 values, the reporter will
+        are not discrete and there are more than 11 values, the tool will
         reformat those data into quantiles
     """
     #
@@ -647,16 +575,16 @@ def __classification_bias_report(*, X, y_true, y_pred, features:list=None, **kwa
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot generate report with undefined targets")
+        raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
-    rprt = sort_report(results)
+    rprt = __sort(results)
     return rprt
 
 
 @iterate_cohorts
-def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs):
+def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -680,11 +608,11 @@ def __regression_bias_report(*, X, y_true, y_pred, features:list=None, **kwargs)
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot generate report with undefined targets")
+        raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
-    rprt = sort_report(results)
+    rprt = __sort(results)
     return rprt
 
 
@@ -704,6 +632,25 @@ def __similarity_measures(X, pa_name, y_true, y_pred):
         aif.between_group_generalized_entropy_error(y_true, y_pred,
                                                         prot_attr=pa_name)
     return if_vals
+
+
+def __sort(strat_tbl):
+    """ Sorts columns in standardized order
+
+    Args:
+        strat_tbl (pd.DataFrame): any of the stratified tables produced by this
+        module
+
+    Returns:
+        pandas DataFrame: sorted strat_tbl
+    """
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
+    head_names = ['Feature Name', 'Feature Value', 'Obs.',
+                 f'{yname} Mean', f'{yhname} Mean']
+    head_cols = [c for c in head_names if c in strat_tbl.columns]
+    tail_cols = sorted([c for c in strat_tbl.columns if c not in head_cols])
+    return strat_tbl[head_cols + tail_cols]
 
 
 @iterate_cohorts
@@ -775,7 +722,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
 
     def __m_p_c(y, yh, yp=None):
         # Returns a dict containing classification performance measure values for
-        # non-stratified reports
+        # non-stratified tables
         res = {'Accuracy': pmtrc.accuracy(y, yh),
             'Balanced Accuracy': pmtrc.balanced_accuracy(y, yh),
             'F1-Score': pmtrc.f1_score(y, yh),
@@ -799,11 +746,11 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class != 2:
         raise ValueError(
-            "Reporter cannot yet process multiclass classification models")
+            "tool cannot yet process multiclass classification models")
     if n_class == 2:
-        labels = report_labels()
+        labels = strat_tbl_labels()
     else:
-        labels = report_labels("multiclass")
+        labels = strat_tbl_labels("multiclass")
     gfl, ifl, mpl, dtl = labels.values()
     # Generate a dictionary of measure values to be converted t a dataframe
     mv_dict = {}
@@ -882,11 +829,11 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     dt_vals = __class_prevalence(y_true, priv_grp)
     #
     mp_vals = {}
-    report = regression_performance(y_true, y_pred)
-    for row in report.iterrows():
+    strat_tbl = regression_performance(y_true, y_pred)
+    for row in strat_tbl.iterrows():
         mp_vals[row[0]] = row[1]['Score']
     # Convert scores to a formatted dataframe and return
-    labels = report_labels("regression")
+    labels = analytical_labels("regression")
     measures = {labels['gf_label']: gf_vals,
                 labels['if_label']: if_vals,
                 labels['mp_label']: mp_vals,
