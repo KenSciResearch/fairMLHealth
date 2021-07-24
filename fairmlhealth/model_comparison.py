@@ -12,7 +12,7 @@ from abc import ABC
 import pandas as pd
 import warnings
 
-from .utils import is_dictlike
+from .tools import is_dictlike
 from .reports import summary_report, flag
 from . import __validation as valid
 from .__validation import ValidationError

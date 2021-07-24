@@ -25,7 +25,7 @@ from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               report_labels, y_cols)
 from .__validation import ValidationError
-from .utils import format_errwarn, iterate_cohorts, limit_alert
+from .__utils import format_errwarn, iterate_cohorts, limit_alert, Flagger
 
 
 # ToDo: find better solution for these warnings
@@ -100,7 +100,7 @@ def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    return __Flagger().apply_flag(df, caption, sig_fig, as_styler)
+    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
 def bias_report(X, y_true, y_pred, features:list=None, pred_type="classification",
@@ -895,153 +895,6 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
     return df
-
-
-class __Flagger():
-    """ Manages flag functionality
-    """
-    diffs = ["auc difference" , "balanced accuracy difference",
-            "equalized odds difference", "positive predictive parity difference",
-            "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
-            # flag not yet enabled for: "r2 difference"
-    ratios = ["balanced accuracy ratio", "disparate impact ratio ",
-              "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
-            # flag not yet enabled for: "mean prediction ratio", "mae ratio", "r2 ratio"
-    stats_high = ["consistency score"]
-    stats_low =["between-group gen. entropy error"]
-
-    def __init__(self):
-        self.reset()
-
-    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True):
-        """ Generates embedded html pandas styler table containing a highlighted
-            version of a model comparison dataframe
-        Args:
-            df (pandas dataframe): model_comparison.compare_models or
-                model_comparison.measure_model dataframe
-            caption (str, optional): Optional caption for table. Defaults to "".
-            as_styler (bool, optional): If True, returns a pandas Styler of the
-                highlighted table (to which other styles/highlights can be added).
-                Otherwise, returns the table as an embedded HTML object.
-        Returns:
-            Embedded html or pandas.io.formats.style.Styler
-        """
-        if caption is None:
-            caption = "Fairness Measures"
-        # bools are treated as a subclass of int, so must test for both
-        if not isinstance(sig_fig, int) or isinstance(sig_fig, bool):
-            raise ValueError(f"Invalid value of significant figure: {sig_fig}")
-        #
-        self.reset()
-        self.df = df
-        self.labels, self.label_type = self.set_measure_labels(df)
-        #
-        if self.label_type == "index":
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=1
-                                    ).apply(self.color_ratio, axis=1
-                                    ).apply(self.color_st, axis=1)
-        else:
-            # pd.Styler doesn't support non-unique indices
-            if len(self.df.index.unique()) <  len(self.df):
-                self.df.reset_index(inplace=True)
-            styled = self.df.style.set_caption(caption
-                                    ).apply(self.color_diff, axis=0
-                                    ).apply(self.color_ratio, axis=0
-                                    ).apply(self.color_st, axis=0)
-        # Styler will reset precision to 6 sig figs
-        styled = styled.set_precision(sig_fig)
-        # return pandas styler if requested
-        if as_styler:
-            return styled
-        else:
-            return HTML(styled.render())
-
-    def color_diff(self, s):
-        """ Returns a list containing the color settings for difference
-            measures found to be OOR
-        """
-        def is_oor(i): return bool(not -0.1 < i < 0.1 and not np.isnan(i))
-        if self.label_type == "index":
-            idx = pd.IndexSlice
-            lbls = self.df.loc[idx['Group Fairness',
-                        [c.lower() in self.diffs for c in self.labels]], :].index
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                   if (s.name in lbls and is_oor(i)) else '' for i in s]
-        else:
-            lbls = self.diffs
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
-        return clr
-
-    def color_st(self, s):
-        """ Returns a list containing the color settings for statistical
-            measures found to be OOR
-        """
-        def is_oor(n, i):
-            res = bool((n in lb_low and i > 0.2)
-                        or (n in lb_high and i < 0.8) and not np.isnan(i))
-            return res
-        if self.label_type == "index":
-            idx = pd.IndexSlice
-            lb_high = self.df.loc[idx['Individual Fairness',
-                        [c.lower() in self.stats_high
-                        for c in self.labels]], :].index
-            lb_low = self.df.loc[idx['Individual Fairness',
-                        [c.lower() in self.stats_low
-                                for c in self.labels]], :].index
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                    if is_oor(s.name, i) else '' for i in s]
-        else:
-            lb_high = self.stats_high
-            lb_low = self.stats_low
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                   if is_oor(s.name.lower(), i) else '' for i in s]
-        return clr
-
-    def color_ratio(self, s):
-        """ Returns a list containing the color settings for ratio
-            measures found to be OOR
-        """
-        def is_oor(i): return bool(not 0.8 < i < 1.2 and not np.isnan(i))
-        if self.label_type == "index":
-            idx = pd.IndexSlice
-            lbls = self.df.loc[idx['Group Fairness',
-                        [c.lower() in self.ratios for c in self.labels]], :].index
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                   if (s.name in lbls and is_oor(i)) else '' for i in s]
-        else:
-            lbls = self.ratios
-            clr = [f'{self.flag_type}:{self.flag_color}'
-                   if (s.name.lower() in lbls and is_oor(i)) else '' for i in s]
-        return clr
-
-    def reset(self):
-        """ Clears the __Flagger settings
-        """
-        self.df = None
-        self.labels = None
-        self.label_type = None
-        self.flag_type = "background-color"
-        self.flag_color = "magenta"
-
-    def set_measure_labels(self, df):
-        """ Determines the locations of the strings containing measure names
-            (within df); then reutrns a list of those measure names along
-            with their location (one of ["columns", "index"]).
-        """
-        try:
-            labels = df.index.get_level_values(1)
-            if type(labels) == pd.core.indexes.numeric.Int64Index:
-                label_type = "columns"
-            else:
-                label_type = "index"
-        except:
-            label_type = "columns"
-        if label_type == "columns":
-            labels = df.columns.tolist()
-        return labels, label_type
-
 
 
 
