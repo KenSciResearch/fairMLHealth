@@ -40,7 +40,7 @@ For a functioning notebook of the usage examples below, see [Example-ToolUsage](
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc, analyze
+from fairmlhealth import report as fr, analyze
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -74,7 +74,7 @@ Measure_model is designed to generate an analysis table of multiple fairness met
 
 ``` python
 # Generate a pandas dataframe of measures
-fairness_measures = fhmc.measure_model(X_test, y_test, prtc_attr, model_1)
+fairness_measures = fr.measure_model(X_test, y_test, prtc_attr, model_1)
 # Display and color measures that are out of range
 analyze.flag(fairness_measures)
 ```
@@ -90,7 +90,7 @@ FairMLHealth now also includes stratified table features to aid in identifying t
 
 Note that the flag tool has not yet been updated to work with stratified tables.
 
-#### Stratified Data Reports
+#### Stratified Data Tables
 
 The data analysis table is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
 
@@ -106,7 +106,7 @@ analyze.data(X_test[['gender']], y_test)
      alt="Data Report"
      />
 
-### Stratified Performance Reports
+### Stratified Performance Tables
 
 The stratified performance analysis table evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
@@ -118,11 +118,11 @@ analyze.performance(X_test[['gender']], y_test, model_1.predict(X_test))
      alt="Performance Report Example"
      />
 
-#### Stratified Fairness Reports
+#### Stratified Bias Fairness Tables
 
 The stratified bias analysis table evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
 
-To simplify the table, fairness measures have been simplified to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
+To simplify the table, fairness measures have been reduced to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
 
 See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
@@ -141,7 +141,7 @@ The compare_models feature can be used to generate side-by-side fairness compari
 Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
 
 ```python
-comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
+comparison = fr.compare_models(X_test, y_test, prtc_attr, model_dict)
 analyze.flag(comparison)
 ```
 
@@ -153,7 +153,7 @@ analyze.flag(comparison)
 The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
 
 ```python
-fhmc.compare_models(X_test, y_test,
+fr.compare_models(X_test, y_test,
                      [X_test['gender'], X_test['ethnicity']],
                       {'gender':model_1, 'ethnicity':model_1})
 ```

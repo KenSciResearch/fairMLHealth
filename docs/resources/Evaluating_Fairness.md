@@ -108,19 +108,19 @@ For the following explanations of specific measures, we'll use the results of a 
      alt="Example FairMLHealth Fairness Report"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_stratified_data.png"
-     alt="Example FairMLHealth Stratified Data Report"
+     alt="Example FairMLHealth Stratified Data Table"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_example_stratified_performance.png"
-     alt="Example FairMLHealth Stratified Performance Report"
+     alt="Example FairMLHealth Stratified Performance Table"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_example_stratified_fairness.png"
-     alt="Example FairMLHealth Stratified Fairness Report"
+     alt="Example FairMLHealth Stratified Fairness Table"
      /></p>
 
 
@@ -163,7 +163,7 @@ The highlighted rows in our example FairMLHealth Fairness Report [above](#fairne
 
 The four-fifths rule works well when comparing prediction performance metrics whose values are above 0.5. However, the rule fails when comparing small values, as is the case in this example and which is as shown in the example stratified table. The ratios between two such small values can easily be well above 1.2, even though the true difference is only a few percentage points. For this reason it's useful to compare both the ratios and the differences when evaluating group measures.
 
-Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Report (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
+Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
 
 |Group Measure Type |Examples |"Fair" Range |Favored Group |
 |- |- |- |- |
