@@ -410,25 +410,23 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
+    if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
-                                 __fair_classification_measures, yt, yh)
+                                 __fair_classification_measures, _y, _yh)
     rprt = __sort_table(results)
     return rprt
 
 
 def __classification_performance(x:pd.DataFrame, y:str, yh:str, yp:str=None):
-    _y = y_cols()['disp_names']['yt']
-    _yh = y_cols()['disp_names']['yh']
     res = {'Obs.': x.shape[0],
-        f'{_y} Mean': x[y].mean(),
-        f'{_yh} Mean': x[yh].mean(),
+        f'{y} Mean': x[y].mean(),
+        f'{yh} Mean': x[yh].mean(),
         'TPR': pmtrc.true_positive_rate(x[y], x[yh]),
         'FPR': pmtrc.false_positive_rate(x[y], x[yh]),
         'Accuracy': pmtrc.accuracy(x[y], x[yh]),
@@ -524,11 +522,11 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         measures[labels['if_label']] = \
             __similarity_measures(X, pa_name, y_true, y_pred)
     if not kwargs.pop('skip_performance', False):
-        y, yh= y_true.columns[0], y_pred.columns[0]
-        X[y], X[yh] = y_true.values, y_pred.values
-        measures[labels['mp_label']] = __classification_performance(X, y, yh)
+        _y, _yh= y_true.columns[0], y_pred.columns[0]
+        X[_y], X[_yh] = y_true.values, y_pred.values
+        measures[labels['mp_label']] = __classification_performance(X, _y, _yh)
     # Convert scores to a formatted dataframe and return
-    df = pd.DataFrame.from_dict(meas_dict, orient="index").stack().to_frame()
+    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     output = __format_summary(df, summary_type)
     return output
@@ -602,13 +600,11 @@ def __format_summary(df, summary_type):
 
 
 def __regression_performance(x:pd.DataFrame, y:str, yh:str):
-    _y = y_cols()['disp_names']['yt']
-    _yh = y_cols()['disp_names']['yh']
     res = {'Obs.': x.shape[0],
-            f'{_y} Mean': x[y].mean(),
-            f'{_y} Std. Dev.': x[y].std(),
-            f'{_yh} Mean': x[yh].mean(),
-            f'{_yh} Std. Dev.': x[yh].std(),
+            f'{y} Mean': x[y].mean(),
+            f'{y} Std. Dev.': x[y].std(),
+            f'{yh} Mean': x[yh].mean(),
+            f'{yh} Std. Dev.': x[yh].std(),
             'Error Mean': (x[yh] - x[y]).mean(),
             'Error Std. Dev.': (x[yh] - x[y]).std(),
             'MAE': mean_absolute_error(x[y], x[yh]),
@@ -641,19 +637,19 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
+    if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
-                                    __classification_performance, yt, yh, yp)
+                                    __classification_performance, _y, _yh, _yp)
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
-        o_dict = __classification_performance(df, yt, yh, yp)
+        o_dict = __classification_performance(df, _y, _yh, _yp)
         for k, v in o_dict.items():
             overview[k] = v
         overview_df = pd.DataFrame(overview, index=[0])
@@ -688,18 +684,19 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
+    if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
-    results = __apply_featureGroups(strat_feats, df, __regression_performance, yt, yh)
+    results = __apply_featureGroups(strat_feats, df,
+                                    __regression_performance, _y, _yh)
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
-        o_dict = __regression_performance(df, yt, yh)
+        o_dict = __regression_performance(df, _y, _yh)
         for k, v in o_dict.items():
             overview[k] = v
         overview_df = pd.DataFrame(overview, index=[0])
@@ -731,14 +728,15 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
+    if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
-    results = __apply_biasGroups(strat_feats, df, __fair_regression_measures, yt, yh)
+    results = __apply_biasGroups(strat_feats, df,
+                                 __fair_regression_measures, _y, _yh)
     rprt = __sort_table(results)
     return rprt
 
@@ -776,7 +774,11 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1,
 
     mp_vals = {}
     if not kwargs.pop('skip_performance', False):
-        perf_rep = __regression_performance(X, y_true, y_pred)
+        # y_true and y_pred will have the same name after going through prep
+        rprt_input = pd.concat([y_true, y_pred], axis=1)
+        colnames = [rprt_input.columns[0], "Prediction"]
+        rprt_input.columns = colnames
+        perf_rep = __regression_performance(rprt_input, colnames[0], colnames[1])
         strat_tbl = pd.DataFrame().from_dict(perf_rep, orient='index'
                           ).rename(columns={0: 'Score'})
         for row in strat_tbl.iterrows():
@@ -821,10 +823,10 @@ def __sort_table(strat_tbl):
     Returns:
         pandas DataFrame: sorted strat_tbl
     """
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
+    _y = y_cols()['disp_names']['yt']
+    _yh = y_cols()['disp_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
+                 f'{_y} Mean', f'{_yh} Mean']
     head_cols = [c for c in head_names if c in strat_tbl.columns]
     tail_cols = sorted([c for c in strat_tbl.columns if c not in head_cols])
     return strat_tbl[head_cols + tail_cols]

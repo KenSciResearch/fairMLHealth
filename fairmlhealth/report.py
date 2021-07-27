@@ -16,8 +16,7 @@ import warnings
 
 from .__utils import is_dictlike
 from .measure import summary, flag, __regression_performance
-from . import __validation as valid
-from .__validation import ValidationError
+from . import __preprocessing as prep, __validation as valid
 
 
 """
@@ -81,7 +80,7 @@ def measure_model(test_data, targets, protected_attr, model=None,
                        predictions, probabilities, pred_type, verboseMode=True)
     model_name = list(comp.models.keys())[0]
     table = comp.measure_model(model_name, flag_oor=flag_oor,
-                               skip_performance=True)
+                               skip_performance=False)
     return table
 
 
@@ -127,12 +126,16 @@ def regression_performance(y_true, y_pred, sig_fig:int=4):
         y_pred (array): Prediction values. Must be compatible with
             model.predict().
     """
-    valid.validate_y(y_true, "y_true")
+    valid.validate_y(y_true, "y_true", expected_len=None)
     valid.validate_y(y_pred, "y_pred", expected_len=len(y_true))
+    y_true = prep.prep_targets(y_true)
+    y_pred = prep.prep_targets(y_pred)
+    if y_true.columns[0] == y_pred.columns[0]:
+        y_pred.columns = ["Prediction"]
     #
-    rpt_input = pd.concat([y_true, y_pred], axis=1, ignore_index=True)
-    y, yh = y_true.columns[0], y_pred.columns[0]
-    report = __regression_performance(rpt_input, y, yh)
+    rprt_input = pd.concat([y_true, y_pred], axis=1)
+    _y, _yh = rprt_input.columns[0], rprt_input.columns[1]
+    report = __regression_performance(rprt_input, _y, _yh)
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
     report = report.round(sig_fig)
@@ -220,7 +223,8 @@ class FairCompare(ABC):
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
-                res = self.measure_model(model_name, flag_oor=False)
+                res = self.measure_model(model_name, skip_performance=True,
+                                         flag_oor=flag_oor)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation

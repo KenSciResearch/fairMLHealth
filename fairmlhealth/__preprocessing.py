@@ -60,49 +60,33 @@ def prep_prtc_attr(arr):
 
 def prep_targets(arr, prtc_attr=None):
     if isinstance(arr, (np.ndarray, pd.Series)):
-        y_true = pd.DataFrame(arr)
+        targets = pd.DataFrame(arr)
     else:
-        y_true = arr.copy(deep=True)
+        targets = arr.copy(deep=True)
     if prtc_attr is not None:
-        y_true = pd.concat([prtc_attr, y_true.reset_index(drop=True)], axis=1)
-        y_true.set_index(prtc_attr.columns.tolist(), inplace=True)
-    return y_true
+        targets = pd.concat([prtc_attr, targets.reset_index(drop=True)], axis=1)
+        targets.set_index(prtc_attr.columns.tolist(), inplace=True)
+    else:
+        targets.reset_index(drop=True, inplace=True)
+    return targets
 
 
-def prep_preds(arr, y_col=None, prtc_attr=None):
+def prep_preds(arr, y_col=None, prtc_attr=None, name="predictions"):
     if isinstance(arr, np.ndarray):
-        y_pred = pd.DataFrame(arr)
+        preds = pd.DataFrame(arr)
     else:
-        y_pred = arr.copy(deep=True)
+        preds = arr.copy(deep=True)
     if prtc_attr is not None:
-        y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop=True)], axis=1)
-        y_pred.set_index(prtc_attr.columns.tolist(), inplace=True)
+        preds = pd.concat([prtc_attr, preds.reset_index(drop=True)], axis=1)
+        preds.set_index(prtc_attr.columns.tolist(), inplace=True)
     else:
-        pass
+        preds.reset_index(drop=True, inplace=True)
     if y_col is None:
         raise ValidationError(
-            "Cannot evaluate predictions without ground truth")
+            f"Cannot evaluate {name} without ground truth")
     else:
-        y_pred.columns = y_col
-    return y_pred
-
-
-def prep_probs(arr, y_col=None, prtc_attr=None):
-    if isinstance(arr, np.ndarray):
-        y_prob = pd.DataFrame(arr)
-    else:
-        y_prob = arr.copy(deep=True)
-    if prtc_attr is not None:
-        y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)], axis=1)
-        y_prob.set_index(prtc_attr.columns.tolist(), inplace=True)
-    else:
-        pass
-    if y_col is None:
-        raise ValidationError(
-            "Cannot evaluate probabilities without ground truth")
-    else:
-        y_prob.columns = y_col
-    return y_prob
+        preds.columns = y_col
+    return preds
 
 
 def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
@@ -134,9 +118,9 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
         y_true = prep_targets(y_true, prtc_attr)
         y_col = y_true.columns
     if y_pred is not None:
-        y_pred = prep_preds(y_pred, y_col, prtc_attr)
+        y_pred = prep_preds(y_pred, y_col, prtc_attr, name="predictions")
     if y_prob is not None:
-        y_prob = prep_probs(y_prob, y_col, prtc_attr)
+        y_prob = prep_preds(y_prob, y_col, prtc_attr, name="probabilities")
     #
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
