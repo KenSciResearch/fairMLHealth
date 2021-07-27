@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
-                             precision_score, balanced_accuracy_score)
+                            balanced_accuracy_score)
 from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
@@ -179,9 +179,27 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     else:
         rprt = results
     #
-    rprt = __sort(rprt)
+    rprt = __sort_table(rprt)
     rprt = rprt.round(sig_fig)
     return rprt
+
+
+def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
+    """ Generates embedded html pandas styler table containing a highlighted
+        version of a model comparison dataframe
+
+    Args:
+        df (pandas dataframe): Model comparison dataframe (see)
+        caption (str, optional): Optional caption for table. Defaults to "".
+        as_styler (bool, optional): If True, returns a pandas Styler of the
+            highlighted table (to which other styles/highlights can be added).
+            Otherwise, returns the table as an embedded HTML object. Defaults
+            to False .
+
+    Returns:
+        Embedded html or pandas.io.formats.style.Styler
+    """
+    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
 def performance(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -211,10 +229,10 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __classification_performance(X, y_true, y_pred, y_prob,
+        df = __strat_class_performance(X, y_true, y_pred, y_prob,
                                                    features, add_overview)
     elif pred_type == "regression":
-        df = __regression_performance(X, y_true, y_pred,
+        df = __strat_reg_performance(X, y_true, y_pred,
                                                features, add_overview)
     #
     df = df.round(sig_fig)
@@ -264,24 +282,6 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
     else:
         df = df.round(sig_fig)
     return df
-
-
-def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
-    """ Generates embedded html pandas styler table containing a highlighted
-        version of a model comparison dataframe
-
-    Args:
-        df (pandas dataframe): Model comparison dataframe (see)
-        caption (str, optional): Optional caption for table. Defaults to "".
-        as_styler (bool, optional): If True, returns a pandas Styler of the
-            highlighted table (to which other styles/highlights can be added).
-            Otherwise, returns the table as an embedded HTML object. Defaults
-            to False .
-
-    Returns:
-        Embedded html or pandas.io.formats.style.Styler
-    """
-    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
 
 
 ''' Private Functions '''
@@ -385,145 +385,6 @@ def __apply_biasGroups(features, df, func, yt, yh):
     return results, errs, warns
 
 
-def __class_prevalence(y_true, priv_grp):
-    """ Returns a dictionary of data metrics applicable to evaluation of
-        fairness
-
-    Args:
-        y_true (pandas DataFrame): Sample targets
-        priv_grp (int): Specifies which label indicates the privileged
-                group. Defaults to 1.
-    """
-    dt_vals = {}
-    prev = round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
-    if not isinstance(prev, float):
-        prev = prev[0]
-    dt_vals['Prevalence of Privileged Class (%)'] = prev
-    return dt_vals
-
-
-def __classification_performance(X, y_true, y_pred, y_prob=None,
-                                        features:list=None, add_overview=True):
-    """Generates a table of stratified performance metrics for each specified
-        feature
-
-    Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values; must be binary values
-        y_pred (1D array-like): Sample target predictions; must be binary values
-        y_prob (1D array-like, optional): Sample target probabilities. Defaults
-            to None.
-        features (list): columns in df to be assessed if not all columns.
-            Defaults to None.
-
-    Returns:
-        pandas DataFrame
-    """
-    #
-    def __perf_rep(x, y, yh, yp):
-        _y = y_cols()['disp_names']['yt']
-        _yh = y_cols()['disp_names']['yh']
-        res = {'Obs.': x.shape[0],
-            f'{_y} Mean': x[y].mean(),
-            f'{_yh} Mean': x[yh].mean(),
-            'TPR': pmtrc.true_positive_rate(x[y], x[yh]),
-            'FPR': pmtrc.false_positive_rate(x[y], x[yh]),
-            'Accuracy': pmtrc.accuracy(x[y], x[yh]),
-            'Precision': pmtrc.precision(x[y], x[yh])  # PPV
-            }
-        if yp is not None:
-            res['ROC AUC'] = pmtrc.roc_auc_score(x[y], x[yp])
-            res['PR AUC'] = pmtrc.pr_auc_score(x[y], x[yp])
-        return res
-    #
-    if y_true is None or y_pred is None:
-        msg = "Cannot assess performance without both y_true and y_pred"
-        raise ValueError(msg)
-    #
-    df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
-    limit_alert(strat_feats, item_name="features")
-    #
-    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh, yp)
-    if add_overview:
-        overview = {'Feature Name': "ALL FEATURES",
-                    'Feature Value': "ALL VALUES"}
-        ov_dict = __perf_rep(df, yt, yh, yp)
-        for k, v in ov_dict.items():
-            overview[k] = v
-        overview_df = pd.DataFrame(overview, index=[0])
-        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
-    else:
-        rprt = results
-    rprt = __sort(rprt)
-    return rprt
-
-
-def __regression_performance(X, y_true, y_pred, features:list=None,
-                                    add_overview=True):
-    """
-    Generates a table of stratified performance metrics for each specified
-    feature
-
-    Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values
-        y_pred (1D array-like): Sample target predictions
-        features (list): columns in df to be assessed if not all columns.
-            Defaults to None.
-
-    Requirements:
-        Each feature must be discrete to run stratified analysis. If any data
-        are not discrete and there are more than 11 values, the tool will
-        reformat those data into quantiles
-    """
-    #
-    def __perf_rep(x, y, yh):
-        _y = y_cols()['disp_names']['yt']
-        _yh = y_cols()['disp_names']['yh']
-        res = {'Obs.': x.shape[0],
-                f'{_y} Mean': x[y].mean(),
-                f'{_yh} Mean': x[yh].mean(),
-                f'{_yh} Median': x[yh].median(),
-                f'{_yh} Std. Dev.': x[yh].std(),
-                'Error Mean': (x[yh] - x[y]).mean(),
-                'Error Std. Dev.': (x[yh] - x[y]).std(),
-                'MAE': mean_absolute_error(x[y], x[yh]),
-                'MSE': mean_squared_error(x[y], x[yh])
-                }
-        return res
-    #
-    if y_true is None or y_pred is None:
-        msg = "Cannot assess performance without both y_true and y_pred"
-        raise ValueError(msg)
-    #
-    df = stratified_preprocess(X, y_true, y_pred, features=features)
-    yt, yh, yp = y_cols(df)['col_names'].values()
-    pred_cols = [n for n in [yt, yh, yp] if n is not None]
-    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
-    if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
-    limit_alert(strat_feats, item_name="features")
-    #
-    results = __apply_featureGroups(strat_feats, df, __perf_rep, yt, yh)
-    if add_overview:
-        overview = {'Feature Name': "ALL FEATURES",
-                    'Feature Value': "ALL VALUES"}
-        ov_dict = __perf_rep(df, yt, yh)
-        for k, v in ov_dict.items():
-            overview[k] = v
-        overview_df = pd.DataFrame(overview, index=[0])
-        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
-    else:
-        rprt = results
-    rprt = __sort(rprt)
-    return rprt
-
-
 @iterate_cohorts
 def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     """ Generates a table of stratified fairness metrics metrics for each specified
@@ -544,28 +405,6 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         reformat those data into quantiles
     """
     #
-    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
-
-    def __bias_rep(y_true, y_pred, pa_name, priv_grp=1):
-        gf_vals = {}
-        gf_vals['Selection Ratio'] = aif.ratio(pdmean, y_true, y_pred,
-                                               prot_attr=pa_name,
-                                               priv_group=priv_grp)
-        gf_vals['PPV Ratio'] = \
-            fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['TPR Ratio'] =  \
-            fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['FPR Ratio'] =  \
-            fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
-        #
-        gf_vals['Selection Diff'] = aif.difference(pdmean, y_true, y_pred,
-                                                    prot_attr=pa_name,
-                                                    priv_group=priv_grp)
-        gf_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
-        gf_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
-        return gf_vals
-    #
     if y_true is None or y_pred is None:
         msg = "Cannot assess fairness without both y_true and y_pred"
         raise ValueError(msg)
@@ -578,8 +417,289 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
-    results = __apply_biasGroups(strat_feats, df, __bias_rep, yt, yh)
-    rprt = __sort(results)
+    results = __apply_biasGroups(strat_feats, df,
+                                 __fair_classification_measures, yt, yh)
+    rprt = __sort_table(results)
+    return rprt
+
+
+def __classification_performance(x:pd.DataFrame, y:str, yh:str, yp:str=None):
+    _y = y_cols()['disp_names']['yt']
+    _yh = y_cols()['disp_names']['yh']
+    res = {'Obs.': x.shape[0],
+        f'{_y} Mean': x[y].mean(),
+        f'{_yh} Mean': x[yh].mean(),
+        'TPR': pmtrc.true_positive_rate(x[y], x[yh]),
+        'FPR': pmtrc.false_positive_rate(x[y], x[yh]),
+        'Accuracy': pmtrc.accuracy(x[y], x[yh]),
+        'Precision': pmtrc.precision(x[y], x[yh]),  # PPV
+        'F1-Score': pmtrc.f1_score(x[y], x[yh])
+        }
+    if yp is not None:
+        res['ROC AUC'] = pmtrc.roc_auc_score(x[y], x[yp])
+        res['PR AUC'] = pmtrc.pr_auc_score(x[y], x[yp])
+    return res
+
+
+@iterate_cohorts
+def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
+                             priv_grp=1, **kwargs):
+    """ Returns a pandas dataframe containing fairness measures for the model
+        results
+
+        Note: named arguments are enforced to enable use of iterate_cohorts
+
+    Args:
+        X (array-like): Sample features
+        prtc_attr (array-like, named): Values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
+        y_prob (array-like, 1-D): Sample target probabilities
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+    """
+    #
+    def update_summary(summary_dict, pa_name, y_true, y_pred, y_prob, priv_grp):
+        """ Adds replaces measure keys with the names found in the literature
+
+        Args:
+            X (pandas DataFrame): Sample features
+            pa_name (str):
+            y_true (pandas DataFrame): Sample targets
+            y_pred (pandas DataFrame): Sample target predictions
+            y_prob (pandas DataFrame, optional): Sample target probabilities.
+                Defaults to None.
+            priv_grp (int): Specifies which label indicates the privileged
+                    group. Defaults to 1.
+        """
+        name_update = {"Selection Diff":"Statistical Parity Difference",
+                       "Selection Ratio": "Disparate Impact Ratio",
+                       "PPV Diff": "Positive Predictive Parity Difference",
+                       "PPV Ratio": "Positive Predictive Parity Ratio"
+                       }
+        drop_keys = ['TPR Ratio', 'TPR Diff', 'FPR Ratio', 'FPR Diff']
+        for k in name_update.keys():
+            val = summary_dict.pop(k)
+            summary_dict[name_update[k]] = val
+        for k in drop_keys:
+            summary_dict.pop(k)
+        summary_dict['Equalized Odds Difference'] = eq_odds_diff(y_true, y_pred,
+                                                            prtc_attr=pa_name)
+        summary_dict['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
+                                                        prtc_attr=pa_name)
+        if y_prob is not None:
+            try:
+                summary_dict['AUC Difference'] = \
+                    aif.difference(pmtrc.roc_auc_score, y_true, y_prob,
+                                    prot_attr=pa_name, priv_group=priv_grp)
+            except:
+                pass
+        return summary_dict
+
+    # Validate and Format Arguments
+    if not isinstance(priv_grp, int):
+        raise ValueError("priv_grp must be an integer value")
+    X, prtc_attr, y_true, y_pred, y_prob = \
+        standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
+    pa_name = prtc_attr.columns.tolist()[0]
+
+    # Temporarily prevent processing for more than 2 classes
+    # ToDo: enable multiclass
+    n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
+    if n_class != 2:
+        raise ValueError(
+            "tool cannot yet process multiclass classification models")
+    if n_class == 2:
+        labels = analytical_labels()
+    else:
+        labels = analytical_labels("multiclass")
+    gfl, ifl, mpl, dtl = labels.values()
+    # Generate a dictionary of measure values to be converted t a dataframe
+    mv_dict = {}
+    summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
+    mv_dict[gfl] =  update_summary(summary, pa_name, y_true, y_pred, y_prob,
+                                   priv_grp)
+    mv_dict[dtl] = __value_prevalence(y_true, priv_grp)
+    if not kwargs.pop('skip_if', False):
+        mv_dict[ifl] = __similarity_measures(X, pa_name, y_true, y_pred)
+    if not kwargs.pop('skip_performance', False):
+        y, yh= y_true.columns[0], y_pred.columns[0]
+        X[y], X[yh] = y_true.values, y_pred.values
+        mv_dict[mpl] = __classification_performance(X, y, yh)
+    # Convert scores to a formatted dataframe and return
+    df = pd.DataFrame.from_dict(mv_dict, orient="index").stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
+    df.columns = ['Value']
+    # Fix the order in which the metrics appear
+    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
+    df.reset_index(inplace=True)
+    df['sortorder'] = df['level_0'].map(metric_order)
+    df = df.sort_values('sortorder').drop('sortorder', axis=1)
+    df.set_index(['level_0', 'level_1'], inplace=True)
+    df.rename_axis(('Metric', 'Measure'), inplace=True)
+    return df
+
+
+def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
+    """ Returns a dict of measure values
+    """
+    def predmean(_, y_pred, *args): return np.mean(y_pred.values)
+    #
+    meas_vals = {}
+    meas_vals['Selection Ratio'] = aif.ratio(predmean, y_true, y_pred,
+                                            prot_attr=pa_name,
+                                            priv_group=priv_grp)
+    meas_vals['PPV Ratio'] = \
+        fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
+    meas_vals['TPR Ratio'] =  \
+        fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    meas_vals['FPR Ratio'] =  \
+        fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    #
+    meas_vals['Selection Diff'] = aif.difference(predmean, y_true, y_pred,
+                                                prot_attr=pa_name,
+                                                priv_group=priv_grp)
+    meas_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
+    meas_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
+    meas_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
+    meas_vals['Balanced Accuracy Difference'] = \
+            aif.difference(balanced_accuracy_score, y_true,
+                           y_pred, prot_attr=pa_name, priv_group=priv_grp)
+    meas_vals['Balanced Accuracy Ratio'] = \
+            aif.ratio(balanced_accuracy_score, y_true,
+                       y_pred, prot_attr=pa_name, priv_group=priv_grp)
+    return meas_vals
+
+
+def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
+    """ Returns dict of regression-specific fairness measures
+    """
+    def predmean(_, y_pred, *args): return np.mean(y_pred.values)
+    def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
+    #
+    meas_vals = {}
+    # Ratios
+    meas_vals['Mean Prediction Ratio'] = \
+        aif.ratio(predmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
+    meas_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
+                                     prot_attr=pa_name, priv_group=priv_grp)
+    # Differences
+    meas_vals['Mean Prediction Difference'] = \
+        aif.difference(predmean, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    meas_vals['MAE Difference'] = \
+        aif.difference(mean_absolute_error, y_true, y_pred,
+                       prot_attr=pa_name, priv_group=priv_grp)
+    return meas_vals
+
+
+def __regression_performance(x:pd.DataFrame, y:str, yh:str):
+    _y = y_cols()['disp_names']['yt']
+    _yh = y_cols()['disp_names']['yh']
+    res = {'Obs.': x.shape[0],
+            f'{_y} Mean': x[y].mean(),
+            f'{_y} Std. Dev.': x[y].std(),
+            f'{_yh} Mean': x[yh].mean(),
+            f'{_yh} Std. Dev.': x[yh].std(),
+            'Error Mean': (x[yh] - x[y]).mean(),
+            'Error Std. Dev.': (x[yh] - x[y]).std(),
+            'MAE': mean_absolute_error(x[y], x[yh]),
+            'MSE': mean_squared_error(x[y], x[yh]),
+            'Rsqrd': pmtrc.r_squared(x[y], x[yh])
+            }
+    return res
+
+
+def __strat_class_performance(X, y_true, y_pred, y_prob=None,
+                                        features:list=None, add_overview=True):
+    """Generates a table of stratified performance metrics for each specified
+        feature
+
+    Args:
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values; must be binary values
+        y_pred (1D array-like): Sample target predictions; must be binary values
+        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+            to None.
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
+
+    Returns:
+        pandas DataFrame
+    """
+    #
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess performance without both y_true and y_pred"
+        raise ValueError(msg)
+    #
+    df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
+    yt, yh, yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
+    if any(y is None for y in [yt, yh]):
+        raise ValidationError("Cannot analyze with undefined targets")
+    limit_alert(strat_feats, item_name="features")
+    #
+    results = __apply_featureGroups(strat_feats, df,
+                                    __classification_performance, yt, yh, yp)
+    if add_overview:
+        overview = {'Feature Name': "ALL FEATURES",
+                    'Feature Value': "ALL VALUES"}
+        ov_dict = __classification_performance(df, yt, yh, yp)
+        for k, v in ov_dict.items():
+            overview[k] = v
+        overview_df = pd.DataFrame(overview, index=[0])
+        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    else:
+        rprt = results
+    rprt = __sort_table(rprt)
+    return rprt
+
+
+def __strat_reg_performance(X, y_true, y_pred, features:list=None,
+                                    add_overview=True):
+    """
+    Generates a table of stratified performance metrics for each specified
+    feature
+
+    Args:
+        df (pandas dataframe or compatible object): data to be assessed
+        y_true (1D array-like): Sample target true values
+        y_pred (1D array-like): Sample target predictions
+        features (list): columns in df to be assessed if not all columns.
+            Defaults to None.
+
+    Requirements:
+        Each feature must be discrete to run stratified analysis. If any data
+        are not discrete and there are more than 11 values, the tool will
+        reformat those data into quantiles
+    """
+    #
+    if y_true is None or y_pred is None:
+        msg = "Cannot assess performance without both y_true and y_pred"
+        raise ValueError(msg)
+    #
+    df = stratified_preprocess(X, y_true, y_pred, features=features)
+    yt, yh, yp = y_cols(df)['col_names'].values()
+    pred_cols = [n for n in [yt, yh, yp] if n is not None]
+    strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
+    if any(y is None for y in [yt, yh]):
+        raise ValidationError("Cannot analyze with undefined targets")
+    limit_alert(strat_feats, item_name="features")
+    #
+    results = __apply_featureGroups(strat_feats, df, __regression_performance, yt, yh)
+    if add_overview:
+        overview = {'Feature Name': "ALL FEATURES",
+                    'Feature Value': "ALL VALUES"}
+        ov_dict = __regression_performance(df, yt, yh)
+        for k, v in ov_dict.items():
+            overview[k] = v
+        overview_df = pd.DataFrame(overview, index=[0])
+        rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
+    else:
+        rprt = results
+    rprt = __sort_table(rprt)
     return rprt
 
 
@@ -611,189 +731,9 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValidationError("Cannot analyze with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
-    results = __apply_biasGroups(strat_feats, df, __regression_bias, yt, yh)
-    rprt = __sort(results)
+    results = __apply_biasGroups(strat_feats, df, __fair_regression_measures, yt, yh)
+    rprt = __sort_table(results)
     return rprt
-
-
-def __similarity_measures(X, pa_name, y_true, y_pred):
-    """ Returns dict of similarity-based fairness measures
-    """
-    if_vals = {}
-    # consistency_score raises error if null values are present in X
-    if X.notnull().all().all():
-        if_vals['Consistency Score'] = \
-            aif.consistency_score(X, y_pred.iloc[:, 0])
-    else:
-        msg = "Cannot calculate consistency score. Null values present in data."
-        logging.warning(msg)
-    # Other aif360 metrics (not consistency) can handle null values
-    if_vals['Between-Group Gen. Entropy Error'] = \
-        aif.between_group_generalized_entropy_error(y_true, y_pred,
-                                                        prot_attr=pa_name)
-    return if_vals
-
-
-def __sort(strat_tbl):
-    """ Sorts columns in standardized order
-
-    Args:
-        strat_tbl (pd.DataFrame): any of the stratified tables produced by this
-        module
-
-    Returns:
-        pandas DataFrame: sorted strat_tbl
-    """
-    yname = y_cols()['disp_names']['yt']
-    yhname = y_cols()['disp_names']['yh']
-    head_names = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{yname} Mean', f'{yhname} Mean']
-    head_cols = [c for c in head_names if c in strat_tbl.columns]
-    tail_cols = sorted([c for c in strat_tbl.columns if c not in head_cols])
-    return strat_tbl[head_cols + tail_cols]
-
-
-@iterate_cohorts
-def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
-                             priv_grp=1, **kwargs):
-    """ Returns a pandas dataframe containing fairness measures for the model
-        results
-
-        Note: named arguments are enforced to enable use of iterate_cohorts
-
-    Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): Values for the protected attribute
-            (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
-        priv_grp (int): Specifies which label indicates the privileged
-            group. Defaults to 1.
-    """
-    #
-    def __summary(X, pa_name, y_true, y_pred, y_prob=None,
-                                        priv_grp=1):
-        """ Returns a dictionary containing group fairness measures specific
-            to binary classification problems
-
-        Args:
-            X (pandas DataFrame): Sample features
-            pa_name (str):
-            y_true (pandas DataFrame): Sample targets
-            y_pred (pandas DataFrame): Sample target predictions
-            y_prob (pandas DataFrame, optional): Sample target probabilities.
-                Defaults to None.
-            priv_grp (int): Specifies which label indicates the privileged
-                    group. Defaults to 1.
-        """
-        #
-        gf_vals = {}
-
-        gf_vals['Statistical Parity Difference'] = \
-            aif.statistical_parity_difference(y_true, y_pred,
-                                                prot_attr=pa_name)
-        gf_vals['Disparate Impact Ratio'] = \
-            aif.disparate_impact_ratio(y_true, y_pred, prot_attr=pa_name)
-
-        gf_vals['Equalized Odds Difference'] = eq_odds_diff(y_true, y_pred,
-                                                            prtc_attr=pa_name)
-        gf_vals['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
-                                                        prtc_attr=pa_name)
-
-        # Precision
-        gf_vals['Positive Predictive Parity Difference'] = \
-            aif.difference(precision_score, y_true,
-                                y_pred, prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['Balanced Accuracy Difference'] = \
-            aif.difference(balanced_accuracy_score, y_true,
-                                y_pred, prot_attr=pa_name, priv_group=priv_grp)
-        gf_vals['Balanced Accuracy Ratio'] = \
-            aif.ratio(balanced_accuracy_score, y_true,
-                        y_pred, prot_attr=pa_name, priv_group=priv_grp)
-        if y_prob is not None:
-            try:
-                gf_vals['AUC Difference'] = \
-                    aif.difference(pmtrc.roc_auc_score, y_true, y_prob,
-                                    prot_attr=pa_name, priv_group=priv_grp)
-            except:
-                pass
-        return gf_vals
-
-    def __m_p_c(y, yh, yp=None):
-        # Returns a dict containing classification performance measure values for
-        # non-stratified tables
-        res = {'Accuracy': pmtrc.accuracy(y, yh),
-            'Balanced Accuracy': pmtrc.balanced_accuracy(y, yh),
-            'F1-Score': pmtrc.f1_score(y, yh),
-            'Recall': pmtrc.true_positive_rate(y, yh),
-            'Precision': pmtrc.precision(y, yh)
-            }
-        if yp is not None:
-            res['ROC_AUC'] = pmtrc.roc_auc_score(y, yp)
-            res['PR_AUC'] = pmtrc.pr_auc_score(y, yp)
-        return res
-    #
-    # Validate and Format Arguments
-    if not isinstance(priv_grp, int):
-        raise ValueError("priv_grp must be an integer value")
-    X, prtc_attr, y_true, y_pred, y_prob = \
-        standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
-    pa_name = prtc_attr.columns.tolist()[0]
-
-    # Temporarily prevent processing for more than 2 classes
-    # ToDo: enable multiclass
-    n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
-    if n_class != 2:
-        raise ValueError(
-            "tool cannot yet process multiclass classification models")
-    if n_class == 2:
-        labels = strat_tbl_labels()
-    else:
-        labels = strat_tbl_labels("multiclass")
-    gfl, ifl, mpl, dtl = labels.values()
-    # Generate a dictionary of measure values to be converted t a dataframe
-    mv_dict = {}
-    mv_dict[gfl] =  __summary(X, pa_name, y_true, y_pred, y_prob, priv_grp)
-    mv_dict[dtl] = __class_prevalence(y_true, priv_grp)
-    if not kwargs.pop('skip_if', False):
-        mv_dict[ifl] = __similarity_measures(X, pa_name, y_true, y_pred)
-    if not kwargs.pop('skip_performance', False):
-        mv_dict[mpl] = __m_p_c(y_true, y_pred)
-    # Convert scores to a formatted dataframe and return
-    df = pd.DataFrame.from_dict(mv_dict, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    df.columns = ['Value']
-    # Fix the order in which the metrics appear
-    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
-    df.reset_index(inplace=True)
-    df['sortorder'] = df['level_0'].map(metric_order)
-    df = df.sort_values('sortorder').drop('sortorder', axis=1)
-    df.set_index(['level_0', 'level_1'], inplace=True)
-    df.rename_axis(('Metric', 'Measure'), inplace=True)
-    return df
-
-
-def __regression_bias(y_true, y_pred, pa_name, priv_grp=1):
-    """ Returns dict of regression-specific fairness measures
-    """
-    def pdmean(y_true, y_pred, *args): return np.mean(y_pred.values)
-    def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
-    #
-    gf_vals = {}
-    # Ratios
-    gf_vals['Mean Prediction Ratio'] = \
-        aif.ratio(pdmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
-                                     prot_attr=pa_name, priv_group=priv_grp)
-    # Differences
-    gf_vals['Mean Prediction Difference'] = \
-        aif.difference(pdmean, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    gf_vals['MAE Difference'] = \
-        aif.difference(mean_absolute_error, y_true, y_pred,
-                       prot_attr=pa_name, priv_group=priv_grp)
-    return gf_vals
 
 
 @iterate_cohorts
@@ -821,20 +761,22 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
         standard_preprocess(X, prtc_attr, y_true, y_pred, priv_grp=priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
     #
-    gf_vals = __regression_bias(y_true, y_pred, pa_name, priv_grp=priv_grp)
+    grp_vals = __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=priv_grp)
     #
+    dt_vals = __value_prevalence(y_true, priv_grp)
     if not kwargs.pop('skip_if', False):
         if_vals = __similarity_measures(X, pa_name, y_true, y_pred)
 
-    dt_vals = __class_prevalence(y_true, priv_grp)
-    #
     mp_vals = {}
-    strat_tbl = regression_performance(y_true, y_pred)
-    for row in strat_tbl.iterrows():
-        mp_vals[row[0]] = row[1]['Score']
+    if not kwargs.pop('skip_performance', False):
+        perf_rep = __regression_performance(X, y_true, y_pred)
+        strat_tbl = pd.DataFrame().from_dict(perf_rep, orient='index'
+                          ).rename(columns={0: 'Score'})
+        for row in strat_tbl.iterrows():
+            mp_vals[row[0]] = row[1]['Score']
     # Convert scores to a formatted dataframe and return
     labels = analytical_labels("regression")
-    measures = {labels['gf_label']: gf_vals,
+    measures = {labels['gf_label']: grp_vals,
                 labels['if_label']: if_vals,
                 labels['mp_label']: mp_vals,
                 labels['dt_label']: dt_vals}
@@ -844,4 +786,56 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
     return df
 
 
+def __similarity_measures(X, pa_name:str, y_true:pd.Series, y_pred:pd.Series):
+    """ Returns dict of similarity-based fairness measures
+    """
+    if_vals = {}
+    # consistency_score raises error if null values are present in X
+    if X.notnull().all().all():
+        if_vals['Consistency Score'] = \
+            aif.consistency_score(X, y_pred.iloc[:, 0])
+    else:
+        msg = "Cannot calculate consistency score. Null values present in data."
+        logging.warning(msg)
+    # Other aif360 metrics (not consistency) can handle null values
+    if_vals['Between-Group Gen. Entropy Error'] = \
+        aif.between_group_generalized_entropy_error(y_true, y_pred,
+                                                        prot_attr=pa_name)
+    return if_vals
+
+
+def __sort_table(strat_tbl):
+    """ Sorts columns in standardized order
+
+    Args:
+        strat_tbl (pd.DataFrame): any of the stratified tables produced by this
+        module
+
+    Returns:
+        pandas DataFrame: sorted strat_tbl
+    """
+    yname = y_cols()['disp_names']['yt']
+    yhname = y_cols()['disp_names']['yh']
+    head_names = ['Feature Name', 'Feature Value', 'Obs.',
+                 f'{yname} Mean', f'{yhname} Mean']
+    head_cols = [c for c in head_names if c in strat_tbl.columns]
+    tail_cols = sorted([c for c in strat_tbl.columns if c not in head_cols])
+    return strat_tbl[head_cols + tail_cols]
+
+
+def __value_prevalence(y_true, priv_grp):
+    """ Returns a dictionary of data metrics applicable to evaluation of
+        fairness
+
+    Args:
+        y_true (pandas DataFrame): Sample targets
+        priv_grp (int): Specifies which label indicates the privileged
+                group. Defaults to 1.
+    """
+    dt_vals = {}
+    prev = round(100*y_true[y_true.eq(priv_grp)].sum()/y_true.shape[0])
+    if not isinstance(prev, float):
+        prev = prev[0]
+    dt_vals['Prevalence of Privileged Class (%)'] = prev
+    return dt_vals
 

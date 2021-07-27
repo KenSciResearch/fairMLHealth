@@ -9,6 +9,23 @@ from .__validation import ValidationError
 
 
 
+def analytical_labels(pred_type: str = "binary"):
+    """ Returns a dictionary of category labels used by analytical functions
+    Args:
+        pred_type (b): number of classes in the prediction problem
+    """
+    valid_pred_types = ["binary", "multiclass", "regression"]
+    if pred_type not in valid_pred_types:
+        raise ValueError(f"pred_type must be one of {valid_pred_types}")
+    c_note = "" if pred_type == "binary" else " (Weighted Avg)"
+    lbls = {'gf_label': "Group Fairness",
+                     'if_label': "Individual Fairness",
+                     'mp_label': f"Model Performance{c_note}",
+                     'dt_label': "Data Metrics"
+                     }
+    return lbls
+
+
 def prep_X(data):
     """ Ensures that data are in the correct format
 
@@ -21,11 +38,12 @@ def prep_X(data):
         else:
             X = pd.DataFrame(data, columns=['X'])
     else:
-        X = data
+        X = data.copy(deep=True)
     # Convert columns to numeric type if they do not contain strings
     for col in X.columns:
         X.loc[:, col] = pd.to_numeric(X[col], errors='ignore')
     return X
+
 
 def prep_prtc_attr(arr):
     if not isinstance(arr, pd.DataFrame):
@@ -35,25 +53,27 @@ def prep_prtc_attr(arr):
             pa_name = 'protected_attribute'
             prtc_attr = pd.DataFrame(arr, columns=[pa_name])
     else:
-        prtc_attr = arr
+        prtc_attr = arr.copy(deep=True)
     prtc_attr.reset_index(inplace=True, drop=True)
     return prtc_attr
+
 
 def prep_targets(arr, prtc_attr=None):
     if isinstance(arr, (np.ndarray, pd.Series)):
         y_true = pd.DataFrame(arr)
     else:
-        y_true = arr
+        y_true = arr.copy(deep=True)
     if prtc_attr is not None:
         y_true = pd.concat([prtc_attr, y_true.reset_index(drop=True)], axis=1)
         y_true.set_index(prtc_attr.columns.tolist(), inplace=True)
     return y_true
 
+
 def prep_preds(arr, y_col=None, prtc_attr=None):
     if isinstance(arr, np.ndarray):
         y_pred = pd.DataFrame(arr)
     else:
-        y_pred = arr
+        y_pred = arr.copy(deep=True)
     if prtc_attr is not None:
         y_pred = pd.concat([prtc_attr, y_pred.reset_index(drop=True)], axis=1)
         y_pred.set_index(prtc_attr.columns.tolist(), inplace=True)
@@ -71,7 +91,7 @@ def prep_probs(arr, y_col=None, prtc_attr=None):
     if isinstance(arr, np.ndarray):
         y_prob = pd.DataFrame(arr)
     else:
-        y_prob = arr
+        y_prob = arr.copy(deep=True)
     if prtc_attr is not None:
         y_prob = pd.concat([prtc_attr, y_prob.reset_index(drop=True)], axis=1)
         y_prob.set_index(prtc_attr.columns.tolist(), inplace=True)
@@ -83,22 +103,6 @@ def prep_probs(arr, y_col=None, prtc_attr=None):
     else:
         y_prob.columns = y_col
     return y_prob
-
-def analytical_labels(pred_type: str = "binary"):
-    """ Returns a dictionary of category labels used by analytical functions
-    Args:
-        pred_type (b): number of classes in the prediction problem
-    """
-    valid_pred_types = ["binary", "multiclass", "regression"]
-    if pred_type not in valid_pred_types:
-        raise ValueError(f"pred_type must be one of {valid_pred_types}")
-    c_note = "" if pred_type == "binary" else " (Weighted Avg)"
-    lbls = {'gf_label': "Group Fairness",
-                     'if_label': "Individual Fairness",
-                     'mp_label': f"Model Performance{c_note}",
-                     'dt_label': "Data Metrics"
-                     }
-    return lbls
 
 
 def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,

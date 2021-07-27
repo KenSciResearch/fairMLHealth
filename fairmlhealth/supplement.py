@@ -74,8 +74,3 @@ def feature_table(df):
                               'feature': 'Category Count (Encoded Features).'})
     return count_df
 
-
-def is_dictlike(obj):
-    dictlike = all([callable(getattr(obj, "keys", None)),
-                    not hasattr(obj, "size")])
-    return dictlike

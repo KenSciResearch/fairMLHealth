@@ -11,12 +11,12 @@ Contributors:
 from abc import ABC
 import numpy as np
 import pandas as pd
-from sklearn import metric as sk_metric
+from sklearn import metrics as sk_metric
 import warnings
 
-from .tools import is_dictlike
-from .analyze import summary, flag
-from . import __performance_metrics as pmtrc, __validation as valid
+from .__utils import is_dictlike
+from .analyze import summary, flag, __regression_performance
+from . import __validation as valid
 from .__validation import ValidationError
 
 
@@ -37,16 +37,18 @@ def classification_performance(y_true, y_pred, target_labels=None,
             model.predict().
         target_labels (list of str): Optional labels for target values.
     """
-    break #ToDo: run validation
     if target_labels is None:
         target_labels = [f"target = {t}" for t in set(y_true)]
+    # scikit will run validation
     report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
                                              target_names=target_labels)
     report = pd.DataFrame(report).transpose()
     # Move accuracy to separate row
     accuracy = report.loc['accuracy', :]
-    report.drop('accuracy', inplace=True)
-    report.loc['accuracy', 'accuracy'] = accuracy[0]
+    if len(accuracy) > 0:
+        report.drop('accuracy', inplace=True)
+        report.loc['accuracy', 'accuracy'] = accuracy[0]
+    #
     report = report.round(sig_fig)
     return report
 
@@ -125,15 +127,12 @@ def regression_performance(y_true, y_pred, sig_fig:int=4):
         y_pred (array): Prediction values. Must be compatible with
             model.predict().
     """
-    break #ToDo: run validation
-    report = {}
-    y = y_cols()['disp_names']['yt']
-    yh = y_cols()['disp_names']['yh']
-    report[f'{y} Mean'] = np.mean(y_true.values)
-    report[f'{yh} Mean'] = np.mean(y_pred.values)
-    report['MSE'] = sk_metric.mean_squared_error(y_true, y_pred)
-    report['MAE'] = sk_metric.mean_absolute_error(y_true, y_pred)
-    report['Rsqrd'] = pmtrc.r_squared(y_true, y_pred)
+    valid.validate_y(y_true, "y_true")
+    valid.validate_y(y_pred, "y_pred", expected_len=len(y_true))
+    #
+    rpt_input = pd.concat([y_true, y_pred], axis=1, ignore_index=True)
+    y, yh = y_true.columns[0], y_pred.columns[0]
+    report = __regression_performance(rpt_input, y, yh)
     report = pd.DataFrame().from_dict(report, orient='index'
                           ).rename(columns={0: 'Score'})
     report = report.round(sig_fig)

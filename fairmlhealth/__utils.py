@@ -51,6 +51,12 @@ def format_errwarn(func):
     return wrapper
 
 
+def is_dictlike(obj):
+    dictlike = all([callable(getattr(obj, "keys", None)),
+                    not hasattr(obj, "size")])
+    return dictlike
+
+
 def iterate_cohorts(func):
     """ Runs the function for each cohort subset
 
@@ -186,7 +192,16 @@ class Flagger():
             raise ValueError(f"Invalid value of significant figure: {sig_fig}")
         #
         self.reset()
-        self.df = df
+        if isinstance(df, pd.DataFrame):
+            self.df = df.copy()
+        else:
+            err = "df must be a pandas DataFrame or Styler"
+            try:
+                if isinstance(df, pd.io.formats.style.Styler):
+                    self.df = df.data.copy()
+                else: raise ValidationError(err)
+            except:
+                raise ValidationError(err)
         self.labels, self.label_type = self.set_measure_labels(df)
         #
         if self.label_type == "index":
