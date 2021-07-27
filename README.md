@@ -14,13 +14,13 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
     - Examples for using the templates and tools
 
 - ### [FairMLHealth](fairmlhealth/README.md)
-    - **Analyze**:
-        - Tools for data and model validation
+    - **Measure**:
+        - Stratified tables useful in data and model validation
         - Tools for detailed analysis across multiple indicators (e.g. when location of bias is undetermined)
     - **Report**:
         - Tools stylized for inclusion in publications and analytical reports
         - Tools for monitoring and reporting on operationalized models
-    - **Supplement**:
+    - **Statistical Utilities**:
         - Generalized tools that can be used in bias analysis as well as in other applications
 
 - ### [Templates](templates/README.md)
