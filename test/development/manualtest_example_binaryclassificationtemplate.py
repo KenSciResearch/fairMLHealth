@@ -24,7 +24,7 @@ def test_example_binaryclassificationtemplate():
         this_dir = os.path.dirname(os.path.abspath(__file__))
         nb_name = "Example-BinaryClassificationTemplate.ipynb"
         nb_path = os.path.join(this_dir, "..", "..",
-                               "tutorials_and_examples", nb_name)
+                               "examples_and_tutorials", nb_name)
 
         nb, err = nbtest.validate_notebook(nb_path, timeout=1800)
 

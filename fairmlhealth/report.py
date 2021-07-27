@@ -15,7 +15,7 @@ from sklearn import metrics as sk_metric
 import warnings
 
 from .__utils import is_dictlike
-from .analyze import summary, flag, __regression_performance
+from .measure import summary, flag, __regression_performance
 from . import __validation as valid
 from .__validation import ValidationError
 

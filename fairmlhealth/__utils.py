@@ -156,6 +156,8 @@ def validate_notebook_requirements():
         raise ValidationError(err)
     else:
         pass
+
+
 class Flagger():
     """ Manages flag functionality
     """

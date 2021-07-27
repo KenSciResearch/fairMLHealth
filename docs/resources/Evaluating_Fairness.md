@@ -99,7 +99,7 @@ There are six common metrics for determining whether a model is considered "fair
 ## Example Model
 
 
-For the following explanations of specific measures, we'll use the results of a hypothetical predictive model shown in the table below. Our example shows performance and fairness measures relative to language as a protected attribute (i.e., whether or not a given patient is an English speaker). Also shown are stratified tables that will aid us in better understanding the source of any apparent disparity. Curious readers can walk through the generation of the model and this table of fairness measures in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+For the following explanations of specific measures, we'll use the results of a hypothetical predictive model shown in the table below. Our example shows performance and fairness measures relative to language as a protected attribute (i.e., whether or not a given patient is an English speaker). Also shown are stratified tables that will aid us in better understanding the source of any apparent disparity. Curious readers can walk through the generation of the model and this table of fairness measures in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 
 <a id="fairness_report"></a>
@@ -252,7 +252,7 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 
 
 ## Comparing Models
-In this section we will compare the results of multiple models using FairMLHealth's **compare_models** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+In this section we will compare the results of multiple models using FairMLHealth's **compare_models** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 <h3 style="text-align: center"><u> Example FairMLHealth Model Comparison Report </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_model_comparison.png"
@@ -299,7 +299,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../examples_and_tutorials/ Example-BinaryClassificationTemplate.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
 
 
 

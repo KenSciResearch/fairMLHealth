@@ -293,8 +293,8 @@ def __apply_featureGroups(features, df, func, *args):
     collecting errors and warnings to be displayed succinctly after processing
 
     Args:
-        features (list): columns of df to be iteratively analyzed
-        df (pd.DataFrame): data to be analyzed
+        features (list): columns of df to be iteratively measured
+        df (pd.DataFrame): data to be measured
         func (function): a function accepting *args and returning a dictionary
 
     Returns:
@@ -332,8 +332,8 @@ def __apply_biasGroups(features, df, func, yt, yh):
         collecting errors and warnings to be displayed succinctly after processing.
 
     Args:
-        features (list): columns of df to be iteratively analyzed
-        df (pd.DataFrame): data to be analyzed
+        features (list): columns of df to be iteratively measured
+        df (pd.DataFrame): data to be measured
         func (function): a function accepting two array arguments for comparison
             (selected from df as yt and yh), as well as a pa_name (str) and
             priv_grp (int) which will be set by __apply_biasGroups. This function
@@ -414,7 +414,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
+        raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
@@ -638,7 +638,7 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
+        raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
@@ -685,7 +685,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
+        raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df, __regression_performance, yt, yh)
@@ -728,7 +728,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     pred_cols = [n for n in [yt, yh, yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [yt, yh]):
-        raise ValidationError("Cannot analyze with undefined targets")
+        raise ValidationError("Cannot measure with undefined targets")
     limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df, __fair_regression_measures, yt, yh)

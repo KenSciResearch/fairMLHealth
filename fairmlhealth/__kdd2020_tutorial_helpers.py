@@ -10,7 +10,7 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import __load_mimic_data, utils
+from . import __utils
 import pandas as pd
 from warnings import warn
 
@@ -102,7 +102,7 @@ def load_mimic3_example(mimic_dirpath):
     return mimic_data.load_mimic3_example(mimic_dirpath)
 
 def feature_table(df):
-    return supplemental.feature_table(df)
+    return stat_utils.feature_table(df)
 
 '''
 Tutorial-Specific Helpers
