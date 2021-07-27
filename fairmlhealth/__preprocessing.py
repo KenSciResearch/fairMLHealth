@@ -19,10 +19,10 @@ def analytical_labels(pred_type: str = "binary"):
         raise ValueError(f"pred_type must be one of {valid_pred_types}")
     c_note = "" if pred_type == "binary" else " (Weighted Avg)"
     lbls = {'gf_label': "Group Fairness",
-                     'if_label': "Individual Fairness",
-                     'mp_label': f"Model Performance{c_note}",
-                     'dt_label': "Data Metrics"
-                     }
+            'if_label': "Individual Fairness",
+            'mp_label': f"Model Performance{c_note}",
+            'dt_label': "Data Metrics"
+            }
     return lbls
 
 

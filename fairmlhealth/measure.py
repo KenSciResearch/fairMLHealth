@@ -507,38 +507,31 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     # Temporarily prevent processing for more than 2 classes
     # ToDo: enable multiclass
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
-    if n_class != 2:
+    if n_class == 2:
+        summary_type = "binary"
+    else:
+        summary_type = "multiclass"
         raise ValueError(
             "tool cannot yet process multiclass classification models")
-    if n_class == 2:
-        labels = analytical_labels()
-    else:
-        labels = analytical_labels("multiclass")
-    gfl, ifl, mpl, dtl = labels.values()
     # Generate a dictionary of measure values to be converted t a dataframe
-    mv_dict = {}
+    labels = analytical_labels(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
-    mv_dict[gfl] =  update_summary(summary, pa_name, y_true, y_pred, y_prob,
-                                   priv_grp)
-    mv_dict[dtl] = __value_prevalence(y_true, priv_grp)
+    measures = {labels['gf_label']: update_summary(summary, pa_name, y_true,
+                                                   y_pred, y_prob, priv_grp),
+                labels['dt_label']: __value_prevalence(y_true, priv_grp)
+                }
     if not kwargs.pop('skip_if', False):
-        mv_dict[ifl] = __similarity_measures(X, pa_name, y_true, y_pred)
+        measures[labels['if_label']] = \
+            __similarity_measures(X, pa_name, y_true, y_pred)
     if not kwargs.pop('skip_performance', False):
         y, yh= y_true.columns[0], y_pred.columns[0]
         X[y], X[yh] = y_true.values, y_pred.values
-        mv_dict[mpl] = __classification_performance(X, y, yh)
+        measures[labels['mp_label']] = __classification_performance(X, y, yh)
     # Convert scores to a formatted dataframe and return
-    df = pd.DataFrame.from_dict(mv_dict, orient="index").stack().to_frame()
+    df = pd.DataFrame.from_dict(meas_dict, orient="index").stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    df.columns = ['Value']
-    # Fix the order in which the metrics appear
-    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
-    df.reset_index(inplace=True)
-    df['sortorder'] = df['level_0'].map(metric_order)
-    df = df.sort_values('sortorder').drop('sortorder', axis=1)
-    df.set_index(['level_0', 'level_1'], inplace=True)
-    df.rename_axis(('Metric', 'Measure'), inplace=True)
-    return df
+    output = __format_summary(df, summary_type)
+    return output
 
 
 def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
@@ -546,30 +539,30 @@ def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
     """
     def predmean(_, y_pred, *args): return np.mean(y_pred.values)
     #
-    meas_vals = {}
-    meas_vals['Selection Ratio'] = aif.ratio(predmean, y_true, y_pred,
+    measures = {}
+    measures['Selection Ratio'] = aif.ratio(predmean, y_true, y_pred,
                                             prot_attr=pa_name,
                                             priv_group=priv_grp)
-    meas_vals['PPV Ratio'] = \
+    measures['PPV Ratio'] = \
         fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
-    meas_vals['TPR Ratio'] =  \
+    measures['TPR Ratio'] =  \
         fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
-    meas_vals['FPR Ratio'] =  \
+    measures['FPR Ratio'] =  \
         fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
     #
-    meas_vals['Selection Diff'] = aif.difference(predmean, y_true, y_pred,
+    measures['Selection Diff'] = aif.difference(predmean, y_true, y_pred,
                                                 prot_attr=pa_name,
                                                 priv_group=priv_grp)
-    meas_vals['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
-    meas_vals['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
-    meas_vals['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
-    meas_vals['Balanced Accuracy Difference'] = \
+    measures['PPV Diff'] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
+    measures['TPR Diff'] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
+    measures['FPR Diff'] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
+    measures['Balanced Accuracy Difference'] = \
             aif.difference(balanced_accuracy_score, y_true,
                            y_pred, prot_attr=pa_name, priv_group=priv_grp)
-    meas_vals['Balanced Accuracy Ratio'] = \
+    measures['Balanced Accuracy Ratio'] = \
             aif.ratio(balanced_accuracy_score, y_true,
                        y_pred, prot_attr=pa_name, priv_group=priv_grp)
-    return meas_vals
+    return measures
 
 
 def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
@@ -578,20 +571,34 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     def predmean(_, y_pred, *args): return np.mean(y_pred.values)
     def meanerr(y_true, y_pred, *args): return np.mean((y_pred - y_true).values)
     #
-    meas_vals = {}
+    measures = {}
     # Ratios
-    meas_vals['Mean Prediction Ratio'] = \
+    measures['Mean Prediction Ratio'] = \
         aif.ratio(predmean, y_true, y_pred,prot_attr=pa_name, priv_group=priv_grp)
-    meas_vals['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
+    measures['MAE Ratio'] = aif.ratio(mean_absolute_error, y_true, y_pred,
                                      prot_attr=pa_name, priv_group=priv_grp)
     # Differences
-    meas_vals['Mean Prediction Difference'] = \
+    measures['Mean Prediction Difference'] = \
         aif.difference(predmean, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    meas_vals['MAE Difference'] = \
+    measures['MAE Difference'] = \
         aif.difference(mean_absolute_error, y_true, y_pred,
                        prot_attr=pa_name, priv_group=priv_grp)
-    return meas_vals
+    return measures
+
+
+def __format_summary(df, summary_type):
+    df.columns = ['Value']
+    # Fix the order in which the metrics appear
+    gfl, ifl, mpl, dtl = analytical_labels(summary_type)
+    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
+    df.reset_index(inplace=True)
+    df['sortorder'] = df['level_0'].map(metric_order)
+    df = df.sort_values('sortorder').drop('sortorder', axis=1)
+    # Fix Display Names
+    df.set_index(['level_0', 'level_1'], inplace=True)
+    df.rename_axis(('Metric', 'Measure'), inplace=True)
+    return df
 
 
 def __regression_performance(x:pd.DataFrame, y:str, yh:str):
@@ -646,8 +653,8 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
-        ov_dict = __classification_performance(df, yt, yh, yp)
-        for k, v in ov_dict.items():
+        o_dict = __classification_performance(df, yt, yh, yp)
+        for k, v in o_dict.items():
             overview[k] = v
         overview_df = pd.DataFrame(overview, index=[0])
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
@@ -692,8 +699,8 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
     if add_overview:
         overview = {'Feature Name': "ALL FEATURES",
                     'Feature Value': "ALL VALUES"}
-        ov_dict = __regression_performance(df, yt, yh)
-        for k, v in ov_dict.items():
+        o_dict = __regression_performance(df, yt, yh)
+        for k, v in o_dict.items():
             overview[k] = v
         overview_df = pd.DataFrame(overview, index=[0])
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
@@ -737,7 +744,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
 
 
 @iterate_cohorts
-def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=None,
+def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1,
                          **kwargs):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
@@ -782,8 +789,8 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, subset=Non
                 labels['dt_label']: dt_vals}
     df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    df.columns = ['Value']
-    return df
+    output = __format_summary(df, "regression")
+    return output
 
 
 def __similarity_measures(X, pa_name:str, y_true:pd.Series, y_pred:pd.Series):
