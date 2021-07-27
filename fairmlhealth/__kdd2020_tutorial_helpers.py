@@ -102,7 +102,7 @@ def load_mimic3_example(mimic_dirpath):
     return mimic_data.load_mimic3_example(mimic_dirpath)
 
 def feature_table(df):
-    return supplement.feature_table(df)
+    return supplemental.feature_table(df)
 
 '''
 Tutorial-Specific Helpers

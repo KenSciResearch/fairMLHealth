@@ -15,7 +15,7 @@ import numpy as np
 import os
 import pandas as pd
 import requests
-from .supplement import cb_round
+from .supplemental import cb_round
 
 
 def load_icd_ccs_xwalk(code_type):
