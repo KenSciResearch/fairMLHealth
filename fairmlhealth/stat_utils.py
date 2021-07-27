@@ -3,9 +3,13 @@ Supplemental functions helpful in supporting analysis
 '''
 import numpy as np
 import pandas as pd
+from scipy.stats import kruskal
+from typing import Callable
+from . import __validation as valid
 
 
-def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
+def bootstrap_significance(a, b, func:Callable=kruskal, alpha:float=0.05,
+                           n_samples:int=50, n_trials:int=100):
     """ Applies bootstrapping to evaluate the statistical difference between
     two samples. Returns True (significant) if the p-value is less than alpha
     for at least P=1-alpha percent of trials.
@@ -24,8 +28,10 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
     Returns:
         bool: whether difference is statistically significant
     """
-    pvals = []
+    valid.validate_array(a, "a", expected_len=None)
+    valid.validate_array(b, "b", expected_len=len(a))
     # Create a list of p-values for each of n_trials
+    pvals = []
     for i in range( 0, n_trials):
         pvals += [func(np.random.choice(a, size=n_samples, replace=True),
                        np.random.choice(b, size=n_samples, replace=True))[1]
@@ -36,7 +42,7 @@ def bootstrap_significance(a, b, func, alpha=0.05, n_samples=50, n_trials=100):
     return result
 
 
-def cb_round(series, base=5, sig_dec=0):
+def cb_round(series:pd.Series, base:float=5, sig_dec:int=0):
     """ Returns the pandas series (or column) with values rounded per the
             custom base value
 
@@ -47,6 +53,7 @@ def cb_round(series, base=5, sig_dec=0):
         sig_dec (int): number of significant decimals for the
             custom-rounded value
     """
+    valid.validate_array(series, "series", expected_len=None)
     if not base >= 0.01:
         err = (f"cannot round with base {base}." +
                "cb_round designed for base >= 0.01.")
@@ -55,13 +62,16 @@ def cb_round(series, base=5, sig_dec=0):
     return result
 
 
-def feature_table(df):
+def feature_table(df:pd.DataFrame):
     ''' Displays a table containing statistics on the features available in the
             passed df
 
         Args:
             df (pandas df): dataframe containing MIMIC data for the tutorial
     '''
+    if df is None or not isinstance(df, pd.DataFrame):
+        raise valid.ValidationError(
+            "feature_table is designed for pandas DataFrame objects only")
     print(f"\n This data subset has {df.shape[0]} total observations" +
           f" and {df.shape[1]-2} input features \n")
     feat_df = pd.DataFrame({'feature': df.columns.tolist()

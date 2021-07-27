@@ -5,7 +5,7 @@ from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep
-from .__validation import validate_X, ValidationError
+from .__validation import validate_data, ValidationError
 from warnings import warn
 
 
@@ -103,7 +103,7 @@ def iterate_cohorts(func):
         #
         if cohorts is not None:
             #
-            validate_X(cohorts, name="cohorts", expected_len=X.shape[0])
+            validate_data(cohorts, name="cohorts", expected_len=X.shape[0])
             cohorts = prep.prep_X(cohorts)
             #
             cix = cohorts.index
@@ -163,11 +163,11 @@ class Flagger():
     """
     diffs = ["auc difference" , "balanced accuracy difference",
             "equalized odds difference", "positive predictive parity difference",
-            "Statistical Parity Difference", "fpr diff", "tpr diff", "ppv diff"]
-            # flag not yet enabled for: "r2 difference"
+            "statistical parity difference", "fpr diff", "tpr diff", "ppv diff"]
+            # not yet enabled: "mean prediction difference", "mae difference", "r2 difference"
     ratios = ["balanced accuracy ratio", "disparate impact ratio ",
               "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio"]
-            # flag not yet enabled for: "mean prediction ratio", "mae ratio", "r2 ratio"
+              # not yet enabled "mean prediction ratio", "mae ratio", "r2 ratio"
     stats_high = ["consistency score"]
     stats_low =["between-group gen. entropy error"]
 

@@ -126,8 +126,8 @@ def regression_performance(y_true, y_pred, sig_fig:int=4):
         y_pred (array): Prediction values. Must be compatible with
             model.predict().
     """
-    valid.validate_y(y_true, "y_true", expected_len=None)
-    valid.validate_y(y_pred, "y_pred", expected_len=len(y_true))
+    valid.validate_array(y_true, "y_true", expected_len=None)
+    valid.validate_array(y_pred, "y_pred", expected_len=len(y_true))
     y_true = prep.prep_targets(y_true)
     y_pred = prep.prep_targets(y_pred)
     if y_true.columns[0] == y_pred.columns[0]:
