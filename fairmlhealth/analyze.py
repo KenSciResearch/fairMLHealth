@@ -33,7 +33,7 @@ filterwarnings('ignore', module='sklearn')
 
 
 def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
-                sig_fig:int=4, flag_oor=True, **kwargs):
+                sig_fig:int=4, flag_oor=False, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
