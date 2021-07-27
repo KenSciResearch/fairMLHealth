@@ -10,7 +10,7 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import mimic_data, utils
+from . import __load_mimic_data, utils
 import pandas as pd
 from warnings import warn
 
