@@ -28,8 +28,6 @@ def bootstrap_significance(a, b, func:Callable=kruskal, alpha:float=0.05,
     Returns:
         bool: whether difference is statistically significant
     """
-    valid.validate_array(a, "a", expected_len=None)
-    valid.validate_array(b, "b", expected_len=len(a))
     # Create a list of p-values for each of n_trials
     pvals = []
     for i in range( 0, n_trials):
