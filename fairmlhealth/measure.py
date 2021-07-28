@@ -112,13 +112,13 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
         if not x[col].isna().all():
-            res[col + " Mean"] = x[col].mean()
-            res[col + " Median"] = x[col].median()
-            res[col + " Std. Dev."] = x[col].std()
+            res[f"{col} Mean"] = x[col].mean()
+            res[f"{col} Median"] = x[col].median()
+            res[f"{col} Std. Dev."] = x[col].std()
         else:
             # Force addition of second column to ensure proper formatting
             # as pandas series
-            for c in [col + " Mean", col + " Median", col + " Std. Dev."]:
+            for c in [f"{col} Mean", f"{col} Median", f"{col} Std. Dev."]:
                 res[c] = np.nan
         return res
     #

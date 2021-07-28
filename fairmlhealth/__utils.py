@@ -104,7 +104,7 @@ def iterate_cohorts(func):
         if cohorts is not None:
             #
             validate_data(cohorts, name="cohorts", expected_len=X.shape[0])
-            cohorts = prep.prep_X(cohorts)
+            cohorts = prep.prep_data(cohorts)
             #
             cix = cohorts.index
             cols = cohorts.columns.tolist()
