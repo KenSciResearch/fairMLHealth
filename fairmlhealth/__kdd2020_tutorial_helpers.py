@@ -10,7 +10,7 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import __utils
+from . import __validation as valid
 import pandas as pd
 from warnings import warn
 
@@ -25,7 +25,7 @@ DeprecationWarning("The KDD2020 tutorial notebook is no longer supported." +
 
 def start_tutorial():
     # Don't start the tutorial unless required packages are present
-    utils.validate_notebook_requirements()
+    valid.validate_notebook_requirements()
     global TUTORIAL_ON
     TUTORIAL_ON = True
 
