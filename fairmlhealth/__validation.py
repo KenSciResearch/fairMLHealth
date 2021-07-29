@@ -1,12 +1,26 @@
 ''' Manages data validation tasks across modules
 '''
 from collections import OrderedDict
+from numbers import Number
 import numpy as np
 import pandas as pd
+from typing import Union
+
+LIST_TYPES = (list, tuple, set)
+ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
+Arraylike = Union[list, tuple, np.ndarray, pd.Series, pd.DataFrame]
+Matrixlike = Union[np.ndarray, pd.DataFrame]
 
 
-ITER_TYPES = (list, tuple, set, dict, OrderedDict)
+def is_dictlike(obj):
+    dictlike = \
+        bool(all([callable(getattr(obj, "keys", None)), not hasattr(obj, "size")]))
+    return dictlike
 
+
+def is_listlike(obj):
+    listlike = bool(obj is not None and isinstance(obj, LIST_TYPES))
+    return listlike
 
 def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
                             prtc_attr=None, priv_grp:int=1):
@@ -51,6 +65,36 @@ def validate_data(data, name="data", expected_len:int=None):
     __validate_length(data, name, expected_len)
 
 
+def validate_fair_boundaries(boundaries:dict=None, measures:list=None):
+    err = None
+    while err is None:
+        if not is_dictlike(boundaries):
+            err = "boundaries must be contained in a dictionary"
+        for v in boundaries.values():
+            if ( not isinstance(v, tuple)
+                or not all([isinstance(i, Number) for i in v]) ):
+                err = "boundaries must contain tuples of numbers"
+            if not v[0] < v[1]:
+                err = "invalid boundary values. must be (lower, higher)"
+        if measures is not None:
+            if ( not is_listlike(measures)
+                or not all([isinstance(s, str) for s in measures]) ):
+                err= "measures must be a list of strings"
+            # Nonsense keys are acceptable as long as one of they keys is correct
+            meas = [m.lower() for m in measures]
+            errant_entries = [k for k in boundaries.keys() if k.lower() not in meas]
+            if not any(errant_entries):
+                    return None
+            else:
+                err = (f"Boundary keys must be present among the measures"
+                       +f" displayed in the table. Found: {errant_entries}")
+        else:
+            return None
+        break
+    if err is not None:
+        raise ValidationError(err)
+
+
 def validate_prtc_attr(arr, expected_len:int=0):
     validate_array(arr, "protected attribute", expected_len)
     __validate_binVal(arr, "protected attribute", fuzzy=False)
@@ -62,6 +106,18 @@ def validate_priv_grp(priv_grp:int=None):
     if not isinstance(priv_grp, int):
         raise TypeError("priv_grp must be an integer")
 
+
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
+    else:
+        pass
 
 class ValidationError(Exception):
     pass
@@ -143,7 +199,7 @@ def __validate_length(data, name:str="array", expected_len:int=0):
 def __validate_type(data, name:str="array"):
     """ Verifies that the data are of a type that can be processed by this
         library
-
+validate_fair_boundaries
     Args:
         data (matrix-like): numpy-compatible matrix or array
         name (str, optional): Name of array to be displayed in feedback.

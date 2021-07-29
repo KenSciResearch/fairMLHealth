@@ -17,7 +17,7 @@ def analytical_labels(pred_type: str = "binary"):
     valid_pred_types = ["binary", "multiclass", "regression"]
     if pred_type not in valid_pred_types:
         raise ValueError(f"pred_type must be one of {valid_pred_types}")
-    c_note = "" if pred_type == "binary" else " (Weighted Avg)"
+    c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
     lbls = {'gf_label': "Group Fairness",
             'if_label': "Individual Fairness",
             'mp_label': f"Model Performance{c_note}",

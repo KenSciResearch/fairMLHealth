@@ -6,10 +6,12 @@ Contributors:
 """
 
 
+from typing import Literal
 import aif360.sklearn.metrics as aif
 from functools import reduce
 from IPython.display import HTML
 import logging
+from numbers import Number
 import numpy as np
 import pandas as pd
 
@@ -19,12 +21,16 @@ from scipy import stats
 from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
 # Tutorial Libraries
-from . import __performance_metrics as pmtrc, __fairness_metrics as fcmtrc
-from .__fairness_metrics import eq_odds_diff, eq_odds_ratio
+from . import (
+    __performance_metrics as pmtrc,
+    __fairness_metrics as fcmtrc,
+    __validation as valid,
+    __utils as utils
+    )
 from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               analytical_labels, y_cols)
 from .__validation import ValidationError
-from .__utils import format_errwarn, iterate_cohorts, limit_alert, Flagger
+from .__utils import format_errwarn, iterate_cohorts
 
 
 # ToDo: find better solution for these warnings
@@ -57,6 +63,7 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
         pandas Data Frame
     """
     validtypes = ["classification", "regression"]
+    #
     if pred_type not in validtypes:
         raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
@@ -67,7 +74,9 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
                                       features=features, **kwargs)
     #
     if flag_oor:
-        df = flag(df, sig_fig=sig_fig)
+        custom_bounds = kwargs.pop('custom_ranges', {})
+        ranges = fair_ranges(custom_bounds, y_true, y_pred, df.columns.tolist())
+        df = flag(df, sig_fig=sig_fig, custom_ranges=ranges)
     else:
         df = df.round(sig_fig)
     return df
@@ -112,13 +121,13 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
         ''' Generates a dictionary of statistics '''
         res = {'Obs.': x.shape[0]}
         if not x[col].isna().all():
-            res[f"{col} Mean"] = x[col].mean()
-            res[f"{col} Median"] = x[col].median()
-            res[f"{col} Std. Dev."] = x[col].std()
+            res[f"Mean {col}"] = x[col].mean()
+            res[f"Median {col}"] = x[col].median()
+            res[f"Std. Dev. {col}"] = x[col].std()
         else:
             # Force addition of second column to ensure proper formatting
             # as pandas series
-            for c in [f"{col} Mean", f"{col} Median", f"{col} Std. Dev."]:
+            for c in [f"Mean {col}", f"Median {col}", f"Std. Dev. {col}"]:
                 res[c] = np.nan
         return res
     #
@@ -130,12 +139,12 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     if features is None:
         features = X_df.columns.tolist()
     strat_feats = [f for f in features if f in X_df.columns]
-    limit_alert(strat_feats, item_name="features")
+    utils.limit_alert(strat_feats, item_name="features")
     #
     if targets is None:
         targets = Y_df.columns.tolist()
     strat_targs = [t for t in targets if t in Y_df.columns]
-    limit_alert(strat_targs, item_name="targets", limit=3,
+    utils.limit_alert(strat_targs, item_name="targets", limit=3,
                 issue="This may make the output difficult to read.")
     #
     res = []
@@ -184,7 +193,20 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     return rprt
 
 
-def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
+def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
+                y_true:valid.Arraylike = None, y_pred:valid.Arraylike = None,
+                available_measures:"list[str]"=None):
+    cbounds = custom_ranges
+    result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
+    if available_measures is not None:
+        # Labels not present among available_measures will cause an error
+        lbls = [str(c).lower() for c in available_measures]
+        result = {k:v for k,v in result.items() if k.lower() in lbls}
+    return result
+
+
+def flag(df:valid.Matrixlike, caption:str = "", sig_fig:int = 4,
+         as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
 
@@ -199,7 +221,8 @@ def flag(df, caption:str="", sig_fig:int=4, as_styler:bool=True):
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    return Flagger().apply_flag(df, caption, sig_fig, as_styler)
+    cbounds = custom_ranges
+    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler, cbounds)
 
 
 def performance(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -415,7 +438,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    limit_alert(strat_feats, item_name="features", limit=200)
+    utils.limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_classification_measures, _y, _yh)
@@ -425,8 +448,8 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
 
 def __classification_performance(x:pd.DataFrame, y:str, yh:str, yp:str=None):
     res = {'Obs.': x.shape[0],
-        f'{y} Mean': x[y].mean(),
-        f'{yh} Mean': x[yh].mean(),
+        f'Mean {y}': x[y].mean(),
+        f'Mean {yh}': x[yh].mean(),
         'TPR': pmtrc.true_positive_rate(x[y], x[yh]),
         'FPR': pmtrc.false_positive_rate(x[y], x[yh]),
         'Accuracy': pmtrc.accuracy(x[y], x[yh]),
@@ -482,10 +505,10 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
             summary_dict[name_update[k]] = val
         for k in drop_keys:
             summary_dict.pop(k)
-        summary_dict['Equalized Odds Difference'] = eq_odds_diff(y_true, y_pred,
-                                                            prtc_attr=pa_name)
-        summary_dict['Equalized Odds Ratio'] = eq_odds_ratio(y_true, y_pred,
-                                                        prtc_attr=pa_name)
+        summary_dict['Equalized Odds Difference'] = \
+            fcmtrc.eq_odds_diff(y_true, y_pred, prtc_attr=pa_name)
+        summary_dict['Equalized Odds Ratio'] = \
+            fcmtrc.eq_odds_ratio(y_true, y_pred, prtc_attr=pa_name)
         if y_prob is not None:
             try:
                 summary_dict['AUC Difference'] = \
@@ -601,12 +624,12 @@ def __format_summary(df, summary_type):
 
 def __regression_performance(x:pd.DataFrame, y:str, yh:str):
     res = {'Obs.': x.shape[0],
-            f'{y} Mean': x[y].mean(),
-            f'{y} Std. Dev.': x[y].std(),
-            f'{yh} Mean': x[yh].mean(),
-            f'{yh} Std. Dev.': x[yh].std(),
-            'Error Mean': (x[yh] - x[y]).mean(),
-            'Error Std. Dev.': (x[yh] - x[y]).std(),
+            f'Mean {y}': x[y].mean(),
+            f'Std. Dev. {y}': x[y].std(),
+            f'Mean {yh}': x[yh].mean(),
+            f'Std. Dev. {yh}': x[yh].std(),
+            'Mean Error': (x[yh] - x[y]).mean(),
+            'Std. Dev. Error': (x[yh] - x[y]).std(),
             'MAE': mean_absolute_error(x[y], x[yh]),
             'MSE': mean_squared_error(x[y], x[yh]),
             'Rsqrd': pmtrc.r_squared(x[y], x[yh])
@@ -642,7 +665,7 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    limit_alert(strat_feats, item_name="features")
+    utils.limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
                                     __classification_performance, _y, _yh, _yp)
@@ -689,7 +712,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    limit_alert(strat_feats, item_name="features")
+    utils.limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
                                     __regression_performance, _y, _yh)
@@ -733,7 +756,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    limit_alert(strat_feats, item_name="features", limit=200)
+    utils.limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_regression_measures, _y, _yh)
@@ -826,7 +849,7 @@ def __sort_table(strat_tbl):
     _y = y_cols()['disp_names']['yt']
     _yh = y_cols()['disp_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
-                 f'{_y} Mean', f'{_yh} Mean']
+                 f'Mean {_y}', f'Mean {_yh}']
     head_cols = [c for c in head_names if c in strat_tbl.columns]
     tail_cols = sorted([c for c in strat_tbl.columns if c not in head_cols])
     return strat_tbl[head_cols + tail_cols]
