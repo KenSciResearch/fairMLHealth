@@ -125,16 +125,16 @@ def synth_dataset(N:int=16):
         N += 8 - N%8
     # Generate dataframe with ranodm information
     df = pd.DataFrame({'A': np.random.randint(1, 4, N),
-                       'B': np.random.randint(1, int(N/2), N),
-                       'C': np.random.randint(1, N, N),
-                       'D': np.random.randint(1, int(2*N), N),
-                       'E': np.random.uniform(-10, 10, N),
-                       'prtc_attr': [0, 1]*int(N/2),
-                       'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
-                       'other': [1, 0, 0, 1]*int(N/4),
-                       'continuous_target': np.random.uniform(0, 8, N),
-                       'binary_target': np.random.randint(0, 2, N),
-                       })
+                        'B': np.random.randint(1, int(N/2), N),
+                        'C': np.random.randint(1, N, N),
+                        'D': np.random.randint(1, int(2*N), N),
+                        'E': np.random.uniform(-10, 10, N),
+                        'prtc_attr': [0, 1]*int(N/2),
+                        'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
+                        'other': [1, 0, 0, 1]*int(N/4),
+                        'continuous_target': np.random.uniform(0, 8, N),
+                        'binary_target': np.random.randint(0, 2, N),
+                        })
 
     # add predictions that are fair half of the time
     half_correct = pd.Series([1, 1, 0, 0]*int(N/4))

@@ -50,7 +50,7 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
             Defaults to "classification".
-        flag_oor (bool): if true, will apply flagging function to highlight
+        flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
         priv_grp (int): Specifies which label indicates the privileged
@@ -262,7 +262,7 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     return df
 
 
-def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
+def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
                    pred_type="classification", priv_grp=1, sig_fig:int=4,
                    **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
@@ -275,7 +275,7 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=True,
         y_true (array-like, 1-D): Sample targets
         y_pred (array-like, 1-D): Sample target predictions
         y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
-        flag_oor (bool): if true, will apply flagging function to highlight
+        flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
         pred_type (str, optional): One of "classification" or "regression".
