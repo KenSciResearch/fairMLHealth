@@ -1,7 +1,6 @@
 '''
 
 '''
-from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 from . import __validation as valid
@@ -24,6 +23,12 @@ def analytical_labels(pred_type: str = "binary"):
             'dt_label': "Data Metrics"
             }
     return lbls
+
+
+def prep_arraylike(arr, name=None):
+    valid.validate_array(arr, expected_len=None)
+    series = pd.Series(arr, name=name)
+    return series
 
 
 def prep_data(data):
@@ -157,18 +162,18 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
         standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                             y_prob=y_prob)
     # Attach y variables and subset to expected columns
-    yt, yh, yp = y_cols()['col_names'].values()
+    _y, _yh, _yp = y_cols()['col_names'].values()
     df = X.copy()
     pred_cols = []
     if y_true is not None:
-        df[yt] = y_true.values
-        pred_cols.append(yt)
+        df[_y] = y_true.values
+        pred_cols.append(_y)
     if y_pred is not None:
-        df[yh] = y_pred.values
-        pred_cols.append(yh)
+        df[_yh] = y_pred.values
+        pred_cols.append(_yh)
     if y_prob is not None:
-        df[yp] = y_prob.values
-        pred_cols.append(yp)
+        df[_yp] = y_prob.values
+        pred_cols.append(_yp)
     if features is None:
         features = X.columns.tolist()
     stratified_features = [f for f in features if f not in pred_cols]

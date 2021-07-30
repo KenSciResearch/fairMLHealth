@@ -1,13 +1,18 @@
 '''
 Back-end functions used throughout the library
 '''
-from importlib.util import find_spec
 from numbers import Number
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ValidationError
 from warnings import warn
+
+
+
+def epsilon():
+    """ error value used to prevent 'division by 0' errors """
+    return np.finfo(np.float64).eps
 
 
 def format_errwarn(func):
@@ -157,7 +162,7 @@ class FairRanges():
         return np.median(np.abs(arr - np.median(arr)))
 
     def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
-                         y_true:valid.Arraylike=None, y_pred:valid.Arraylike=None):
+                         y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
         """
         Args:
             custom_ranges (dict): a  dict whose keys are present among the measures
@@ -172,12 +177,14 @@ class FairRanges():
 
         # Update with specific regression boundaries if possible
         if y_true is not None and y_pred is not None:
-            y = prep.prep_targets(y_true)
-            yh = prep.prep_targets(y_pred)
+            y = prep.prep_arraylike(y_true, "y")
+            yh = prep.prep_arraylike(y_pred, "y")
             aerr = (y - yh).abs()
+            # Use np.concatenate to combine values s.t. ignore column names
             all_vals = y.append(yh)
             bnds['mean prediction difference'] = self.__calc_diff_range(all_vals)
             bnds['mae difference'] = self.__calc_diff_range(aerr)
+            #import pdb; pdb.set_trace()
         else:
             bnds.pop('mean prediction difference')
             bnds.pop('mae difference')
@@ -194,16 +201,12 @@ class FairRanges():
         valid.validate_fair_boundaries(bnds, available_measures)
         return bnds
 
-    def __drop_outliers(self, s:pd.Series):
-        madval = self.mad(s)
-        s.loc[s.gt(s.mean() + 3*madval)] = np.nan
-        s.loc[s.lt(s.mean() - 3*madval)] = np.nan
-        return s
-
-    def __calc_diff_range(self, s:pd.Series):
-        valid_s = self.__drop_outliers(s)
-        s_range = valid_s.max() - valid_s.min()
+    def __calc_diff_range(self, ser:pd.Series):
+        s_range = np.max(ser) - np.min(ser)
         s_bnd = 0.1*s_range
+        if s_bnd == 0 or np.isnan(s_bnd):
+            raise ValidationError(
+                "Error computing fair boundaries. Verify targets and predictions.")
         return (-s_bnd, s_bnd)
 
     def default_boundaries(self, diff_bnd=(-0.1, 0.1), rto_bnd=(0.8, 1.2)):

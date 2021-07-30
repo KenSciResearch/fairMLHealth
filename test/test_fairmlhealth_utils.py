@@ -3,6 +3,7 @@
  # ToDo: Add more robust testing throughout
 
 
+from logging import warning
 from fairmlhealth import measure, report
 import numpy as np
 import pytest
@@ -32,65 +33,74 @@ def load_data(request):
     yield
 
 
-
-
 @pytest.mark.usefixtures("load_data")
 class TestCohorts:
     """ Validates that standard inputs are processed without error
     """
     def test_no_cohort(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'], self.df['y'],
-                            self.df['avg'], pred_type="classification")
+        _ = measure.summary(self.df, self.df['prtc_attr'],
+                            self.df['classification'],
+                            self.df['avg_classification'],
+                            pred_type="classification")
 
     def test_one_cohort(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'], self.df['y'],
-                            self.df['avg'], pred_type="classification",
+        _ = measure.summary(self.df, self.df['prtc_attr'],
+                            self.df['classification'],
+                            self.df['avg_classification'],
+                            pred_type="classification",
                             cohorts=self.cohorts[0])
 
     def test_multi_cohort(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'], self.df['y'],
-                            self.df['avg'], pred_type="classification",
+        _ = measure.summary(self.df, self.df['prtc_attr'],
+                            self.df['classification'],
+                            self.df['avg_classification'],
+                            pred_type="classification",
                             cohorts=self.cohorts)
 
     def test_cohort_stratified(self):
-        _ = measure.bias(self.df, self.df['prtc_attr'], self.df['y'],
-                         pred_type="classification", cohorts=self.cohorts)
+        _ = measure.bias(self.df, self.df['prtc_attr'],
+                            self.df['classification'],
+                            pred_type="classification", cohorts=self.cohorts)
 
 
 @pytest.mark.usefixtures("load_data")
 class TestFlag():
     def test_summary_default_flags_classification(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'],
+        _ = measure.summary(self.df,
+                            self.df['prtc_attr'],
                             self.df['classification'],
                             self.df['avg_classification'],
                             pred_type="classification",
                             flag_oor=True)
 
     def test_summary_default_flags_regression(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'],
+        _ = measure.summary(self.df,
+                            self.df['prtc_attr'],
                             self.df['regression'],
                             self.df['avg_regression'],
                             pred_type="regression",
                             flag_oor=True)
 
     def test_bias_default_flags_classification(self):
-        _ = measure.bias(self.df, self.df['prtc_attr'],
+        _ = measure.bias(self.df,
                          self.df['classification'],
                          self.df['avg_classification'],
                          pred_type="classification",
                          flag_oor=True)
 
     def test_bias_default_flags_regression(self):
-        _ = measure.bias(self.df, self.df['prtc_attr'],
-                         self.df['regression'],
-                         self.df['avg_regression'],
-                         pred_type="regression",
-                         flag_oor=True)
+        _ = measure.bias(self.df,
+                            self.df['regression'],
+                            self.df['avg_regression'],
+                            pred_type="regression",
+                            flag_oor=True)
 
     def test_compare_models_flags(self):
-        result = report.compare_models(self.df, self.df['classification'],
-                                     self.df['prtc_attr'],
-                                     predictions=[self.df['avg_classification'],
-                                                  self.df['avg_classification']
-                                                 ],
-                                     flag_oor=True)
+        result = report.compare_models(self.df,
+                                       self.df['classification'],
+                                       self.df['prtc_attr'],
+                                       predictions=[self.df['avg_classification'],
+                                                    self.df['avg_classification']
+                                                    ],
+                                        pred_type="classification",
+                                        flag_oor=True)

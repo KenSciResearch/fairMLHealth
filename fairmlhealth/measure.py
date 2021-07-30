@@ -194,7 +194,7 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
 
 
 def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
-                y_true:valid.Arraylike = None, y_pred:valid.Arraylike = None,
+                y_true:valid.ArrayLike = None, y_pred:valid.ArrayLike = None,
                 available_measures:"list[str]"=None):
     cbounds = custom_ranges
     result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
@@ -205,7 +205,7 @@ def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
     return result
 
 
-def flag(df:valid.Matrixlike, caption:str = "", sig_fig:int = 4,
+def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
          as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe

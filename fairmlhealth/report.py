@@ -287,7 +287,7 @@ class FairCompare(ABC):
                     pred_func = getattr(mdl, "predict", None)
                     if not callable(pred_func):
                         msg = f"{mdl} model does not have predict function"
-                        raise ValidationError(msg)
+                        raise valid.ValidationError(msg)
                     try:
                         y_pred = mdl.predict(self.X[mdl_name])
                     except BaseException as e:
@@ -295,7 +295,7 @@ class FairCompare(ABC):
                         msg = (f"Failure generating predictions for {mdl_name}"
                                " model. Verify if data are correctly formatted"
                                " for this model.") + e
-                        raise ValidationError(msg)
+                        raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
                     # Since most fairness measures do not require probabilities,
                     #   y_prob is optional
@@ -307,17 +307,17 @@ class FairCompare(ABC):
                     self.probs[mdl_name] = y_prob
 
             elif not all(m is None for m in model_objs):
-                raise ValidationError(
+                raise valid.ValidationError(
                     "Incomplete set of models detected. Can't process a mix of"
                     + " models and predictions")
             else:
                 if any(p is None for p in pred_objs):
-                    raise ValidationError(
+                    raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
                 missing_probs = [p for p in prob_objs if p is None]
         else:
             if any(p is None for p in pred_objs):
-                raise ValidationError(
+                raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
             missing_probs = [p for p in prob_objs if p is None]
 
@@ -354,7 +354,7 @@ class FairCompare(ABC):
             lengths = [len(getattr(self, i)) for i in iterable_obj]
             err = "All iterable arguments must be of same length"
             if not len(set(lengths)) == 1:
-                raise ValidationError(err)
+                raise valid.ValidationError(err)
             else:
                 expected_len = lengths[0]
 
@@ -364,7 +364,7 @@ class FairCompare(ABC):
         if any(dict_obj):
             err = "All dict arguments must have the same keys"
             if not all([k.keys() == dict_obj[0].keys() for k in dict_obj]):
-                raise ValidationError(err)
+                raise valid.ValidationError(err)
             elif not any(expected_keys):
                 expected_keys = list(dict_obj[0].keys())
         else:
@@ -393,15 +393,15 @@ class FairCompare(ABC):
             if not (self.models is None or self.preds is None):
                 err = ("FairCompare accepts either models or predictions, but" +
                        "not both")
-                raise ValidationError(err)
+                raise valid.ValidationError(err)
             self.__set_dicts()
             for x in self.X.values():
                 valid.validate_analytical_input(x)
             self.__check_models_predictions()
             for m in self.models.keys():
                 self.__validate(m)
-        except ValidationError as ve:
-            raise ValidationError(f"Error loading FairCompare. {ve}")
+        except valid.ValidationError as ve:
+            raise valid.ValidationError(f"Error loading FairCompare. {ve}")
 
 
     def __toggle_validation(self):
@@ -412,7 +412,7 @@ class FairCompare(ABC):
                 appropriate
 
         Raises:
-            ValidationError
+            valid.ValidationError
         """
         # Validation may be paused during iteration to save time
         if self.__paused_validation():

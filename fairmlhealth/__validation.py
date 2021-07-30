@@ -1,6 +1,7 @@
 ''' Manages data validation tasks across modules
 '''
 from collections import OrderedDict
+from importlib.util import find_spec
 from numbers import Number
 import numpy as np
 import pandas as pd
@@ -8,13 +9,13 @@ from typing import Union
 
 LIST_TYPES = (list, tuple, set)
 ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
-Arraylike = Union[list, tuple, np.ndarray, pd.Series, pd.DataFrame]
-Matrixlike = Union[np.ndarray, pd.DataFrame]
+ArrayLike = Union[list, tuple, np.ndarray, pd.Series, pd.DataFrame]
+MatrixLike = Union[np.ndarray, pd.DataFrame]
 
 
 def is_dictlike(obj):
     dictlike = \
-        bool(all([callable(getattr(obj, "keys", None)), not hasattr(obj, "size")]))
+        bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
     return dictlike
 
 
@@ -55,6 +56,7 @@ def validate_array(arr, name="array", expected_len:int=0):
     __validate_oneDArray(arr, name)
     expected_len = arr.shape[0] if expected_len is None else expected_len
     __validate_length(arr, name, expected_len)
+    __validate_values(arr, name)
 
 
 def validate_data(data, name="data", expected_len:int=None):
@@ -63,41 +65,43 @@ def validate_data(data, name="data", expected_len:int=None):
     __validate_type(data)
     expected_len = data.shape[0] if expected_len is None else expected_len
     __validate_length(data, name, expected_len)
+    __validate_values(data, name)
 
 
 def validate_fair_boundaries(boundaries:dict=None, measures:list=None):
     err = None
-    while err is None:
-        if not is_dictlike(boundaries):
-            err = "boundaries must be contained in a dictionary"
-        for v in boundaries.values():
-            if ( not isinstance(v, tuple)
-                or not all([isinstance(i, Number) for i in v]) ):
-                err = "boundaries must contain tuples of numbers"
-            if not v[0] < v[1]:
-                err = "invalid boundary values. must be (lower, higher)"
-        if measures is not None:
-            if ( not is_listlike(measures)
-                or not all([isinstance(s, str) for s in measures]) ):
-                err= "measures must be a list of strings"
-            # Nonsense keys are acceptable as long as one of they keys is correct
-            meas = [m.lower() for m in measures]
-            errant_entries = [k for k in boundaries.keys() if k.lower() not in meas]
-            if not any(errant_entries):
-                    return None
-            else:
-                err = (f"Boundary keys must be present among the measures"
-                       +f" displayed in the table. Found: {errant_entries}")
+    #
+    if not is_dictlike(boundaries):
+        raise ValidationError("boundaries must be contained in a dictionary")
+    for k, v in boundaries.items():
+        if ( not isinstance(v, tuple)
+            or not all([isinstance(i, Number) for i in v]) ):
+            raise ValidationError("boundaries must contain tuples of numbers")
+        elif not v[0] < v[1]:
+            raise ValidationError(
+                "Invalid boundary values. must be (lower, higher)" +
+                f" Got {v} for {k}")
+    if ( not is_listlike(measures)
+            or not all([isinstance(s, str) for s in measures]) ):
+            raise ValidationError("measures must be a list of strings")
+    if measures is not None:
+        # Nonsense keys are acceptable as long as one of they keys is correct
+        meas = [m.lower() for m in measures]
+        errant_entries = [k for k in boundaries.keys() if k.lower() not in meas]
+        if not any(errant_entries):
+                return None
         else:
-            return None
-        break
-    if err is not None:
-        raise ValidationError(err)
+            err = (f"Boundary keys must be present among the measures"
+                    +f" displayed in the table. Found: {errant_entries}")
+            raise ValidationError(err)
+    else:
+        pass
 
 
 def validate_prtc_attr(arr, expected_len:int=0):
     validate_array(arr, "protected attribute", expected_len)
     __validate_binVal(arr, "protected attribute", fuzzy=False)
+    __validate_values(arr, "protected_attribute")
 
 
 def validate_priv_grp(priv_grp:int=None):
@@ -189,7 +193,7 @@ def __validate_length(data, name:str="array", expected_len:int=0):
     minlen = 5
     if expected_len < minlen:
         raise ValidationError(f"Cannot measure fewer than {minlen} observations"
-                              + f" (found in {name})")
+                              + f" (Only {expected_len} found in {name})")
     N = data.shape[0]
     if not N == expected_len:
         raise ValidationError("All data arguments must be of same length."
@@ -208,10 +212,26 @@ validate_fair_boundaries
     Raises:
         TypeError
     """
-    valid_data_types = (pd.DataFrame, pd.Series, np.ndarray)
+    valid_data_types = list, tuple, np.ndarray, pd.Series, pd.DataFrame
     if not isinstance(data, valid_data_types):
             err = ("Inputs must be one of the following types:"
                    f" {valid_data_types}. Found: {type(data)} in {name}")
             raise TypeError(err)
 
 
+def __validate_values(data:ArrayLike, name:str="Series"):
+    if isinstance(data, pd.Series):
+        if data.isnull().all():
+            raise ValidationError(f"{name} contains all missing values")
+        else:
+            pass
+    elif isinstance(data, pd.DataFrame):
+        if data.isnull().all().any():
+            raise ValidationError(f"Some columns are contain all missing values")
+        else:
+            pass
+    elif isinstance(data, np.ndarray):
+        if np.array_equal(np.unique(data), np.array([np.nan])):
+            raise ValidationError(f"All values are missing.")
+    else:
+        pass

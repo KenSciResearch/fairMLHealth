@@ -7,7 +7,9 @@ from numbers import Number
 import numpy as np
 import pandas as pd
 import sklearn.metrics as sk_metric
+from .__utils import epsilon
 from .__validation import ArrayLike
+
 
 
 
@@ -36,10 +38,10 @@ def binary_prediction_results(y_true:ArrayLike, y_pred:ArrayLike):
     return counts
 
 
-def check_result(res:Number, metric_name:str, custom_lower:Number,
-                 custom_upper:Number):
+def check_result(res:Number, metric_name:str,
+                 custom_lower:Number=None, custom_upper:Number=None):
     """ Verifies that the result is in the expected range for the metric and
-    returns that result if valid
+        returns that result if valid
 
     Args:
         res (int): result to be validated
@@ -54,11 +56,6 @@ def check_result(res:Number, metric_name:str, custom_lower:Number,
             raise ValueError(f"{metric_name} result out of range ({res})")
         else:
             return res
-
-
-def epsilon():
-    """ error value used to prevent 'division by 0' errors """
-    return np.finfo(np.float64).eps
 
 
 def ratio(numerator:Number, denominator:Number):
