@@ -145,7 +145,7 @@ def limit_alert(items:list=None, item_name="", limit:int=100,
             msg = f"More than {limit} {item_name} detected. {issue}"
             warn(msg)
 
-class Flagger():
+class FairRanges():
     __diffs = ["auc difference" , "balanced accuracy difference",
                 "equalized odds difference", "fpr diff", "tpr diff", "ppv diff"
                 "positive predictive parity difference",
@@ -154,6 +154,72 @@ class Flagger():
     __ratios = ["balanced accuracy ratio", "disparate impact ratio ",
                 "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio",
                 "mean prediction ratio", "mae ratio", "r2 ratio"]
+    __stats =  ['consistency score']
+
+    def __init__(self):
+        pass
+
+    def mad(self, arr):
+        return np.median(np.abs(arr - np.median(arr)))
+
+    def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
+                         y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
+        """
+        Args:
+            custom_ranges (dict): a  dict whose keys are present among the measures
+                in df and whose values are tuples containing the (lower, upper)
+                bounds to the "fair" range. If None, uses default boundaries and
+                will skip difference measures for regressions models. Default is None.
+            y_true (array-like 1D, optional): Sample targets. Defaults to None.
+            y_pred (array-like 1D, optional): Sample target predictions. Defaults to None.
+        """
+        #Load generic defaults
+        bnds = self.default_boundaries()
+
+        # Update with specific regression boundaries if possible
+        if y_true is not None and y_pred is not None:
+            y = prep.prep_arraylike(y_true, "y")
+            yh = prep.prep_arraylike(y_pred, "y")
+            aerr = (y - yh).abs()
+            # Use np.concatenate to combine values s.t. ignore column names
+            all_vals = y.append(yh)
+            bnds['mean prediction difference'] = self.__calc_diff_range(all_vals)
+            bnds['mae difference'] = self.__calc_diff_range(aerr)
+            #import pdb; pdb.set_trace()
+        else:
+            bnds.pop('mean prediction difference')
+            bnds.pop('mae difference')
+        #
+        if custom_ranges is not None:
+            if valid.is_dictlike(custom_ranges):
+                for k, v in custom_ranges.items():
+                    bnds[str(k).lower()] = v
+            else:
+                raise TypeError(
+                    "custom boundaries must be dict-like object if defined")
+        #
+        available_measures = self.__diffs + self.__ratios + self.__stats
+        valid.validate_fair_boundaries(bnds, available_measures)
+        return bnds
+
+    def __calc_diff_range(self, ser:pd.Series):
+        s_range = np.max(ser) - np.min(ser)
+        s_bnd = 0.1*s_range
+        if s_bnd == 0 or np.isnan(s_bnd):
+            raise ValidationError(
+                "Error computing fair boundaries. Verify targets and predictions.")
+        return (-s_bnd, s_bnd)
+
+    def default_boundaries(self, diff_bnd=(-0.1, 0.1), rto_bnd=(0.8, 1.2)):
+        default = {"consistency score": (0.7, 1)}
+        for d in self.__diffs:
+            default[d] = diff_bnd
+        for r in self.__ratios:
+            default[r] = rto_bnd
+        return default
+
+
+class Flagger():
 
     def __init__(self):
         self.reset()
@@ -235,11 +301,15 @@ class Flagger():
             return [clr if is_oor(name, v) else ""  for v in vals]
 
     def __set_boundaries(self, boundaries):
-        self.boundaries = {}
-        for k in self.__diffs:
-            self.boundaries[k] = (-0.1, 0.1)
-        for k in self.__ratios:
-            self.boundaries[k] = (0.8, 1.2)
+        lbls = [l.lower() for l in self.labels]
+        if boundaries is None:
+            bnd = FairRanges().load_fair_ranges()
+            # Mismatched keys may lead to errant belief that a measure is within
+            # the fair range when actually there was a mistake (eg. key was
+            # misspelled)
+            boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
+        valid.validate_fair_boundaries(boundaries, lbls)
+        self.boundaries = boundaries
 
     def __set_df(self, df):
         if isinstance(df, pd.DataFrame):
