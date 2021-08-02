@@ -5,12 +5,32 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.17] - 2021-07-31
+### Documentation Update
+
+- Major changes to the structure of the library intended to make it more intuitive:
+    - fairMLHealth modules were renamed to clarify scope and purpose. This will facilitate adding new features in upcoming PRs:
+        - **reports.py** is now named **measure.py**
+        - **model_comparison** is now named **report.py**
+        - utils.py is now split into stat_utils.py and __utils.py
+            - __utils.py contains back-end functions for which validation is assumed to have been run
+            - stat_utils.py contains supplemental functions that may be useful in statistical analysis or data munging
+    - newly-renamed measure.py has also been reorganized so that functions are in alphabetical order and names are more intuitive. (this should have been a separate PR. apologies in advance).
+    - load_mimic_data.py is now "__mimic_data.py"
+    - the "tutorials_and_examples" folder has been renamed "examples_and_tutorials" so that it will be easier to find (e.g. seen adjacent to the "docs" folder)
+
+
+## [0.1.16] - 2021-07-30
+### Documentation Update
+
+- Doctstings on public-facing functions given added detail components of the code.
+- The "feature_table" function was moved into utils.py so that it can be used publicly.
+
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
 - Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
 - Adds tutorial, template, and example notebooks for regression features
 - Improves management of significant figures as required to enable flagging of regression outputs
-
 
 ## [0.1.14] - 2021-06-25
 ### Cohorting Feature
@@ -30,7 +50,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 ### Validation Updates
 - Validation and preprocessing are now in individual modules to reduce redundancy and improve readability
 - Bugs in validation addressed
-
 
 ## [0.1.10] - 2021-06-08
 ### Testing Updates
@@ -54,7 +73,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Troubleshooting documentation added
 - Bug fixes implemented
 
-
 ## [0.1.7] - 2021-04-14
 ### Testing Update
 - Add integrated notebook testing
@@ -72,7 +90,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Add development documentation (docs folder): issue template and pull request template
 - Update READMEs and resources
 - Correct typos
-
 
 ## [0.1.4] - 2020-12-09
 ### Added and fixed

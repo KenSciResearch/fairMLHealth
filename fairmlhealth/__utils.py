@@ -1,5 +1,6 @@
 '''
-Back-end functions used throughout the library
+Back-end functions used throughout the library, many of which assume that inputs
+have been validated
 '''
 from numbers import Number
 import numpy as np

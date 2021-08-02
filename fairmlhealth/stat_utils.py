@@ -1,5 +1,5 @@
 '''
-Supplemental functions helpful in supporting analysis
+Supplemental functions that may be useful in analysis or data munging.
 '''
 import numpy as np
 import pandas as pd

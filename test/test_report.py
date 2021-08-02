@@ -2,7 +2,7 @@
 '''
 
 
-from fairmlhealth import report as fhrp
+from fairmlhealth import report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
@@ -44,38 +44,38 @@ class TestCompModFunction:
             raise AssertionError("Invalid Result")
 
     def test_single_dataInputs(self):
-        result = fhrp.compare_models(self.X, self.y, self.prtc_attr,
+        result = report.compare_models(self.X, self.y, self.prtc_attr,
                                      self.model_dict, flag_oor=False)
         self.is_result_valid(result)
 
     def test_model_list(self):
-        result = fhrp.compare_models(self.X, self.y, self.prtc_attr,
+        result = report.compare_models(self.X, self.y, self.prtc_attr,
                                      [self.model_dict[0]], flag_oor=False)
         self.is_result_valid(result)
 
     def test_mixed_groupings(self):
-        result = fhrp.compare_models([self.X, self.X],
+        result = report.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      [self.model_dict[0], self.model_dict[1]],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_with_protected_attributes(self):
-        result = fhrp.compare_models([self.X, self.X], [self.y, self.y],
+        result = report.compare_models([self.X, self.X], [self.y, self.y],
                                      [self.prtc_attr, self.prtc_attr],
                                      [self.model_dict[0], self.model_dict[1]],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_not_models(self):
-        result = fhrp.compare_models([self.X, self.X],
+        result = report.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      predictions=[self.y, self.y],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_and_probs(self):
-        result = fhrp.compare_models([self.X, self.X],
+        result = report.compare_models([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      predictions=[self.y, self.y],
                                      probabilities=[self.y, self.y],
@@ -84,8 +84,8 @@ class TestCompModFunction:
 
     def test_multiple_calls(self):
         args = (self.X, self.y, self.prtc_attr, self.model_dict[0])
-        _ = fhrp.compare_models(*args, flag_oor=False)
-        result = fhrp.compare_models(*args, flag_oor=False)
+        _ = report.compare_models(*args, flag_oor=False)
+        result = report.compare_models(*args, flag_oor=False)
         self.is_result_valid(result)
 
 
@@ -95,7 +95,7 @@ class TestCompModValidations:
     """
     def test_mismatch_input_numbers(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {1: self.prtc_attr},
                                 self.model_dict,
@@ -103,7 +103,7 @@ class TestCompModValidations:
 
     def test_missing_models(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 {0: None, 1: None},
@@ -111,7 +111,7 @@ class TestCompModValidations:
 
     def test_invalid_X_member(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 {0: self.y, 1: self.y},
@@ -119,7 +119,7 @@ class TestCompModValidations:
 
     def test_invalid_y_member(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: None},
+            report.compare_models({0: self.X, 1: None},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -127,7 +127,7 @@ class TestCompModValidations:
 
     def test_invalid_prtc_member(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: None},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -135,7 +135,7 @@ class TestCompModValidations:
 
     def test_invalid_model_member(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: None},
                                 self.model_dict,
@@ -143,7 +143,7 @@ class TestCompModValidations:
 
     def test_differing_keys(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({5: self.X, 6: self.X},
+            report.compare_models({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -151,7 +151,7 @@ class TestCompModValidations:
 
     def test_missing_keys(self):
         with pytest.raises(Exception):
-            fhrp.compare_models({0: self.X, 1: self.X},
+            report.compare_models({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 None,
                                 self.model_dict,

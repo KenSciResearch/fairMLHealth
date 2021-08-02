@@ -46,7 +46,7 @@ For a functioning notebook of the usage examples below, see [Example-ToolUsage](
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import report as fhrp, measure
+from fairmlhealth import report, measure
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -80,7 +80,7 @@ Measure_model is designed to generate an analysis table of multiple fairness met
 
 ``` python
 # Generate a pandas dataframe of measures
-fairness_measures = fhrp.measure_model(X_test, y_test, prtc_attr, model_1)
+fairness_measures = report.measure_model(X_test, y_test, prtc_attr, model_1)
 # Display and color measures that are out of range
 measure.flag(fairness_measures)
 ```
@@ -147,7 +147,7 @@ The compare_models feature can be used to generate side-by-side fairness compari
 Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
 
 ```python
-comparison = fhrp.compare_models(X_test, y_test, prtc_attr, model_dict)
+comparison = report.compare_models(X_test, y_test, prtc_attr, model_dict)
 measure.flag(comparison)
 ```
 
@@ -159,7 +159,7 @@ measure.flag(comparison)
 The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
 
 ```python
-fhrp.compare_models(X_test, y_test,
+report.compare_models(X_test, y_test,
                      [X_test['gender'], X_test['ethnicity']],
                       {'gender':model_1, 'ethnicity':model_1})
 ```
