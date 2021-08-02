@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.16] - 2021-07-30
+### Documentation Update
+
+- Doctstings on public-facing functions given added detail components of the code.
+- The "feature_table" function was moved into utils.py so that it can be used publicly.
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
 - Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
 - Adds tutorial, template, and example notebooks for regression features
 - Improves management of significant figures as required to enable flagging of regression outputs
-
 
 ## [0.1.14] - 2021-06-25
 ### Cohorting Feature
@@ -30,7 +34,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 ### Validation Updates
 - Validation and preprocessing are now in individual modules to reduce redundancy and improve readability
 - Bugs in validation addressed
-
 
 ## [0.1.10] - 2021-06-08
 ### Testing Updates
@@ -54,7 +57,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Troubleshooting documentation added
 - Bug fixes implemented
 
-
 ## [0.1.7] - 2021-04-14
 ### Testing Update
 - Add integrated notebook testing
@@ -72,7 +74,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Add development documentation (docs folder): issue template and pull request template
 - Update READMEs and resources
 - Correct typos
-
 
 ## [0.1.4] - 2020-12-09
 ### Added and fixed
