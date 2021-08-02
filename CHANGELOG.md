@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.18] - 2021-07-31
+### Regression Measure Flagging
+- Updated flagging feature to enable custom boundaries and flagging for regression measures
+-  Related updates to the __validation module. This includes the addition of class-related validation and a first pass at improved type-hinting throughout the tool.
+- Minor changes to text displays.
+
 ## [0.1.17] - 2021-07-31
 ### Documentation Update
 
