@@ -12,7 +12,11 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
     - fairMLHealth modules were renamed to clarify scope and purpose. This will facilitate adding new features in upcoming PRs:
         - **reports.py** is now named **measure.py**
         - **model_comparison** is now named **report.py**
-    - fairMLHealth modules made private: utils.py (now split into stat_utils.py and __utils.py), load_mimic_data.py (now: "__mimic_data.py")
+        - utils.py is now split into stat_utils.py and __utils.py
+            - __utils.py contains back-end functions for which validation is assumed to have been run
+            - stat_utils.py contains supplemental functions that may be useful in statistical analysis or data munging
+    - newly-renamed measure.py has also been reorganized so that functions are in alphabetical order and names are more intuitive. (this should have been a separate PR. apologies in advance).
+    - load_mimic_data.py is now "__mimic_data.py"
     - the "tutorials_and_examples" folder has been renamed "examples_and_tutorials" so that it will be easier to find (e.g. seen adjacent to the "docs" folder)
 
 
