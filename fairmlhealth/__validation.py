@@ -23,6 +23,12 @@ def is_listlike(obj):
     listlike = bool(obj is not None and isinstance(obj, LIST_TYPES))
     return listlike
 
+def is_dictlike(obj):
+    dictlike = \
+        bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
+    return dictlike
+
+
 def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
                             prtc_attr=None, priv_grp:int=1):
     """ Raises error if data are of incorrect type or size for processing by
@@ -94,6 +100,19 @@ def validate_fair_boundaries(boundaries:dict=None, measures:list=None):
             err = (f"Boundary keys must be present among the measures"
                     +f" displayed in the table. Found: {errant_entries}")
             raise ValidationError(err)
+    else:
+        pass
+
+
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
     else:
         pass
 
