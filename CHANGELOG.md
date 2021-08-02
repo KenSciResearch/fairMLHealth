@@ -6,7 +6,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 
 ## [0.1.17] - 2021-07-31
-### Documentation Update
+### Library Reorganization
 
 - Major changes to the structure of the library intended to make it more intuitive:
     - fairMLHealth modules were renamed to clarify scope and purpose. This will facilitate adding new features in upcoming PRs:
