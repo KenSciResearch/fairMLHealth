@@ -223,8 +223,10 @@ class FairCompare(ABC):
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
+                # Keep flag off at this stage to allow column rename (flagger
+                # returns a pandas Styler). Flag applied a few lines below
                 res = self.measure_model(model_name, skip_performance=True,
-                                         flag_oor=flag_oor)
+                                         flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
