@@ -1,10 +1,11 @@
 # Pull Request Submission
 
 Please use this format as a template for submitting your pull request [through our GitHub Pull Requests page](https://github.com/KenSciResearch/fairMLHealth/pulls).
+
 ## Overview
 [Summary of the Pull Request, including motivation and context.]
 
-Resolves: (issue # or AB#)
+Resolves: issue # or AB#
 
 ### Note to Reviewers
 [Add special instructions for the reviewers. Delete if not applicable.]
