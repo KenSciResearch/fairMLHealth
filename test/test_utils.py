@@ -4,11 +4,11 @@
 
 
 from logging import warning
-from fairmlhealth import measure, report
+from fairmlhealth import measure, report, __validation as valid
 import numpy as np
 import pytest
 import pandas as pd
-from .__test_utils import synth_dataset
+from .__testing_utilities import synth_dataset
 np.random.seed(506)
 
 
@@ -43,19 +43,28 @@ class TestCohorts:
                             self.df['avg_classification'],
                             pred_type="classification")
 
-    def test_one_cohort(self):
+    def test_one_cohort_cols(self):
         _ = measure.summary(self.df, self.df['prtc_attr'],
                             self.df['classification'],
                             self.df['avg_classification'],
                             pred_type="classification",
                             cohorts=self.cohorts[0])
 
-    def test_multi_cohort(self):
+    def test_multi_cohort_cols(self):
         _ = measure.summary(self.df, self.df['prtc_attr'],
                             self.df['classification'],
                             self.df['avg_classification'],
                             pred_type="classification",
                             cohorts=self.cohorts)
+
+    def test_toomany_cohorts(self):
+        tmc = self.df['A'].reset_index()
+        with pytest.raises(valid.ValidationError):
+            _ = measure.summary(self.df, self.df['prtc_attr'],
+                                self.df['classification'],
+                                self.df['avg_classification'],
+                                pred_type="classification",
+                                cohorts=tmc['index'])
 
     def test_cohort_stratified(self):
         _ = measure.bias(self.df, self.df['prtc_attr'],
