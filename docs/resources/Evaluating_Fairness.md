@@ -139,13 +139,13 @@ The *Disparate Impact Ratio* is the ratio between the probability of positive pr
 ### Equal Odds
 Odds are equalized if P(+) is approximately the same for all groups of the protected attribute.
 
-The *Equalized Odds Difference* is the greater between the difference in TPR and the difference in FPR. This provides a comparable measure to the Average Odds Difference found in [AIF360](https://github.com/IBM/AIF360). A value of 0 indicates that all groups have the same TPR, FPR, TNR, and FNR, and that the model is "fair" relative to the protected attribute.
+The *Equal Odds Difference* is the greater between the difference in TPR and the difference in FPR, where difference is calculated as the unprivileged value minus the privileged value. An Equal Odds Difference of 0 indicates that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
 > <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
 
-The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in [AIF360](https://github.com/IBM/AIF360)).
-> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )">
+The *Equal Odds Ratio* is the ratio of maximimum divergence from 1 between the TPR Ratio and FPR Ratio, where the TPR and FPR ratios are calculated as the rate of the unpriviliged group divided by the rate of the privileged group. A value of 1 means that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_odds\_ratio = max( |(FPR_unprivileged/FPR_privileged) - 1|, |(TPR_unprivileged/TPR_privileged) - 1|)">
 
-*Equal Opportunity Difference (or Ratio)* compares the recall scores (TPR) between the unprivileged and privileged groups.
+*Equal Opportunity Difference (or Ratio)* compares only the TPRs (recall scores) between the unprivileged and privileged groups.
 > <img src="https://render.githubusercontent.com/render/math?math=equal\_opportunity\_difference = recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})">
 
 
