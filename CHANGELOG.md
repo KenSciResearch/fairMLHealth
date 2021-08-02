@@ -5,11 +5,23 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.17] - 2021-07-31
+### Documentation Update
+
+- Major changes to the structure of the library intended to make it more intuitive:
+    - fairMLHealth modules were renamed to clarify scope and purpose. This will facilitate adding new features in upcoming PRs:
+        - **reports.py** is now named **measure.py**
+        - **model_comparison** is now named **report.py**
+    - fairMLHealth modules made private: utils.py (now split into stat_utils.py and __utils.py), load_mimic_data.py (now: "__mimic_data.py")
+    - the "tutorials_and_examples" folder has been renamed "examples_and_tutorials" so that it will be easier to find (e.g. seen adjacent to the "docs" folder)
+
+
 ## [0.1.16] - 2021-07-30
 ### Documentation Update
 
 - Doctstings on public-facing functions given added detail components of the code.
 - The "feature_table" function was moved into utils.py so that it can be used publicly.
+
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
 - Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
