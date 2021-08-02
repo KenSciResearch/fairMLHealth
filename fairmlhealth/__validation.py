@@ -51,6 +51,19 @@ def validate_data(data, name="data", expected_len:int=None):
     __validate_length(data, name, expected_len)
 
 
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
+    else:
+        pass
+
+
 def validate_prtc_attr(arr, expected_len:int=0):
     validate_array(arr, "protected attribute", expected_len)
     __validate_binVal(arr, "protected attribute", fuzzy=False)
