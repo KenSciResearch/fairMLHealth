@@ -101,7 +101,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
                         y_prob=None, priv_grp=1):
     """ Formats data for use by fairness analytical functions.
     Args:
-        X (array-like): Sample features
+        X (matrix-like): Sample features
         prtc_attr (named array-like): values for the protected attribute
             (note: protected attribute may also be present in X)
         y_true (1D array-like): Sample targets

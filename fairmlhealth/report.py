@@ -257,6 +257,7 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
+            # Cohorting is not currently available for report functions
             res = summary(self.X[model_name],
                                  self.prtc_attr[model_name],
                                  self.y[model_name],
@@ -264,6 +265,7 @@ class FairCompare(ABC):
                                  self.probs[model_name],
                                  pred_type=self.pred_type,
                                  sig_fig=self.sig_fig,
+                                 cohorts=None,
                                  **kwargs)
             return res
 

@@ -38,14 +38,17 @@ filterwarnings('ignore', module='pandas')
 filterwarnings('ignore', module='sklearn')
 
 
-def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
-                sig_fig:int=4, flag_oor=False, **kwargs):
-    """ Generates a table of stratified bias metrics
+def bias(X:valid.MatrixLike, y_true:valid.ArrayLike, y_pred:valid.ArrayLike,
+         features:list=None, pred_type:str="classification",
+         flag_oor:bool=False, cohorts:valid.MatrixLike=None, sig_fig:int=4,
+         **kwargs):
+    """
+    Generates a table of stratified bias metrics
 
     Args:
-        X (array-like): Sample features
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
+        X (matrix-ike): Sample features
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
         features (list): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
@@ -53,8 +56,9 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
-        priv_grp (int): Specifies which label indicates the privileged
-            group. Defaults to 1.
+        cohorts (matrix-like, optional): Additional labels for each observation
+            by which feature-value pairs will be further stratified.
+        sig_fig (int): Number of digits to which to round result. Defaults to 4.
 
     Raises:
         ValueError
@@ -68,10 +72,10 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
         raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
         df = __classification_bias(X=X, y_true=y_true, y_pred=y_pred,
-                                          features=features, **kwargs)
+                                   features=features, cohorts=cohorts, **kwargs)
     elif pred_type == "regression":
         df = __regression_bias(X=X, y_true=y_true, y_pred=y_pred,
-                                      features=features, **kwargs)
+                               features=features, cohorts=cohorts, **kwargs)
     #
     if flag_oor:
         custom_bounds = kwargs.pop('custom_ranges', {})
@@ -232,9 +236,9 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
 
     Args:
         X (pandas dataframe or compatible object): sample data to be assessed
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities. Defaults to None.
         features (list): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
@@ -263,25 +267,28 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
 
 
 def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
-                   pred_type="classification", priv_grp=1, sig_fig:int=4,
-                   **kwargs):
+            pred_type="classification", cohorts:valid.MatrixLike=None,  priv_grp=1,
+            sig_fig:int=4, **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
     relative to their input data
 
     Args:
-        X (array-like): Sample features
+        X (matrix-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities. Defaults to None.
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
+        cohorts (matrix-like, optional): Additional labels for each observation
+            by which feature-value pairs will be further stratified.
         pred_type (str, optional): One of "classification" or "regression".
             Defaults to "classification".
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
+        sig_fig (int): Number of digits to which to round result. Defaults to 4.
 
     Raises:
         ValueError
@@ -471,12 +478,12 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
-        X (array-like): Sample features
+        X (matrix-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
     """
@@ -773,11 +780,11 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1,
         Note: named arguments are enforced to enable @iterate_cohorts
 
     Args:
-        X (array-like): Sample features
+        X (matrix-like): Sample features
         prtc_attr (array-like, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target probabilities
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
     """

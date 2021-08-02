@@ -35,12 +35,12 @@ def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
         the fairness or performance tables
 
     Args:
-        X (array-like): Sample features
+        X (matrix-like): Sample features
         prtc_attr (array-like, named): values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities
     """
     validate_data(X, name="input data")
     if y_true is not None:
