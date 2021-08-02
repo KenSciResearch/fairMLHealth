@@ -1,11 +1,18 @@
 ''' Manages data validation tasks across modules
 '''
 from collections import OrderedDict
+from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 
 
 ITER_TYPES = (list, tuple, set, dict, OrderedDict)
+
+
+def is_dictlike(obj):
+    dictlike = \
+        bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
+    return dictlike
 
 
 def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,

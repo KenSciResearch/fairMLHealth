@@ -14,9 +14,9 @@ import pandas as pd
 from sklearn import metrics as sk_metric
 import warnings
 
-from .__utils import is_dictlike
 from .measure import summary, flag, __regression_performance
 from . import __preprocessing as prep, __validation as valid
+from .__validation import ValidationError
 
 
 """
@@ -212,7 +212,7 @@ class FairCompare(ABC):
             (Out Of Range)
         """
         # Model objects are assumed to be held in a dict
-        if not is_dictlike(self.models):
+        if not valid.is_dictlike(self.models):
             self.__set_dicts()
         #
         if len(self.models) == 0:
@@ -274,7 +274,7 @@ class FairCompare(ABC):
 
         """
         # Model objects are assumed to be held in a dict
-        if not is_dictlike(self.models):
+        if not valid.is_dictlike(self.models):
             self.__set_dicts()
         #
         model_objs = [*self.models.values()]
@@ -361,7 +361,7 @@ class FairCompare(ABC):
 
         # Dictionaries will assume the same keys after validation
         dict_obj = [getattr(self, i)
-                    for i in iterable_obj if is_dictlike(getattr(self, i))]
+                    for i in iterable_obj if valid.is_dictlike(getattr(self, i))]
         if any(dict_obj):
             err = "All dict arguments must have the same keys"
             if not all([k.keys() == dict_obj[0].keys() for k in dict_obj]):
@@ -373,7 +373,7 @@ class FairCompare(ABC):
 
         # All measure-related attributes will be assumed as dicts henceforth
         for name in self.__meas_obj:
-            if not is_dictlike(getattr(self, name)):
+            if not valid.is_dictlike(getattr(self, name)):
                 if not isinstance(getattr(self, name), valid.ITER_TYPES):
                     objL = [getattr(self, name)] * expected_len
                 else:
