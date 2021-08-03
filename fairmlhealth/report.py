@@ -18,10 +18,6 @@ from .measure import summary, flag, __regression_performance
 from . import __preprocessing as prep, __validation as valid
 
 
-"""
-    Model Comparison Tools
-"""
-
 
 def classification_performance(y_true, y_pred, target_labels=None,
                                sig_fig:int=4):
