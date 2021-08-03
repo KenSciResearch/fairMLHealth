@@ -6,7 +6,6 @@ Contributors:
 """
 
 
-from typing import Literal
 import aif360.sklearn.metrics as aif
 from functools import reduce
 from IPython.display import HTML
@@ -31,11 +30,6 @@ from .__preprocessing import (standard_preprocess, stratified_preprocess,
                               analytical_labels, y_cols)
 from .__validation import ValidationError
 from .__utils import format_errwarn, iterate_cohorts
-
-
-# ToDo: find better solution for these warnings
-filterwarnings('ignore', module='pandas')
-filterwarnings('ignore', module='sklearn')
 
 
 def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
@@ -75,7 +69,8 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
     elif pred_type == "regression":
         df = __regression_bias(X=X, y_true=y_true, y_pred=y_pred,
                                cohorts=cohorts, features=features, **kwargs)
-    #
+    # Significant figures must be handled by the flag funcion (if called) since
+    #   the Styler will reset significant digits
     if flag_oor:
         custom_bounds = kwargs.pop('custom_ranges', {})
         ranges = fair_ranges(custom_bounds, y_true, y_pred, df.columns.tolist())
@@ -181,13 +176,12 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
         df = __strat_class_performance(X=X, y_true=y_true, y_pred=y_pred,
                                        y_prob=y_prob, features=features,
                                        add_overview=add_overview, cohorts=cohorts,
-                                       **kwargs)
+                                       sig_fig=sig_fig, **kwargs)
     elif pred_type == "regression":
         df = __strat_reg_performance(X=X, y_true=y_true, y_pred=y_pred,
                                      features=features, add_overview=add_overview,
-                                     cohorts=cohorts, **kwargs)
+                                     cohorts=cohorts, sig_fig=sig_fig, **kwargs)
     #
-    df = df.round(sig_fig)
     return df
 
 
@@ -230,7 +224,8 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     elif pred_type == "regression":
         df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred,
                                   priv_grp=priv_grp, cohorts=cohorts, **kwargs)
-    #
+    # Significant figures must be handled by the flag funcion (if called) since
+    #   the Styler will reset significant digits
     if flag_oor:
         df = flag(df, sig_fig=sig_fig)
     else:
@@ -349,8 +344,7 @@ def __analyze_data(*, X, Y, features:list=None, targets:list=None,
     else:
         rprt = results
     #
-    rprt = __sort_table(rprt)
-    rprt = rprt.round(sig_fig)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
@@ -424,7 +418,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
             df[pa_name] = 0
             df.loc[df[f].eq(v), pa_name] = 1
             if v != "nan":
-                df.loc[df[f].eq("nan"), pa_name] = np.nan
+                df.loc[df[f].eq("nan") | df[f].isnull(), pa_name] = np.nan
             # Nothing to measure if only one value is present (other than nan)
             if df[pa_name].nunique() == 1:
                 continue
@@ -486,7 +480,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_classification_measures, _y, _yh)
-    rprt = __sort_table(results)
+    rprt = __format_table(results)
     return rprt
 
 
@@ -569,8 +563,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
 
-    # Temporarily prevent processing for more than 2 classes
-    # ToDo: enable multiclass
+    # Prevent processing for more than 2 classes until measures enabled
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class == 2:
         summary_type = "binary"
@@ -652,7 +645,9 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __format_summary(df, summary_type):
+def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
+    """ Formatting specific to the summary tables
+    """
     df.columns = ['Value']
     # Fix the order in which the metrics appear
     gfl, ifl, mpl, dtl = analytical_labels(summary_type)
@@ -664,6 +659,16 @@ def __format_summary(df, summary_type):
     df.set_index(['level_0', 'level_1'], inplace=True)
     df.rename_axis(('Metric', 'Measure'), inplace=True)
     return df
+
+
+def __format_table(strat_tbl, sig_fig:int=6):
+    """ Formatting for stratified tables not including the summary tables. Use
+        __format_summary to format summary tables.
+    """
+    tbl = __sort_table(strat_tbl)
+    tbl['Feature Name'] = tbl['Feature Name'].astype(str)
+    tbl = tbl.round(sig_fig)
+    return tbl
 
 
 def __regression_performance(x:pd.DataFrame, y:str, yh:str):
@@ -683,7 +688,7 @@ def __regression_performance(x:pd.DataFrame, y:str, yh:str):
 
 @iterate_cohorts
 def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None,
-                              add_overview=True, **kwargs):
+                              add_overview=True, sig_fig:int=9, **kwargs):
     """Generates a table of stratified performance metrics for each specified
         feature
 
@@ -724,13 +729,13 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = __sort_table(rprt)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
 @iterate_cohorts
 def __strat_reg_performance(X, y_true, y_pred, features:list=None,
-                            add_overview=True, **kwargs):
+                            add_overview=True, sig_fig:int=9, **kwargs):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -772,7 +777,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = __sort_table(rprt)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
@@ -806,7 +811,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_regression_measures, _y, _yh)
-    rprt = __sort_table(results)
+    rprt = __format_table(results)
     return rprt
 
 
