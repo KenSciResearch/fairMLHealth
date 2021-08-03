@@ -19,7 +19,7 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
         - Tools for detailed analysis across multiple indicators (e.g. when location of bias is undetermined)
     - **Report**:
         - Tools stylized for inclusion in publications and analytical reports
-        - Tools for monitoring and reporting on operationalized models
+        - Tools reporting on operationalized models
     - **Statistical Utilities**:
         - Generalized tools that can be used in bias analysis as well as in other applications
 
@@ -53,24 +53,27 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 
 
-# Load data
-X = pd.DataFrame({'col1':[1,2,50,3,45,32],
-                  'col2':[34,26,44,2,1,1],
-                  'col3':[32,23,34,22,65,27],
-                  'gender':[0,1,0,1,1,0]
-                  })
-y = pd.Series([1,1,0,1,0,1], name='y')
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.75, random_state=36)
+# First we'll create a semi-randomized dataframe with specific columns for our attributes of interest
+np.random.seed(506)
+N = 240
+X = pd.DataFrame({'col1': np.random.randint(1, 4, N),
+                  'col2': np.random.randint(1, 75, N),
+                  'col3': np.random.randint(0, 2, N),
+                  'gender': [0, 1]*int(N/2),
+                  'ethnicity': [1, 1, 0, 0]*int(N/4),
+                  'other': [1, 0, 1, 0, 1, 1, 0, 1]*int(N/8)
+                 })
 
-#Train models
+# Next we'll create a randomized target value
+y = pd.Series(X['col3'].values + np.random.randint(0, 2, N), name='y').clip(upper=1)
+
+# Third, we'll split the data and use it to train two generic models
+splits = train_test_split(X, y, stratify=y, test_size=0.5, random_state=60)
+X_train, X_test, y_train, y_test = splits
+
 model_1 = BernoulliNB().fit(X_train, y_train)
 model_2 = DecisionTreeClassifier().fit(X_train, y_train)
 
-# Determine your set of protected attributes
-prtc_attr = X_test['gender']
-
-# Specify either a dict or a list of trained models to compare
-model_dict = {'model_1': model_1, 'model_2': model_2}
 ```
 
 ### Measuring
