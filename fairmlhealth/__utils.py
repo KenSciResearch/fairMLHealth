@@ -70,10 +70,19 @@ def iterate_cohorts(func:Callable):
 
     """
     def prepend_cohort(df:valid.MatrixLike, new_ix:valid.ArrayLike):
+        """ Attaches cohort information to the far left of the dataframe, adjusting
+            by type. Cohorts are added to the index to enable flagging for
+            cohorted summary tables (pd.Styler fails with non-unique indices)
+        """
         idx = df.index.to_frame().rename(columns={0:'__index'})
+        # add padding to shift start location if prepending a summary table
+        ixpad = 0
+        if df.index.names == ['Metric', 'Measure']:
+            ixpad = 2
+        # Attach new_ix data to the index
         if idx.any().any():
             for l, i in enumerate(new_ix):
-                idx.insert(l, i[0], i[1])
+                idx.insert(l+ixpad, i[0], i[1])
             if '__index' in idx.columns:
                 idx.drop('__index', axis=1, inplace=True)
         else:
