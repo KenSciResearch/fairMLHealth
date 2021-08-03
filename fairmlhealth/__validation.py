@@ -50,7 +50,7 @@ def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
     if y_prob is not None:
         validate_array(y_prob, name="probabilities", expected_len=X.shape[0])
     if prtc_attr is not None:
-        validate_prtc_attr(prtc_attr, expected_len=X.shape[0])
+        validate_binary_attr(prtc_attr, "protected attribute", expected_len=X.shape[0])
     validate_priv_grp(priv_grp)
     return True
 
@@ -62,6 +62,12 @@ def validate_array(arr, name="array", expected_len:int=0):
     __validate_oneDArray(arr, name)
     expected_len = arr.shape[0] if expected_len is None else expected_len
     __validate_length(arr, name, expected_len)
+    __validate_values(arr, name)
+
+
+def validate_binary_attr(arr, name="attribute", expected_len:int=0):
+    validate_array(arr, name, expected_len)
+    __validate_binVal(arr, name, fuzzy=False)
     __validate_values(arr, name)
 
 
@@ -117,12 +123,6 @@ def validate_notebook_requirements():
         pass
 
 
-def validate_prtc_attr(arr, expected_len:int=0):
-    validate_array(arr, "protected attribute", expected_len)
-    __validate_binVal(arr, "protected attribute", fuzzy=False)
-    __validate_values(arr, "protected_attribute")
-
-
 def validate_priv_grp(priv_grp:int=None):
     if priv_grp is None:
         raise ValueError("No privileged group found.")
@@ -162,8 +162,8 @@ def __validate_binVal(arr, name:str="array", fuzzy:bool=True):
     err = None
     binVals = np.array([0, 1])
     if len(np.unique(arr)) > 2:
-        err = (f"Multiple labels found in {name}. "
-                "Expected only 0 or 1.")
+        err = (f"Expected values of [0, 1] in {name}." +
+                f" Received {np.unique(arr)}")
     # Protected attribute must have entries for both 0 and 1
     elif not fuzzy and not np.array_equal(np.unique(arr), binVals):
         err = (f"Expected values of [0, 1] in {name}." +
