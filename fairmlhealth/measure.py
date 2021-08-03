@@ -658,6 +658,10 @@ def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
     # Fix Display Names
     df.set_index(['level_0', 'level_1'], inplace=True)
     df.rename_axis(('Metric', 'Measure'), inplace=True)
+    # Drop Obs. from Model Performance since it may be ambiguous and
+    # may be redundant with some Data Metrics measures
+    if ('Model Performance', 'Obs.') in df.index:
+        df.drop(('Model Performance', 'Obs.'), axis=0, inplace=True)
     return df
 
 
