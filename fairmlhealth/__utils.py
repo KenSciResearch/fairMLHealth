@@ -123,8 +123,10 @@ def iterate_cohorts(func:Callable):
                 raise ValidationError(err)
             #
             results = []
+            errant_groups = []
             for k in cgrp.groups.keys():
-                vals = cgrp.get_group(k)[cols].head(1).values[0]
+                grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
+                # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
@@ -132,22 +134,25 @@ def iterate_cohorts(func:Callable):
                 pa = subset(prtc_attr, ixs)
                 new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                try:
-                    df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
-                          prtc_attr=pa, **sub_args)
-                except BaseException as e:
+                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
+                        prtc_attr=pa, **sub_args)
+                # Empty dataframes indicate issues with evaluation of the function
+                if len(df) == 0:
                     grpname = ""
                     for i, c in enumerate(cols):
                         if len(grpname) > 0:
-                            grpname += ", "
-                        grpname = f"{c} {vals[i]}"
-                    e = getattr(e, 'message') if 'message' in dir(e) else str(e)
-                    msg = (f"Could not evaluate {grpname}." + e)
-                    print(msg)
-                ix = [(c, vals[i]) for i, c in enumerate(cols)]
+                            grpname += " & "
+                        grpname += f"{c} {grp_vals[i]}"
+                    errant_groups.append(grpname)
+                ix = [(c, grp_vals[i]) for i, c in enumerate(cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
             output = pd.concat(results, axis=0)
+            if any(errant_groups):
+                msg = ("Could not evaluate function for group(s): "
+                       +"{errant_groups}. This is commonly caused when only a "
+                       " single feature-value pair is available.")
+                warn(msg)
             return output
         else:
             return func(X=X, **kwargs)
