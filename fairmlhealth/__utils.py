@@ -220,6 +220,8 @@ class FairRanges():
 
 
 class Flagger():
+    __hex = {'magenta':'#d00095', 'magenta_lt':'#ff05b8',
+             'purple':'#947fed', 'purple_lt':'#c2bae3'}
 
     def __init__(self):
         self.reset()
@@ -275,7 +277,7 @@ class Flagger():
         self.boundaries = None
         self.df = None
         self.flag_type = "background-color"
-        self.flag_color = "magenta"
+        self.flag_color = self.__hex['purple_lt']
         self.labels = None
         self.label_type = None
 
