@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ValidationError
-from warnings import warn
+from warnings import warn, catch_warnings, filterwarnings
 
 
 
@@ -276,8 +276,10 @@ class Flagger():
                 self.df.reset_index(inplace=True)
             styled = self.df.style.set_caption(caption
                                  ).apply(self.__colors, axis=0)
-        # Styler will reset precision to 6 sig figs
-        styled = styled.format(precision=sig_fig)
+        # Styler automatically sets precision to 6 sig figs
+        with catch_warnings(record=False):
+            filterwarnings("ignore", category=DeprecationWarning)
+            styled = styled.set_precision(sig_fig)
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested

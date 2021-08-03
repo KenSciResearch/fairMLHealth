@@ -66,7 +66,8 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
     elif pred_type == "regression":
         df = __regression_bias(X=X, y_true=y_true, y_pred=y_pred,
                                       features=features, **kwargs)
-    #
+    # Significant figures must be handled by the flag funcion (if called) since
+    #   the Styler will reset significant digits
     if flag_oor:
         custom_bounds = kwargs.pop('custom_ranges', {})
         ranges = fair_ranges(custom_bounds, y_true, y_pred, df.columns.tolist())
@@ -182,8 +183,7 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     else:
         rprt = results
     #
-    rprt = __sort_table(rprt)
-    rprt = rprt.round(sig_fig)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
@@ -246,13 +246,12 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __strat_class_performance(X, y_true, y_pred, y_prob,
-                                                   features, add_overview)
+        df = __strat_class_performance(X, y_true, y_pred, y_prob, features,
+                                       add_overview, sig_fig)
     elif pred_type == "regression":
-        df = __strat_reg_performance(X, y_true, y_pred,
-                                               features, add_overview)
+        df = __strat_reg_performance(X, y_true, y_pred, features, add_overview,
+                                     sig_fig)
     #
-    df = df.round(sig_fig)
     return df
 
 
@@ -293,7 +292,8 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     elif pred_type == "regression":
         df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
                                   y_pred=y_pred, priv_grp=priv_grp, **kwargs)
-    #
+    # Significant figures must be handled by the flag funcion (if called) since
+    #   the Styler will reset significant digits
     if flag_oor:
         df = flag(df, sig_fig=sig_fig)
     else:
@@ -436,7 +436,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_classification_measures, _y, _yh)
-    rprt = __sort_table(results)
+    rprt = __format_table(results)
     return rprt
 
 
@@ -617,6 +617,16 @@ def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
     return df
 
 
+def __format_table(strat_tbl, sig_fig:int=6):
+    """ Formatting for stratified tables not including the summary tables. Use
+        __format_summary to format summary tables.
+    """
+    tbl = __sort_table(strat_tbl)
+    tbl['Feature Name'] = tbl['Feature Name'].astype(str)
+    tbl = tbl.round(sig_fig)
+    return tbl
+
+
 def __regression_performance(x:pd.DataFrame, y:str, yh:str):
     res = {'Obs.': x.shape[0],
             f'Mean {y}': x[y].mean(),
@@ -632,8 +642,8 @@ def __regression_performance(x:pd.DataFrame, y:str, yh:str):
     return res
 
 
-def __strat_class_performance(X, y_true, y_pred, y_prob=None,
-                                        features:list=None, add_overview=True):
+def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None,
+                              add_overview=True, sig_fig:int=9):
     """Generates a table of stratified performance metrics for each specified
         feature
 
@@ -674,12 +684,12 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = __sort_table(rprt)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
 def __strat_reg_performance(X, y_true, y_pred, features:list=None,
-                                    add_overview=True):
+                            add_overview=True, sig_fig:int=9):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -721,7 +731,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
         rprt = pd.concat([overview_df, results], axis=0, ignore_index=True)
     else:
         rprt = results
-    rprt = __sort_table(rprt)
+    rprt = __format_table(rprt, sig_fig)
     return rprt
 
 
@@ -755,7 +765,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_regression_measures, _y, _yh)
-    rprt = __sort_table(results)
+    rprt = __format_table(results)
     return rprt
 
 
