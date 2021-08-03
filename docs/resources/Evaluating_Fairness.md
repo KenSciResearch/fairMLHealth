@@ -139,13 +139,13 @@ The *Disparate Impact Ratio* is the ratio between the probability of positive pr
 ### Equal Odds
 Odds are equalized if P(+) is approximately the same for all groups of the protected attribute.
 
-The *Equalized Odds Difference* is the greater between the difference in TPR and the difference in FPR. This provides a comparable measure to the Average Odds Difference found in [AIF360](https://github.com/IBM/AIF360). A value of 0 indicates that all groups have the same TPR, FPR, TNR, and FNR, and that the model is "fair" relative to the protected attribute.
-> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
+The *Equal Odds Difference* is calculated by this tool as the greater between the difference in TPR and the difference in FPR, where difference is calculated as the unprivileged value minus the privileged value. An Equal Odds Difference of 0 indicates that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
 
-The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in [AIF360](https://github.com/IBM/AIF360)).
-> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )">
+The *Equal Odds Ratio* is calculated by this tool as the ratio of maximimum divergence from 1 between the TPR Ratio and FPR Ratio, where the TPR and FPR ratios are calculated as the rate of the unpriviliged group divided by the rate of the privileged group. A value of 1 means that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_odds\_ratio = max( |(FPR_unprivileged/FPR_privileged) - 1|, |(TPR_unprivileged/TPR_privileged) - 1|)">
 
-*Equal Opportunity Difference (or Ratio)* compares the recall scores (TPR) between the unprivileged and privileged groups.
+*Equal Opportunity Difference (or Ratio)* compares only the TPRs (recall scores) between the unprivileged and privileged groups.
 > <img src="https://render.githubusercontent.com/render/math?math=equal\_opportunity\_difference = recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})">
 
 
@@ -163,12 +163,12 @@ The highlighted rows in our example FairMLHealth Fairness Report [above](#fairne
 
 The four-fifths rule works well when comparing prediction performance metrics whose values are above 0.5. However, the rule fails when comparing small values, as is the case in this example and which is as shown in the example stratified table. The ratios between two such small values can easily be well above 1.2, even though the true difference is only a few percentage points. For this reason it's useful to compare both the ratios and the differences when evaluating group measures.
 
-Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
+Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equal Odds Ratio, which also appears outside of the "fair" range. The Equal Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
 
 |Group Measure Type |Examples |"Fair" Range |Favored Group |
 |- |- |- |- |
-|Statistical Ratio |Disparate Impact Ratio, Equalized Odds Ratio | 0.8 <= "Fair" <= 1.2 | < 1 favors privileged group, > 1 favors unprivileged |
-|Statistical Difference |Equalized Odds Difference, Predictive Parity Difference | -0.1 <= "Fair" <= 0.1 | < 0 favors privileged group, > 0 favors unprivileged |
+|Statistical Ratio |Disparate Impact Ratio, Equal Odds Ratio | 0.8 <= "Fair" <= 1.2 | < 1 favors privileged group, > 1 favors unprivileged |
+|Statistical Difference |Equal Odds Difference, Predictive Parity Difference | -0.1 <= "Fair" <= 0.1 | < 0 favors privileged group, > 0 favors unprivileged |
 
 ### Problems with Group Fairness Measures
 Although these statistically-based measures make intuitive sense, they are not applicable in every situation. For example, Demographic Parity is inapplicable where the base rates significantly differ between groups. Also, by evaluating protected attributes in pre-defined groups, these measures may miss certain nuance. For example, a model may perform unfairly for certain sub-groups of the unprivileged class (e.g., black females), but not for the unprivileged group as a whole.
@@ -386,5 +386,3 @@ Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness bey
 * [FAT Forensics](https://github.com/fat-forensics/fat-forensics)
 * [ML Fairness Gym](https://github.com/google/ml-fairness-gym)
 * [Themis ML](https://themis-ml.readthedocs.io/en/latest/)
-
-
