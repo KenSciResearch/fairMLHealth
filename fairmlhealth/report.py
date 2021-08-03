@@ -201,7 +201,7 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self, flag_oor=True):
+    def compare_measures(self, flag_oor=True, skip_performance=False):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
 
@@ -224,8 +224,12 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(model_name, skip_performance=True,
-                                         flag_oor=False)
+                res = self.measure_model(model_name, flag_oor=False,
+                                         skip_performance=skip_performance)
+                # Drop Obs. from Model Performance since it may be ambiguous and
+                # may be redundant with some Data Metrics measures
+                if ('Model Performance', 'Obs.') in res.index:
+                    res.drop(('Model Performance', 'Obs.'), axis=0, inplace=True)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
