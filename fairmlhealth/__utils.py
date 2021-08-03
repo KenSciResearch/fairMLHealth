@@ -230,6 +230,8 @@ class FairRanges():
 
 
 class Flagger():
+    __hex = {'magenta':'#d00095', 'magenta_lt':'#ff05b8',
+             'purple':'#947fed', 'purple_lt':'#c2bae3'}
 
     def __init__(self):
         self.reset()
@@ -285,7 +287,7 @@ class Flagger():
         self.boundaries = None
         self.df = None
         self.flag_type = "background-color"
-        self.flag_color = "magenta"
+        self.flag_color = self.__hex['purple_lt']
         self.labels = None
         self.label_type = None
 
@@ -311,7 +313,7 @@ class Flagger():
             return [clr if is_oor(name, v) else ""  for v in vals]
 
     def __set_boundaries(self, boundaries):
-        lbls = [l.lower() for l in self.labels]
+        lbls = [str(l).lower() for l in self.labels]
         if boundaries is None:
             bnd = FairRanges().load_fair_ranges()
             # Mismatched keys may lead to errant belief that a measure is within
@@ -341,14 +343,16 @@ class Flagger():
         if self.df is None:
             pass
         else:
-            try:
-                labels = self.df.index.get_level_values(1)
-                if type(labels) == pd.core.indexes.numeric.Int64Index:
-                    label_type = "columns"
-                else:
+            if isinstance(self.df.index, pd.MultiIndex):
+                if "Measure" in self.df.index.names:
                     label_type = "index"
-            except:
+                    labels = self.df.index.get_level_values(1)
+                else:
+                    label_type = "columns"
+                    labels = self.df.columns.tolist()
+            else:
                 label_type = "columns"
                 labels = self.df.columns.tolist()
+
             self.label_type, self.labels = label_type, labels
 
