@@ -66,10 +66,16 @@ class TestCohorts:
                                 pred_type="classification",
                                 cohorts=tmc['index'])
 
-    def test_cohort_stratified(self):
+    def test_cohort_bias(self):
         _ = measure.bias(self.df, self.df['prtc_attr'],
                             self.df['classification'],
                             pred_type="classification", cohorts=self.cohorts)
+
+    def test_cohort_data(self):
+        _ = measure.data(self.df, self.df['prtc_attr'],
+                            self.df['classification'],
+                            pred_type="classification", cohorts=self.cohorts)
+
 
 
 @pytest.mark.usefixtures("load_data")
