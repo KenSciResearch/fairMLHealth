@@ -69,12 +69,13 @@ class TestCohorts:
     def test_cohort_bias(self):
         _ = measure.bias(self.df, self.df['prtc_attr'],
                             self.df['classification'],
-                            pred_type="classification", cohorts=self.cohorts)
+                            pred_type="classification",
+                            cohorts=self.cohorts)
 
     def test_cohort_data(self):
-        _ = measure.data(self.df, self.df['prtc_attr'],
-                            self.df['classification'],
-                            pred_type="classification", cohorts=self.cohorts)
+        _ = measure.data(self.df,
+                         self.df['prtc_attr'],
+                         cohorts=self.cohorts)
 
 
 
