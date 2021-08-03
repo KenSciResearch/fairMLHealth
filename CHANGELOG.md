@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.20] - 2021-08-03
+### Analytical Update
+- Bootstrap_significance updated to accept any function that returns a p-value, and supporting functions for kruskal and chisquare were added
+- Cohorting enabled for measure.data and measure.performance
+- Fixed bugs uncovered during testing
+
 ## [0.1.19] - 2021-08-03
 ### Testing Update
 - New tests added
