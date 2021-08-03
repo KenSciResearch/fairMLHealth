@@ -3,6 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
+from typing import Callable
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -58,7 +59,7 @@ def format_errwarn(func):
     return wrapper
 
 
-def iterate_cohorts(func):
+def iterate_cohorts(func:Callable):
     """ Runs the function for each cohort subset
 
     Args:
@@ -68,22 +69,25 @@ def iterate_cohorts(func):
         cohort-iterated version of the output
 
     """
-    def prepend_cohort(df, new_ix):
+    def prepend_cohort(df:valid.MatrixLike, new_ix:valid.ArrayLike):
         idx = df.index.to_frame().rename(columns={0:'__index'})
-        for l, i in enumerate(new_ix):
-            idx.insert(l, i[0], i[1])
-        if '__index' in idx.columns:
-            idx.drop('__index', axis=1, inplace=True)
+        if idx.any().any():
+            for l, i in enumerate(new_ix):
+                idx.insert(l, i[0], i[1])
+            if '__index' in idx.columns:
+                idx.drop('__index', axis=1, inplace=True)
+        else:
+            pass # No data in dataframe
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
-    def subset(data, idxs):
+    def subset(data:valid.MatrixLike, idxs:valid.ArrayLike):
         if data is not None:
             return data.loc[idxs,]
         else:
             return None
 
-    def wrapper(cohorts=None, **kwargs):
+    def wrapper(cohorts:valid.MatrixLike=None, **kwargs):
         """ Iterates for each cohort subset
 
         Args:
@@ -110,10 +114,19 @@ def iterate_cohorts(func):
             cix = cohorts.index
             cols = cohorts.columns.tolist()
             cgrp = cohorts.groupby(cols)
-            limit_alert(cgrp, "permutations of cohorts", 8)
+            valid.limit_alert(cgrp, "permutations of cohorts", 8,
+                        issue="This may slow processing time and reduce utility.")
+            minobs = valid.MIN_OBS
+            if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
+                err = ("Some cohort groups have too few observations to be measured."
+                       + f" At least {minobs} are required for each group.")
+                raise ValidationError(err)
             #
             results = []
+            errant_groups = []
             for k in cgrp.groups.keys():
+                grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
+                # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
@@ -122,28 +135,30 @@ def iterate_cohorts(func):
                 new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
                 df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
-                          prtc_attr=pa, **sub_args)
-                vals = cgrp.get_group(k)[cols].head(1).values[0]
-                ix = [(c, vals[i]) for i, c in enumerate(cols)]
+                        prtc_attr=pa, **sub_args)
+                # Empty dataframes indicate issues with evaluation of the function
+                if len(df) == 0:
+                    grpname = ""
+                    for i, c in enumerate(cols):
+                        if len(grpname) > 0:
+                            grpname += " & "
+                        grpname += f"{c} {grp_vals[i]}"
+                    errant_groups.append(grpname)
+                ix = [(c, grp_vals[i]) for i, c in enumerate(cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
             output = pd.concat(results, axis=0)
+            if any(errant_groups):
+                msg = ("Could not evaluate function for group(s): "
+                       +"{errant_groups}. This is commonly caused when only a "
+                       " single feature-value pair is available.")
+                warn(msg)
             return output
         else:
             return func(X=X, **kwargs)
 
     return wrapper
 
-
-def limit_alert(items:list=None, item_name="", limit:int=100,
-                issue:str="This may slow processing time."):
-    """ Warns the user if there are too many items due to potentially slowed
-        processing time
-    """
-    if any(items):
-        if len(items) > limit:
-            msg = f"More than {limit} {item_name} detected. {issue}"
-            warn(msg)
 
 class FairRanges():
     __diffs = ["auc difference" , "balanced accuracy difference",

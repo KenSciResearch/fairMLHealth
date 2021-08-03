@@ -3,22 +3,25 @@
 
 
 from fairmlhealth import report
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 import pandas as pd
-from .__test_utils import synth_dataset
+from .__testing_utilities import synth_dataset
 
 
 
 @pytest.fixture(scope="class")
 def load_data(request):
-    df = synth_dataset(24)
-    X = df[['A', 'B', 'C', 'D', 'E', 'prtc_attr']]
-    y = df['binary_target'].rename('y')
-    splits = train_test_split(X, y, test_size=0.75, random_state=506)
-    X_train, X_test, y_train, y_test = splits
+    N= 128
+    df = synth_dataset(N)
+    X = df[['A', 'B', 'C', 'E', 'F', 'prtc_attr', 'other']]
+
+    y = pd.Series((X['F']*X['other']).values + np.random.randint(0, 2, N), name='y').clip(upper=1)
+    X_train, y_train= X.iloc[0:int(N/4)], y.iloc[0:int(N/4)]
+    X_test, y_test = X.iloc[int(N/4):N], y.iloc[int(N/4):N]
 
     # Train models
     model_1 = BernoulliNB().fit(X_train, y_train)

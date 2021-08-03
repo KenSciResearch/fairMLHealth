@@ -6,11 +6,15 @@ from numbers import Number
 import numpy as np
 import pandas as pd
 from typing import Union
+from warnings import warn
+
 
 LIST_TYPES = (list, tuple, set)
 ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
 ArrayLike = Union[list, tuple, np.ndarray, pd.Series, pd.DataFrame]
 MatrixLike = Union[np.ndarray, pd.DataFrame]
+
+MIN_OBS = 5 # The minimum number of observations required for measuring and reporting functions
 
 
 def is_dictlike(obj):
@@ -23,10 +27,22 @@ def is_listlike(obj):
     listlike = bool(obj is not None and isinstance(obj, LIST_TYPES))
     return listlike
 
+
 def is_dictlike(obj):
     dictlike = \
         bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
     return dictlike
+
+
+def limit_alert(items:list=None, item_name:str="", limit:int=100,
+                issue:str="This may slow processing time."):
+    """ Warns the user if there are too many items due to potentially slowed
+        processing time
+    """
+    if any(items):
+        if len(items) > limit:
+            msg = f"More than {limit} {item_name} detected. {issue}"
+            warn(msg)
 
 
 def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
@@ -209,9 +225,8 @@ def __validate_length(data, name:str="array", expected_len:int=0):
     """
     # AIF360's consistency_score defaults to 5 nearest neighbors, thus 5 is
     #   the minimum acceptable length as long as that dependency exists
-    minlen = 5
-    if expected_len < minlen:
-        raise ValidationError(f"Cannot measure fewer than {minlen} observations"
+    if expected_len < MIN_OBS:
+        raise ValidationError(f"Cannot measure fewer than {MIN_OBS} observations"
                               + f" (Only {expected_len} found in {name})")
     N = data.shape[0]
     if not N == expected_len:
