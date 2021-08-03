@@ -6,7 +6,6 @@ Contributors:
 """
 
 
-from typing import Literal
 import aif360.sklearn.metrics as aif
 from functools import reduce
 from IPython.display import HTML
