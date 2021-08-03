@@ -6,11 +6,15 @@ from numbers import Number
 import numpy as np
 import pandas as pd
 from typing import Union
+from warnings import warn
+
 
 LIST_TYPES = (list, tuple, set)
 ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
 ArrayLike = Union[list, tuple, np.ndarray, pd.Series, pd.DataFrame]
 MatrixLike = Union[np.ndarray, pd.DataFrame]
+
+MIN_OBS = 5 # The minimum number of observations required for measuring and reporting functions
 
 
 def is_dictlike(obj):
@@ -23,10 +27,22 @@ def is_listlike(obj):
     listlike = bool(obj is not None and isinstance(obj, LIST_TYPES))
     return listlike
 
+
 def is_dictlike(obj):
     dictlike = \
         bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
     return dictlike
+
+
+def limit_alert(items:list=None, item_name:str="", limit:int=100,
+                issue:str="This may slow processing time."):
+    """ Warns the user if there are too many items due to potentially slowed
+        processing time
+    """
+    if any(items):
+        if len(items) > limit:
+            msg = f"More than {limit} {item_name} detected. {issue}"
+            warn(msg)
 
 
 def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
@@ -50,7 +66,7 @@ def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
     if y_prob is not None:
         validate_array(y_prob, name="probabilities", expected_len=X.shape[0])
     if prtc_attr is not None:
-        validate_prtc_attr(prtc_attr, expected_len=X.shape[0])
+        validate_binary_attr(prtc_attr, "protected attribute", expected_len=X.shape[0])
     validate_priv_grp(priv_grp)
     return True
 
@@ -62,6 +78,12 @@ def validate_array(arr, name="array", expected_len:int=0):
     __validate_oneDArray(arr, name)
     expected_len = arr.shape[0] if expected_len is None else expected_len
     __validate_length(arr, name, expected_len)
+    __validate_values(arr, name)
+
+
+def validate_binary_attr(arr, name="attribute", expected_len:int=0):
+    validate_array(arr, name, expected_len)
+    __validate_binVal(arr, name, fuzzy=False)
     __validate_values(arr, name)
 
 
@@ -117,12 +139,6 @@ def validate_notebook_requirements():
         pass
 
 
-def validate_prtc_attr(arr, expected_len:int=0):
-    validate_array(arr, "protected attribute", expected_len)
-    __validate_binVal(arr, "protected attribute", fuzzy=False)
-    __validate_values(arr, "protected_attribute")
-
-
 def validate_priv_grp(priv_grp:int=None):
     if priv_grp is None:
         raise ValueError("No privileged group found.")
@@ -162,8 +178,8 @@ def __validate_binVal(arr, name:str="array", fuzzy:bool=True):
     err = None
     binVals = np.array([0, 1])
     if len(np.unique(arr)) > 2:
-        err = (f"Multiple labels found in {name}. "
-                "Expected only 0 or 1.")
+        err = (f"Expected values of [0, 1] in {name}." +
+                f" Received {np.unique(arr)}")
     # Protected attribute must have entries for both 0 and 1
     elif not fuzzy and not np.array_equal(np.unique(arr), binVals):
         err = (f"Expected values of [0, 1] in {name}." +
@@ -209,9 +225,8 @@ def __validate_length(data, name:str="array", expected_len:int=0):
     """
     # AIF360's consistency_score defaults to 5 nearest neighbors, thus 5 is
     #   the minimum acceptable length as long as that dependency exists
-    minlen = 5
-    if expected_len < minlen:
-        raise ValidationError(f"Cannot measure fewer than {minlen} observations"
+    if expected_len < MIN_OBS:
+        raise ValidationError(f"Cannot measure fewer than {MIN_OBS} observations"
                               + f" (Only {expected_len} found in {name})")
     N = data.shape[0]
     if not N == expected_len:

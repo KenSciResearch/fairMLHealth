@@ -4,11 +4,11 @@
 
 
 from logging import warning
-from fairmlhealth import measure, report
+from fairmlhealth import measure, report, __validation as valid
 import numpy as np
 import pytest
 import pandas as pd
-from .__test_utils import synth_dataset
+from .__testing_utilities import synth_dataset
 np.random.seed(506)
 
 
@@ -43,24 +43,46 @@ class TestCohorts:
                             self.df['avg_classification'],
                             pred_type="classification")
 
-    def test_one_cohort(self):
+    def test_one_cohort_cols(self):
         _ = measure.summary(self.df, self.df['prtc_attr'],
                             self.df['classification'],
                             self.df['avg_classification'],
                             pred_type="classification",
                             cohorts=self.cohorts[0])
 
-    def test_multi_cohort(self):
+    def test_multi_cohort_cols(self):
         _ = measure.summary(self.df, self.df['prtc_attr'],
                             self.df['classification'],
                             self.df['avg_classification'],
                             pred_type="classification",
                             cohorts=self.cohorts)
 
-    def test_cohort_stratified(self):
+    def test_toomany_cohorts(self):
+        tmc = self.df['A'].reset_index()
+        with pytest.raises(valid.ValidationError):
+            _ = measure.summary(self.df, self.df['prtc_attr'],
+                                self.df['classification'],
+                                self.df['avg_classification'],
+                                pred_type="classification",
+                                cohorts=tmc['index'])
+
+    def test_cohort_bias(self):
         _ = measure.bias(self.df, self.df['prtc_attr'],
                             self.df['classification'],
-                            pred_type="classification", cohorts=self.cohorts)
+                            pred_type="classification",
+                            cohorts=self.cohorts)
+
+    def test_cohort_data(self):
+        _ = measure.data(self.df,
+                         self.df['avg_classification'],
+                         cohorts=self.cohorts[0])
+
+    def test_cohort_performance(self):
+        _ = measure.performance(self.df,
+                                self.df['classification'],
+                                self.df['avg_classification'],
+                                pred_type="classification",
+                                cohorts=self.cohorts[0])
 
 
 @pytest.mark.usefixtures("load_data")

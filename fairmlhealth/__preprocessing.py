@@ -25,9 +25,9 @@ def analytical_labels(pred_type: str = "binary"):
     return lbls
 
 
-def prep_arraylike(arr, name=None):
-    valid.validate_array(arr, expected_len=None)
-    series = pd.Series(arr, name=name)
+def prep_arraylike(arr:valid.ArrayLike, name:str=None, expected_len:int=None):
+    valid.validate_array(arr, name, expected_len)
+    series = pd.Series(arr, name=name).reset_index(drop=True)
     return series
 
 

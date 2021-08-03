@@ -38,17 +38,15 @@ filterwarnings('ignore', module='pandas')
 filterwarnings('ignore', module='sklearn')
 
 
-def bias(X:valid.MatrixLike, y_true:valid.ArrayLike, y_pred:valid.ArrayLike,
-         features:list=None, pred_type:str="classification",
-         flag_oor:bool=False, cohorts:valid.MatrixLike=None, sig_fig:int=4,
-         **kwargs):
-    """
-    Generates a table of stratified bias metrics
+def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
+                sig_fig:int=4, flag_oor=False, cohorts:valid.MatrixLike=None,
+                **kwargs):
+    """ Generates a table of stratified bias metrics
 
     Args:
-        X (matrix-ike): Sample features
-        y_true (1D array-like): Sample targets
-        y_pred (1D array-like): Sample target predictions
+        X (matrix-like): Sample features
+        y_true (array-like, 1-D): Sample targets
+        y_pred (array-like, 1-D): Sample target predictions
         features (list): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
@@ -56,9 +54,11 @@ def bias(X:valid.MatrixLike, y_true:valid.ArrayLike, y_pred:valid.ArrayLike,
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
-        cohorts (matrix-like, optional): Additional labels for each observation
-            by which feature-value pairs will be further stratified.
         sig_fig (int): Number of digits to which to round result. Defaults to 4.
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+        cohorts (matrix-like): additional labels for each observation by which
+            analysis should be grouped
 
     Raises:
         ValueError
@@ -87,9 +87,170 @@ def bias(X:valid.MatrixLike, y_true:valid.ArrayLike, y_pred:valid.ArrayLike,
 
 
 def data(X, Y, features:list=None, targets:list=None, add_overview=True,
-                sig_fig:int=4):
+                sig_fig:int=4, cohorts:valid.MatrixLike=None):
+    """ Generates a table of stratified data metrics
+
+    Args:
+        X (pandas dataframe or compatible object): sample data to be assessed
+        Y (pandas dataframe or compatible object): sample targets to be
+            assessed. Note that any observations with missing targets will be
+            ignored.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        targets (list): columns in Y to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        cohorts (matrix-like): additional labels for each observation by which
+            analysis should be grouped
+
+    Requirements:
+        Each feature must be discrete to run stratified analysis. If any data
+        are not discrete and there are more than 11 values, the tool will
+        reformat those data into quantiles
+
+    Returns:
+        pandas Data Frame
     """
-    Generates a table of stratified data metrics
+    # This is a wrapper function to force keyword arguments enable cohort iteration
+    return __analyze_data(X=X, Y=Y, features=features, targets=targets,
+                          add_overview=add_overview, sig_fig=sig_fig,
+                          cohorts=cohorts)
+
+
+def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
+                y_true:valid.ArrayLike = None, y_pred:valid.ArrayLike = None,
+                available_measures:"list[str]"=None):
+    cbounds = custom_ranges
+    result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
+    if available_measures is not None:
+        # Labels not present among available_measures will cause an error
+        lbls = [str(c).lower() for c in available_measures]
+        result = {k:v for k,v in result.items() if k.lower() in lbls}
+    return result
+
+
+def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
+         as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
+    """ Generates embedded html pandas styler table containing a highlighted
+        version of a model comparison dataframe
+
+    Args:
+        df (pandas dataframe): Model comparison dataframe (see)
+        caption (str, optional): Optional caption for table. Defaults to "".
+        as_styler (bool, optional): If True, returns a pandas Styler of the
+            highlighted table (to which other styles/highlights can be added).
+            Otherwise, returns the table as an embedded HTML object. Defaults
+            to False .
+
+    Returns:
+        Embedded html or pandas.io.formats.style.Styler
+    """
+    cbounds = custom_ranges
+    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler, cbounds)
+
+
+def performance(X, y_true, y_pred, y_prob=None, features:list=None,
+                pred_type="classification", sig_fig:int=4,
+                add_overview=True, cohorts:valid.MatrixLike=None, **kwargs):
+    """ Generates a table of stratified performance metrics
+
+    Args:
+        X (pandas dataframe or compatible object): sample data to be assessed
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities. Defaults to None.
+        features (list): columns in X to be assessed if not all columns.
+            Defaults to None (i.e. all columns).
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        cohorts (matrix-like): additional labels for each observation by which
+            analysis should be grouped
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas DataFrame
+    """
+    validtypes = ["classification", "regression"]
+    if pred_type not in validtypes:
+        raise ValueError(f"Summary table type must be one of {validtypes}")
+    if pred_type == "classification":
+        df = __strat_class_performance(X=X, y_true=y_true, y_pred=y_pred,
+                                       y_prob=y_prob, features=features,
+                                       add_overview=add_overview, cohorts=cohorts,
+                                       **kwargs)
+    elif pred_type == "regression":
+        df = __strat_reg_performance(X=X, y_true=y_true, y_pred=y_pred,
+                                     features=features, add_overview=add_overview,
+                                     cohorts=cohorts, **kwargs)
+    #
+    df = df.round(sig_fig)
+    return df
+
+
+def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor:bool=False,
+            pred_type:str="classification", priv_grp:int=1, sig_fig:int=4,
+            cohorts:valid.MatrixLike=None, **kwargs):
+    """ Generates a summary of fairness measures for a set of predictions
+    relative to their input data
+
+    Args:
+        X (matrix-like): Sample features
+        prtc_attr (array-like, named): Values for the protected attribute
+            (note: protected attribute may also be present in X)
+        y_true (1D array-like): Sample targets
+        y_pred (1D array-like): Sample target predictions
+        y_prob (1D array-like): Sample target probabilities. Defaults to None.
+        flag_oor (bool): if True, will apply flagging function to highlight
+            fairness metrics which are considered to be outside the "fair" range
+            (Out Of Range). Defaults to False.
+        cohorts (matrix-like, optional): Additional labels for each observation
+            by which feature-value pairs will be further stratified.
+        pred_type (str, optional): One of "classification" or "regression".
+            Defaults to "classification".
+        priv_grp (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+        sig_fig (int): Number of digits to which to round result. Defaults to 4.
+        cohorts (matrix-like): additional labels for each observation by which
+            analysis should be grouped
+
+    Raises:
+        ValueError
+
+    Returns:
+        pandas DataFrame
+    """
+    validtypes = ["classification", "regression"]
+    if pred_type not in validtypes:
+        raise ValueError(f"Summary table type must be one of {validtypes}")
+    if pred_type == "classification":
+        df = __classification_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
+                                      y_pred=y_pred, y_prob=y_prob,
+                                      priv_grp=priv_grp, cohorts=cohorts, **kwargs)
+    elif pred_type == "regression":
+        df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true, y_pred=y_pred,
+                                  priv_grp=priv_grp, cohorts=cohorts, **kwargs)
+    #
+    if flag_oor:
+        df = flag(df, sig_fig=sig_fig)
+    else:
+        df = df.round(sig_fig)
+    return df
+
+
+''' Private Functions '''
+
+
+@iterate_cohorts
+def __analyze_data(*, X, Y, features:list=None, targets:list=None,
+                   add_overview=True, sig_fig:int=4, **kwargs):
+    """ Generates a table of stratified data metrics
+
+    Note: named arguments are enforced
 
     Args:
         X (pandas dataframe or compatible object): sample data to be assessed
@@ -143,12 +304,12 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     if features is None:
         features = X_df.columns.tolist()
     strat_feats = [f for f in features if f in X_df.columns]
-    utils.limit_alert(strat_feats, item_name="features")
+    valid.limit_alert(strat_feats, item_name="features")
     #
     if targets is None:
         targets = Y_df.columns.tolist()
     strat_targs = [t for t in targets if t in Y_df.columns]
-    utils.limit_alert(strat_targs, item_name="targets", limit=3,
+    valid.limit_alert(strat_targs, item_name="targets", limit=3,
                 issue="This may make the output difficult to read.")
     #
     res = []
@@ -195,126 +356,6 @@ def data(X, Y, features:list=None, targets:list=None, add_overview=True,
     rprt = __sort_table(rprt)
     rprt = rprt.round(sig_fig)
     return rprt
-
-
-def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
-                y_true:valid.ArrayLike = None, y_pred:valid.ArrayLike = None,
-                available_measures:"list[str]"=None):
-    cbounds = custom_ranges
-    result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
-    if available_measures is not None:
-        # Labels not present among available_measures will cause an error
-        lbls = [str(c).lower() for c in available_measures]
-        result = {k:v for k,v in result.items() if k.lower() in lbls}
-    return result
-
-
-def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
-         as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
-    """ Generates embedded html pandas styler table containing a highlighted
-        version of a model comparison dataframe
-
-    Args:
-        df (pandas dataframe): Model comparison dataframe (see)
-        caption (str, optional): Optional caption for table. Defaults to "".
-        as_styler (bool, optional): If True, returns a pandas Styler of the
-            highlighted table (to which other styles/highlights can be added).
-            Otherwise, returns the table as an embedded HTML object. Defaults
-            to False .
-
-    Returns:
-        Embedded html or pandas.io.formats.style.Styler
-    """
-    cbounds = custom_ranges
-    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler, cbounds)
-
-
-def performance(X, y_true, y_pred, y_prob=None, features:list=None,
-                      pred_type="classification", sig_fig:int=4,
-                      add_overview=True):
-    """ Generates a table of stratified performance metrics
-
-    Args:
-        X (pandas dataframe or compatible object): sample data to be assessed
-        y_true (1D array-like): Sample targets
-        y_pred (1D array-like): Sample target predictions
-        y_prob (1D array-like): Sample target probabilities. Defaults to None.
-        features (list): columns in X to be assessed if not all columns.
-            Defaults to None (i.e. all columns).
-        pred_type (str, optional): One of "classification" or "regression".
-            Defaults to "classification".
-        add_overview (bool): whether to add a summary row with metrics for
-            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
-
-    Raises:
-        ValueError
-
-    Returns:
-        pandas DataFrame
-    """
-    validtypes = ["classification", "regression"]
-    if pred_type not in validtypes:
-        raise ValueError(f"Summary table type must be one of {validtypes}")
-    if pred_type == "classification":
-        df = __strat_class_performance(X, y_true, y_pred, y_prob,
-                                                   features, add_overview)
-    elif pred_type == "regression":
-        df = __strat_reg_performance(X, y_true, y_pred,
-                                               features, add_overview)
-    #
-    df = df.round(sig_fig)
-    return df
-
-
-def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
-            pred_type="classification", cohorts:valid.MatrixLike=None,  priv_grp=1,
-            sig_fig:int=4, **kwargs):
-    """ Generates a summary of fairness measures for a set of predictions
-    relative to their input data
-
-    Args:
-        X (matrix-like): Sample features
-        prtc_attr (array-like, named): Values for the protected attribute
-            (note: protected attribute may also be present in X)
-        y_true (1D array-like): Sample targets
-        y_pred (1D array-like): Sample target predictions
-        y_prob (1D array-like): Sample target probabilities. Defaults to None.
-        flag_oor (bool): if True, will apply flagging function to highlight
-            fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range). Defaults to False.
-        cohorts (matrix-like, optional): Additional labels for each observation
-            by which feature-value pairs will be further stratified.
-        pred_type (str, optional): One of "classification" or "regression".
-            Defaults to "classification".
-        priv_grp (int): Specifies which label indicates the privileged
-            group. Defaults to 1.
-        sig_fig (int): Number of digits to which to round result. Defaults to 4.
-
-    Raises:
-        ValueError
-
-    Returns:
-        pandas DataFrame
-    """
-    validtypes = ["classification", "regression"]
-    if pred_type not in validtypes:
-        raise ValueError(f"Summary table type must be one of {validtypes}")
-    if pred_type == "classification":
-        df = __classification_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
-                                      y_pred=y_pred, y_prob=y_prob,
-                                        priv_grp=priv_grp, **kwargs)
-    elif pred_type == "regression":
-        df = __regression_summary(X=X, prtc_attr=prtc_attr, y_true=y_true,
-                                  y_pred=y_pred, priv_grp=priv_grp, **kwargs)
-    #
-    if flag_oor:
-        df = flag(df, sig_fig=sig_fig)
-    else:
-        df = df.round(sig_fig)
-    return df
-
-
-''' Private Functions '''
 
 
 @format_errwarn
@@ -445,7 +486,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    utils.limit_alert(strat_feats, item_name="features", limit=200)
+    valid.limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_classification_measures, _y, _yh)
@@ -644,8 +685,9 @@ def __regression_performance(x:pd.DataFrame, y:str, yh:str):
     return res
 
 
-def __strat_class_performance(X, y_true, y_pred, y_prob=None,
-                                        features:list=None, add_overview=True):
+@iterate_cohorts
+def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None,
+                              add_overview=True, **kwargs):
     """Generates a table of stratified performance metrics for each specified
         feature
 
@@ -672,7 +714,7 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    utils.limit_alert(strat_feats, item_name="features")
+    valid.limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
                                     __classification_performance, _y, _yh, _yp)
@@ -690,8 +732,9 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     return rprt
 
 
+@iterate_cohorts
 def __strat_reg_performance(X, y_true, y_pred, features:list=None,
-                                    add_overview=True):
+                            add_overview=True, **kwargs):
     """
     Generates a table of stratified performance metrics for each specified
     feature
@@ -719,7 +762,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    utils.limit_alert(strat_feats, item_name="features")
+    valid.limit_alert(strat_feats, item_name="features")
     #
     results = __apply_featureGroups(strat_feats, df,
                                     __regression_performance, _y, _yh)
@@ -763,7 +806,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
-    utils.limit_alert(strat_feats, item_name="features", limit=200)
+    valid.limit_alert(strat_feats, item_name="features", limit=200)
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_regression_measures, _y, _yh)

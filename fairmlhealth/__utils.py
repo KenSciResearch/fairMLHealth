@@ -3,6 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
+from typing import Callable
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -58,7 +59,7 @@ def format_errwarn(func):
     return wrapper
 
 
-def iterate_cohorts(func):
+def iterate_cohorts(func:Callable):
     """ Runs the function for each cohort subset
 
     Args:
@@ -68,22 +69,25 @@ def iterate_cohorts(func):
         cohort-iterated version of the output
 
     """
-    def prepend_cohort(df, new_ix):
+    def prepend_cohort(df:valid.MatrixLike, new_ix:valid.ArrayLike):
         idx = df.index.to_frame().rename(columns={0:'__index'})
-        for l, i in enumerate(new_ix):
-            idx.insert(l, i[0], i[1])
-        if '__index' in idx.columns:
-            idx.drop('__index', axis=1, inplace=True)
+        if idx.any().any():
+            for l, i in enumerate(new_ix):
+                idx.insert(l, i[0], i[1])
+            if '__index' in idx.columns:
+                idx.drop('__index', axis=1, inplace=True)
+        else:
+            pass # No data in dataframe
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
-    def subset(data, idxs):
+    def subset(data:valid.MatrixLike, idxs:valid.ArrayLike):
         if data is not None:
             return data.loc[idxs,]
         else:
             return None
 
-    def wrapper(cohorts=None, **kwargs):
+    def wrapper(cohorts:valid.MatrixLike=None, **kwargs):
         """ Iterates for each cohort subset
 
         Args:
@@ -94,7 +98,8 @@ def iterate_cohorts(func):
             pandas DataFrame
         """
         # Run preprocessing to facilitate subsetting
-        X = kwargs.pop('X', None)
+        X = kwargs.get('X', None)
+        Y = kwargs.get('Y', None)
         y_true = kwargs.get('y_true', None)
         y_pred = kwargs.get('y_pred', None)
         y_prob = kwargs.get('y_prob', None)
@@ -110,40 +115,53 @@ def iterate_cohorts(func):
             cix = cohorts.index
             cols = cohorts.columns.tolist()
             cgrp = cohorts.groupby(cols)
-            limit_alert(cgrp, "permutations of cohorts", 8)
+            valid.limit_alert(cgrp, "permutations of cohorts", 8,
+                        issue="This may slow processing time and reduce utility.")
+            minobs = valid.MIN_OBS
+            if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
+                err = ("Some cohort groups have too few observations to be measured."
+                       + f" At least {minobs} are required for each group.")
+                raise ValidationError(err)
             #
             results = []
+            errant_groups = []
             for k in cgrp.groups.keys():
+                grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
+                # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
+                x = subset(X, ixs)
+                y = subset(Y, ixs)
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
                 yp = subset(y_prob, ixs)
                 pa = subset(prtc_attr, ixs)
-                new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
+                new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
-                          prtc_attr=pa, **sub_args)
-                vals = cgrp.get_group(k)[cols].head(1).values[0]
-                ix = [(c, vals[i]) for i, c in enumerate(cols)]
+                df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
+                        prtc_attr=pa, **sub_args)
+                # Empty dataframes indicate issues with evaluation of the function
+                if len(df) == 0:
+                    grpname = ""
+                    for i, c in enumerate(cols):
+                        if len(grpname) > 0:
+                            grpname += " & "
+                        grpname += f"{c} {grp_vals[i]}"
+                    errant_groups.append(grpname)
+                ix = [(c, grp_vals[i]) for i, c in enumerate(cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
             output = pd.concat(results, axis=0)
+            if any(errant_groups):
+                msg = ("Could not evaluate function for group(s): "
+                       +"{errant_groups}. This is commonly caused when only a "
+                       " single feature-value pair is available.")
+                warn(msg)
             return output
         else:
-            return func(X=X, **kwargs)
+            return func(**kwargs)
 
     return wrapper
 
-
-def limit_alert(items:list=None, item_name="", limit:int=100,
-                issue:str="This may slow processing time."):
-    """ Warns the user if there are too many items due to potentially slowed
-        processing time
-    """
-    if any(items):
-        if len(items) > limit:
-            msg = f"More than {limit} {item_name} detected. {issue}"
-            warn(msg)
 
 class FairRanges():
     __diffs = ["auc difference" , "balanced accuracy difference",
@@ -220,6 +238,8 @@ class FairRanges():
 
 
 class Flagger():
+    __hex = {'magenta':'#d00095', 'magenta_lt':'#ff05b8',
+             'purple':'#947fed', 'purple_lt':'#c2bae3'}
 
     def __init__(self):
         self.reset()
@@ -275,7 +295,7 @@ class Flagger():
         self.boundaries = None
         self.df = None
         self.flag_type = "background-color"
-        self.flag_color = "magenta"
+        self.flag_color = self.__hex['purple_lt']
         self.labels = None
         self.label_type = None
 
@@ -301,7 +321,7 @@ class Flagger():
             return [clr if is_oor(name, v) else ""  for v in vals]
 
     def __set_boundaries(self, boundaries):
-        lbls = [l.lower() for l in self.labels]
+        lbls = [str(l).lower() for l in self.labels]
         if boundaries is None:
             bnd = FairRanges().load_fair_ranges()
             # Mismatched keys may lead to errant belief that a measure is within
@@ -331,14 +351,16 @@ class Flagger():
         if self.df is None:
             pass
         else:
-            try:
-                labels = self.df.index.get_level_values(1)
-                if type(labels) == pd.core.indexes.numeric.Int64Index:
-                    label_type = "columns"
-                else:
+            if isinstance(self.df.index, pd.MultiIndex):
+                if "Measure" in self.df.index.names:
                     label_type = "index"
-            except:
+                    labels = self.df.index.get_level_values(1)
+                else:
+                    label_type = "columns"
+                    labels = self.df.columns.tolist()
+            else:
                 label_type = "columns"
                 labels = self.df.columns.tolist()
+
             self.label_type, self.labels = label_type, labels
 
