@@ -9,9 +9,7 @@ import numpy as np
 
 
 class TestClassificationMetrics:
-    """ Test proper functioning of the compare_models function. Result
-        should be a pandas dataframe
-
+    """
     """
     y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
     prfct_prdctr = y

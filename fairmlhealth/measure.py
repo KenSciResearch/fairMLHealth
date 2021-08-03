@@ -649,19 +649,19 @@ def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
     """ Formatting specific to the summary tables
     """
     df.columns = ['Value']
-    # Fix the order in which the metrics appear
-    gfl, ifl, mpl, dtl = analytical_labels(summary_type)
-    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
-    df.reset_index(inplace=True)
-    df['sortorder'] = df['level_0'].map(metric_order)
-    df = df.sort_values('sortorder').drop('sortorder', axis=1)
     # Fix Display Names
-    df.set_index(['level_0', 'level_1'], inplace=True)
     df.rename_axis(('Metric', 'Measure'), inplace=True)
     # Drop Obs. from Model Performance since it may be ambiguous and
     # may be redundant with some Data Metrics measures
     if ('Model Performance', 'Obs.') in df.index:
         df.drop(('Model Performance', 'Obs.'), axis=0, inplace=True)
+    # Fix the order in which the metrics appear
+    gfl, ifl, mpl, dtl = analytical_labels(summary_type).values()
+    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
+    df.reset_index(inplace=True)
+    df['sortorder'] = df['Metric'].map(metric_order)
+    df = df.sort_values('sortorder').drop('sortorder', axis=1)
+    df.set_index(['Metric', 'Measure'], inplace=True)
     return df
 
 
@@ -901,8 +901,8 @@ def __sort_table(strat_tbl):
     Returns:
         pandas DataFrame: sorted strat_tbl
     """
-    _y = y_cols()['disp_names']['yt']
-    _yh = y_cols()['disp_names']['yh']
+    _y = y_cols()['col_names']['yt']
+    _yh = y_cols()['col_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
                  f'Mean {_y}', f'Mean {_yh}']
     head_cols = [c for c in head_names if c in strat_tbl.columns]

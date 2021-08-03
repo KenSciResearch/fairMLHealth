@@ -39,7 +39,7 @@ def load_data(request):
 
 @pytest.mark.usefixtures("load_data")
 class TestCompModFunction:
-    """ Test proper functioning of the compare_models function. Result
+    """ Test proper functioning of the compare function. Result
         should be a pandas dataframe
     """
     def is_result_valid(self, result):
@@ -47,38 +47,38 @@ class TestCompModFunction:
             raise AssertionError("Invalid Result")
 
     def test_single_dataInputs(self):
-        result = report.compare_models(self.X, self.y, self.prtc_attr,
+        result = report.compare(self.X, self.y, self.prtc_attr,
                                      self.model_dict, flag_oor=False)
         self.is_result_valid(result)
 
     def test_model_list(self):
-        result = report.compare_models(self.X, self.y, self.prtc_attr,
+        result = report.compare(self.X, self.y, self.prtc_attr,
                                      [self.model_dict[0]], flag_oor=False)
         self.is_result_valid(result)
 
     def test_mixed_groupings(self):
-        result = report.compare_models([self.X, self.X],
+        result = report.compare([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      [self.model_dict[0], self.model_dict[1]],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_with_protected_attributes(self):
-        result = report.compare_models([self.X, self.X], [self.y, self.y],
+        result = report.compare([self.X, self.X], [self.y, self.y],
                                      [self.prtc_attr, self.prtc_attr],
                                      [self.model_dict[0], self.model_dict[1]],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_not_models(self):
-        result = report.compare_models([self.X, self.X],
+        result = report.compare([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      predictions=[self.y, self.y],
                                      flag_oor=False)
         self.is_result_valid(result)
 
     def test_preds_and_probs(self):
-        result = report.compare_models([self.X, self.X],
+        result = report.compare([self.X, self.X],
                                      self.y, self.prtc_attr,
                                      predictions=[self.y, self.y],
                                      probabilities=[self.y, self.y],
@@ -87,18 +87,18 @@ class TestCompModFunction:
 
     def test_multiple_calls(self):
         args = (self.X, self.y, self.prtc_attr, self.model_dict[0])
-        _ = report.compare_models(*args, flag_oor=False)
-        result = report.compare_models(*args, flag_oor=False)
+        _ = report.compare(*args, flag_oor=False)
+        result = report.compare(*args, flag_oor=False)
         self.is_result_valid(result)
 
 
 @pytest.mark.usefixtures("load_data")
 class TestCompModValidations:
-    """ Validations for the compare_models function
+    """ Validations for the compare function
     """
     def test_mismatch_input_numbers(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {1: self.prtc_attr},
                                 self.model_dict,
@@ -106,7 +106,7 @@ class TestCompModValidations:
 
     def test_missing_models(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 {0: None, 1: None},
@@ -114,7 +114,7 @@ class TestCompModValidations:
 
     def test_invalid_X_member(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 {0: self.y, 1: self.y},
@@ -122,7 +122,7 @@ class TestCompModValidations:
 
     def test_invalid_y_member(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: None},
+            report.compare({0: self.X, 1: None},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -130,7 +130,7 @@ class TestCompModValidations:
 
     def test_invalid_prtc_member(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: None},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -138,7 +138,7 @@ class TestCompModValidations:
 
     def test_invalid_model_member(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: None},
                                 self.model_dict,
@@ -146,7 +146,7 @@ class TestCompModValidations:
 
     def test_differing_keys(self):
         with pytest.raises(Exception):
-            report.compare_models({5: self.X, 6: self.X},
+            report.compare({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
                                 self.model_dict,
@@ -154,7 +154,7 @@ class TestCompModValidations:
 
     def test_missing_keys(self):
         with pytest.raises(Exception):
-            report.compare_models({0: self.X, 1: self.X},
+            report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 None,
                                 self.model_dict,

@@ -18,11 +18,6 @@ from .measure import summary, flag, __regression_performance
 from . import __preprocessing as prep, __validation as valid
 
 
-"""
-    Model Comparison Tools
-"""
-
-''' Mini Reports '''
 
 def classification_performance(y_true, y_pred, target_labels=None,
                                sig_fig:int=4):
@@ -51,39 +46,7 @@ def classification_performance(y_true, y_pred, target_labels=None,
     return report
 
 
-def measure_model(test_data, targets, protected_attr, model=None,
-                  predictions=None, probabilities=None,
-                  pred_type="classification", flag_oor=True):
-    """ Generates a report of fairness measures for the model
-
-    Args:
-        test_data (pandas DataFrame or compatible type):
-        targets (1D array-like):
-        protected_attr (1D array-like):
-        model (scikit model or other model object with a *.predict() function
-            Defaults to None. If None, must pass predictions.
-        predictions (1D array-like): Set of predictions
-            corresponding to targets. Defaults to None. Ignored
-            if model argument is passed.
-        probabilities (1D array-like): Set of probabilities
-            corresponding to predictions. Defaults to None. Ignored
-            if models argument is passed.
-        flag_oor (bool): if True, will apply flagging function to highlight
-            fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range). Defaults to False.
-
-    Returns:
-        pandas dataframe of fairness measures for the model
-    """
-    comp = FairCompare(test_data, targets, protected_attr, model,
-                       predictions, probabilities, pred_type, verboseMode=True)
-    model_name = list(comp.models.keys())[0]
-    table = comp.measure_model(model_name, flag_oor=flag_oor,
-                               skip_performance=False)
-    return table
-
-
-def compare_models(test_data, targets, protected_attr, models=None,
+def compare(test_data, targets, protected_attr, models=None,
                    predictions=None, probabilities=None,
                    pred_type="classification", flag_oor=True):
     """ Generates a report comparing fairness measures for the models passed.
@@ -224,7 +187,7 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(model_name, skip_performance=True,
+                res = self.measure_model(model_name, skip_performance=False,
                                          flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
@@ -402,7 +365,6 @@ class FairCompare(ABC):
                 self.__validate(m)
         except valid.ValidationError as ve:
             raise valid.ValidationError(f"Error loading FairCompare. {ve}")
-
 
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation

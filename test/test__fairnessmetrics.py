@@ -23,8 +23,7 @@ def load_data(request):
 
 @pytest.mark.usefixtures("load_data")
 class TestFairnessMetrics:
-    """ Test proper functioning of the compare_models function. Result
-        should be a pandas dataframe
+    """ Test proper functioning of compare(). Result should be a pandas dataframe
 
     """
     def test_eo_diff(self):

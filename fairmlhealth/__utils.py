@@ -261,8 +261,7 @@ class Flagger():
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
-            df (pandas dataframe): model_comparison.compare_models or
-                model_comparison.measure_model dataframe
+            df (pandas dataframe): report.compare dataframe
             caption (str, optional): Optional caption for table. Defaults to "".
             as_styler (bool, optional): If True, returns a pandas Styler of the
                 highlighted table (to which other styles/highlights can be added).
