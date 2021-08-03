@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.19] - 2021-08-03
+### Testing Update
+- New tests added
+- Testing utilities renamed for clarity
+- Fixed bugs uncovered during testing
+
+
 ## [0.1.18] - 2021-07-31
 ### Regression Measure Flagging
 - Updated flagging feature to enable custom boundaries and flagging for regression measures

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ValidationError
-from warnings import warn
+from warnings import warn, catch_warnings, filterwarnings
 
 
 
@@ -117,6 +117,9 @@ def iterate_cohorts(func:Callable):
             cgrp = cohorts.groupby(cols)
             valid.limit_alert(cgrp, "permutations of cohorts", 8,
                         issue="This may slow processing time and reduce utility.")
+            # cohorts with too few observations, will cause terminating errors.
+            # Note that this doesn't validate that there's enough data for each
+            # feature-value pair: that should be handled by the function being wrapped
             minobs = valid.MIN_OBS
             if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
                 err = ("Some cohort groups have too few observations to be measured."
@@ -279,8 +282,10 @@ class Flagger():
                 self.df.reset_index(inplace=True)
             styled = self.df.style.set_caption(caption
                                  ).apply(self.__colors, axis=0)
-        # Styler will reset precision to 6 sig figs
-        styled = styled.set_precision(sig_fig)
+        # Styler automatically sets precision to 6 sig figs
+        with catch_warnings(record=False):
+            filterwarnings("ignore", category=DeprecationWarning)
+            styled = styled.set_precision(sig_fig)
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested
