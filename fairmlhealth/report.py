@@ -22,7 +22,6 @@ from . import __preprocessing as prep, __validation as valid
     Model Comparison Tools
 """
 
-''' Mini Reports '''
 
 def classification_performance(y_true, y_pred, target_labels=None,
                                sig_fig:int=4):
@@ -192,7 +191,7 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(model_name, skip_performance=True,
+                res = self.measure_model(model_name, skip_performance=False,
                                          flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
@@ -370,7 +369,6 @@ class FairCompare(ABC):
                 self.__validate(m)
         except valid.ValidationError as ve:
             raise valid.ValidationError(f"Error loading FairCompare. {ve}")
-
 
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation
