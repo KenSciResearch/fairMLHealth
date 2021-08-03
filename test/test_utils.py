@@ -123,8 +123,8 @@ class TestFlag():
                             pred_type="regression",
                             flag_oor=True)
 
-    def test_compare_models_flags(self):
-        result = report.compare_models(self.df,
+    def test_compare_flags(self):
+        result = report.compare(self.df,
                                        self.df['classification'],
                                        self.df['prtc_attr'],
                                        predictions=[self.df['avg_classification'],
