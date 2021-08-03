@@ -32,11 +32,6 @@ from .__validation import ValidationError
 from .__utils import format_errwarn, iterate_cohorts
 
 
-# ToDo: find better solution for these warnings
-filterwarnings('ignore', module='pandas')
-filterwarnings('ignore', module='sklearn')
-
-
 def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
                 sig_fig:int=4, flag_oor=False, **kwargs):
     """ Generates a table of stratified bias metrics
@@ -524,8 +519,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
 
-    # Temporarily prevent processing for more than 2 classes
-    # ToDo: enable multiclass
+    # Prevent processing for more than 2 classes until measures enabled
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class == 2:
         summary_type = "binary"

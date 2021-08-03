@@ -9,10 +9,6 @@ from .__performance_metrics import (
     true_negative_rate, false_negative_rate)
 
 
-# ToDo: find better solution for these warnings
-warnings.filterwarnings('ignore', module='aif360')
-
-
 def eq_odds_diff(y_true, y_pred, prtc_attr=None, priv_grp=1):
     """ Returns the greatest discrepancy between the between-group FPR
         difference and the between-group TPR difference

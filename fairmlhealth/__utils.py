@@ -277,7 +277,7 @@ class Flagger():
             styled = self.df.style.set_caption(caption
                                  ).apply(self.__colors, axis=0)
         # Styler will reset precision to 6 sig figs
-        styled = styled.set_precision(sig_fig)
+        styled = styled.format(precision=sig_fig)
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested
