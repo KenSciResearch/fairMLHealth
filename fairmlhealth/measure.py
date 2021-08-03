@@ -151,7 +151,7 @@ def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
 
 def performance(X, y_true, y_pred, y_prob=None, features:list=None,
                 pred_type="classification", sig_fig:int=4,
-                add_overview=True, cohorts:valid.MatrixLike=None):
+                add_overview=True, cohorts:valid.MatrixLike=None, **kwargs):
     """ Generates a table of stratified performance metrics
 
     Args:
@@ -178,11 +178,14 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     if pred_type not in validtypes:
         raise ValueError(f"Summary table type must be one of {validtypes}")
     if pred_type == "classification":
-        df = __strat_class_performance(X, y_true, y_pred, y_prob,
-                                    features, add_overview)
+        df = __strat_class_performance(X=X, y_true=y_true, y_pred=y_pred,
+                                       y_prob=y_prob, features=features,
+                                       add_overview=add_overview, cohorts=cohorts,
+                                       **kwargs)
     elif pred_type == "regression":
-        df = __strat_reg_performance(X, y_true, y_pred,
-                                               features, add_overview)
+        df = __strat_reg_performance(X=X, y_true=y_true, y_pred=y_pred,
+                                     features=features, add_overview=add_overview,
+                                     cohorts=cohorts, **kwargs)
     #
     df = df.round(sig_fig)
     return df
@@ -678,8 +681,9 @@ def __regression_performance(x:pd.DataFrame, y:str, yh:str):
     return res
 
 
-def __strat_class_performance(X, y_true, y_pred, y_prob=None,
-                                        features:list=None, add_overview=True):
+@iterate_cohorts
+def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None,
+                              add_overview=True, **kwargs):
     """Generates a table of stratified performance metrics for each specified
         feature
 
@@ -724,8 +728,9 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None,
     return rprt
 
 
+@iterate_cohorts
 def __strat_reg_performance(X, y_true, y_pred, features:list=None,
-                                    add_overview=True):
+                            add_overview=True, **kwargs):
     """
     Generates a table of stratified performance metrics for each specified
     feature

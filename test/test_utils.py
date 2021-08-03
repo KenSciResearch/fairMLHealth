@@ -77,6 +77,13 @@ class TestCohorts:
                          self.df['avg_classification'],
                          cohorts=self.cohorts[0])
 
+    def test_cohort_performance(self):
+        _ = measure.performance(self.df,
+                                self.df['classification'],
+                                self.df['avg_classification'],
+                                pred_type="classification",
+                                cohorts=self.cohorts[0])
+
 
 @pytest.mark.usefixtures("load_data")
 class TestFlag():
