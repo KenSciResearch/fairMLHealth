@@ -71,10 +71,13 @@ def iterate_cohorts(func:Callable):
     """
     def prepend_cohort(df:valid.MatrixLike, new_ix:valid.ArrayLike):
         idx = df.index.to_frame().rename(columns={0:'__index'})
-        for l, i in enumerate(new_ix):
-            idx.insert(l, i[0], i[1])
-        if '__index' in idx.columns:
-            idx.drop('__index', axis=1, inplace=True)
+        if idx.any().any():
+            for l, i in enumerate(new_ix):
+                idx.insert(l, i[0], i[1])
+            if '__index' in idx.columns:
+                idx.drop('__index', axis=1, inplace=True)
+        else:
+            pass # No data in dataframe
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
@@ -121,6 +124,7 @@ def iterate_cohorts(func:Callable):
             #
             results = []
             for k in cgrp.groups.keys():
+                vals = cgrp.get_group(k)[cols].head(1).values[0]
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
@@ -128,9 +132,18 @@ def iterate_cohorts(func:Callable):
                 pa = subset(prtc_attr, ixs)
                 new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
+                try:
+                    df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
                           prtc_attr=pa, **sub_args)
-                vals = cgrp.get_group(k)[cols].head(1).values[0]
+                except BaseException as e:
+                    grpname = ""
+                    for i, c in enumerate(cols):
+                        if len(grpname) > 0:
+                            grpname += ", "
+                        grpname = f"{c} {vals[i]}"
+                    e = getattr(e, 'message') if 'message' in dir(e) else str(e)
+                    msg = (f"Could not evaluate {grpname}." + e)
+                    print(msg)
                 ix = [(c, vals[i]) for i, c in enumerate(cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
