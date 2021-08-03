@@ -3,6 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
+from typing import Callable
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -58,7 +59,7 @@ def format_errwarn(func):
     return wrapper
 
 
-def iterate_cohorts(func):
+def iterate_cohorts(func:Callable):
     """ Runs the function for each cohort subset
 
     Args:
@@ -68,7 +69,7 @@ def iterate_cohorts(func):
         cohort-iterated version of the output
 
     """
-    def prepend_cohort(df, new_ix):
+    def prepend_cohort(df:valid.MatrixLike, new_ix:valid.ArrayLike):
         idx = df.index.to_frame().rename(columns={0:'__index'})
         for l, i in enumerate(new_ix):
             idx.insert(l, i[0], i[1])
@@ -77,13 +78,13 @@ def iterate_cohorts(func):
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
-    def subset(data, idxs):
+    def subset(data:valid.MatrixLike, idxs:valid.ArrayLike):
         if data is not None:
             return data.loc[idxs,]
         else:
             return None
 
-    def wrapper(cohorts=None, **kwargs):
+    def wrapper(cohorts:valid.MatrixLike=None, **kwargs):
         """ Iterates for each cohort subset
 
         Args:
@@ -110,7 +111,13 @@ def iterate_cohorts(func):
             cix = cohorts.index
             cols = cohorts.columns.tolist()
             cgrp = cohorts.groupby(cols)
-            limit_alert(cgrp, "permutations of cohorts", 8)
+            valid.limit_alert(cgrp, "permutations of cohorts", 8,
+                        issue="This may slow processing time and reduce utility.")
+            minobs = valid.MIN_OBS
+            if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
+                err = ("Some cohort groups have too few observations to be measured."
+                       + f" At least {minobs} are required for each group.")
+                raise ValidationError(err)
             #
             results = []
             for k in cgrp.groups.keys():
@@ -134,16 +141,6 @@ def iterate_cohorts(func):
 
     return wrapper
 
-
-def limit_alert(items:list=None, item_name="", limit:int=100,
-                issue:str="This may slow processing time."):
-    """ Warns the user if there are too many items due to potentially slowed
-        processing time
-    """
-    if any(items):
-        if len(items) > limit:
-            msg = f"More than {limit} {item_name} detected. {issue}"
-            warn(msg)
 
 class FairRanges():
     __diffs = ["auc difference" , "balanced accuracy difference",

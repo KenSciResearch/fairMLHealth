@@ -129,6 +129,7 @@ def synth_dataset(N:int=16):
                         'C': np.random.randint(1, N, N),
                         'D': np.random.randint(1, int(2*N), N),
                         'E': np.random.uniform(-10, 10, N),
+                        'F': np.random.randint(1, 2, N),
                         'prtc_attr': [0, 1]*int(N/2),
                         'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
                         'other': [1, 0, 0, 1]*int(N/4),
