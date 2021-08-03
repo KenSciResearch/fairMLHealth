@@ -297,14 +297,15 @@ class FairCompare(ABC):
                                " for this model.") + e
                         raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
-                    # Since most fairness measures do not require probabilities,
-                    #   y_prob is optional
-                    try:
-                        y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
-                    except BaseException:
-                        y_prob = None
-                        missing_probs.append(mdl_name)
-                    self.probs[mdl_name] = y_prob
+                    if self.pred_type == "classification":
+                        # Since most fairness measures do not require probabilities,
+                        #   y_prob is optional
+                        try:
+                            y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
+                        except BaseException:
+                            y_prob = None
+                            missing_probs.append(mdl_name)
+                        self.probs[mdl_name] = y_prob
 
             elif not all(m is None for m in model_objs):
                 raise valid.ValidationError(
@@ -321,7 +322,7 @@ class FairCompare(ABC):
                         "Cannot measure without either models or predictions")
             missing_probs = [p for p in prob_objs if p is None]
 
-        if any(missing_probs):
+        if self.pred_type == "classification" and any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
                 f"generated for the following models: {missing_probs}. " +
                 "Dependent metrics will be skipped.")
