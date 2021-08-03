@@ -116,6 +116,9 @@ def iterate_cohorts(func:Callable):
             cgrp = cohorts.groupby(cols)
             valid.limit_alert(cgrp, "permutations of cohorts", 8,
                         issue="This may slow processing time and reduce utility.")
+            # cohorts with too few observations, will cause terminating errors.
+            # Note that this doesn't validate that there's enough data for each
+            # feature-value pair: that should be handled by the function being wrapped
             minobs = valid.MIN_OBS
             if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
                 err = ("Some cohort groups have too few observations to be measured."
