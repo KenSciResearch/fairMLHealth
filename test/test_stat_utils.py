@@ -35,7 +35,11 @@ class TestBootstrapping:
     """ Validates that standard inputs are processed without error
     """
     def test_true(self):
-        assert stat_utils.bootstrap_significance(self.df['A'], self.df['B'])
+        assert stat_utils.bootstrap_significance(func=stat_utils.kruskal_pval,
+                                                 dist_a=self.df['A'],
+                                                 dist_b=self.df['B'])
 
     def test_false(self):
-        assert not stat_utils.bootstrap_significance(self.df['A'], self.df['A'])
+        assert not stat_utils.bootstrap_significance(func=stat_utils.kruskal_pval,
+                                                 dist_a=self.df['A'],
+                                                 dist_b=self.df['A'])

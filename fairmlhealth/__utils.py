@@ -98,7 +98,8 @@ def iterate_cohorts(func:Callable):
             pandas DataFrame
         """
         # Run preprocessing to facilitate subsetting
-        X = kwargs.pop('X', None)
+        X = kwargs.get('X', None)
+        Y = kwargs.get('Y', None)
         y_true = kwargs.get('y_true', None)
         y_pred = kwargs.get('y_pred', None)
         y_prob = kwargs.get('y_prob', None)
@@ -128,13 +129,15 @@ def iterate_cohorts(func:Callable):
                 grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
                 # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
+                x = subset(X, ixs)
+                y = subset(Y, ixs)
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
                 yp = subset(y_prob, ixs)
                 pa = subset(prtc_attr, ixs)
-                new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
+                new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
+                df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
                         prtc_attr=pa, **sub_args)
                 # Empty dataframes indicate issues with evaluation of the function
                 if len(df) == 0:
@@ -155,7 +158,7 @@ def iterate_cohorts(func:Callable):
                 warn(msg)
             return output
         else:
-            return func(X=X, **kwargs)
+            return func(**kwargs)
 
     return wrapper
 
