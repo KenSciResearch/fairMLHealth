@@ -74,9 +74,8 @@ class TestCohorts:
 
     def test_cohort_data(self):
         _ = measure.data(self.df,
-                         self.df['prtc_attr'],
-                         cohorts=self.cohorts)
-
+                         self.df['avg_classification'],
+                         cohorts=self.cohorts[0])
 
 
 @pytest.mark.usefixtures("load_data")
