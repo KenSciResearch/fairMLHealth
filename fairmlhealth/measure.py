@@ -379,7 +379,7 @@ def __apply_biasGroups(features, df, func, yt, yh):
             df[pa_name] = 0
             df.loc[df[f].eq(v), pa_name] = 1
             if v != "nan":
-                df.loc[df[f].eq("nan"), pa_name] = np.nan
+                df.loc[df[f].eq("nan") | df[f].isnull(), pa_name] = np.nan
             # Nothing to measure if only one value is present (other than nan)
             if df[pa_name].nunique() == 1:
                 continue
@@ -607,7 +607,9 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __format_summary(df, summary_type):
+def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
+    """ Formatting specific to the summary tables
+    """
     df.columns = ['Value']
     # Fix the order in which the metrics appear
     gfl, ifl, mpl, dtl = analytical_labels(summary_type)
