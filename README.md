@@ -1,6 +1,11 @@
+# New in Version 2.0!
+We've reorganized library to make things more intuitive and added some useful new features:
+* evaluate measures for regression analysis
+* stack stratified tables by cohort groups
+* use a single **compare** function to compare any number of models
+
 # fairMLHealth
 Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
-
 
 ## Resources
 - ### [Documentation and References](docs/README.md)
@@ -41,9 +46,11 @@ For some metrics, FairMLHealth relies on AIF360, which has a few known installat
 If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
 
 ## FairMLHealth Usage
-For a functioning notebook of the usage examples below, see [Example-ToolUsage](./examples_and_tutorials/Example-ToolUSAGE.ipynb)
+Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Binary.ipynb)
+* [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
+
 ### Example Setup
-The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
 from fairmlhealth import report, measure
@@ -64,8 +71,9 @@ X = pd.DataFrame({'col1': np.random.randint(1, 4, N),
                   'other': [1, 0, 1, 0, 1, 1, 0, 1]*int(N/8)
                  })
 
-# Next we'll create a randomized target value
-y = pd.Series(X['col3'].values + np.random.randint(0, 2, N), name='y').clip(upper=1)
+# Next we'll create two randomized target variables
+y = pd.Series(X['col3'].values + np.random.randint(0, 2, N), name='Example_Target').clip(upper=1)
+y_reg = pd.Series((X['col3']+X['gender']).values + np.random.uniform(0, 6, N), name='Example_Target')
 
 # Third, we'll split the data and use it to train two generic models
 splits = train_test_split(X, y, stratify=y, test_size=0.5, random_state=60)
@@ -76,22 +84,48 @@ model_2 = DecisionTreeClassifier().fit(X_train, y_train)
 
 ```
 
-### Measuring
-The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the **compare** function.
+### Generalized Reports - report.py
+As in previous versions, the latest version of fairMLHealth has tools to greate generalized reports of model bias and performance. A major change is that all of these features are now contained in the **report.py** module.
 
-Measure_model is designed to generate an analysis table of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
+The **compare** feature can now be used to generate side-by-side comparisons for any number of models, and for either binary classifcation or for regression problems. Model performance metrics such as accuracy and precision (or MAE and RSquared for regression problems) are also provided to facilitate comparison.
+
+Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
 
 ``` python
 # Generate a pandas dataframe of measures
 fairness_measures = report.compare(X_test, y_test, prtc_attr, model_1)
 ```
 
-<img src="./docs/img/measure_model.png"
-     alt="Example of single model measurement"
-     height="300px"
+<img src="./docs/img/main/binary_oneModel.png.png"
+     alt="single model compare example"
+     width="800px"
     />
 
-### Evaluating
+
+
+```python
+comparison = report.compare(X_test, y_test, prtc_attr, model_dict)
+```
+
+<img src="./docs/img/main/binary_multiModel.png"
+     alt="two model comparison example"
+     width="90%"
+     />
+
+**compare** can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
+
+```python
+report.compare(X_test, y_test,
+                     [X_test['gender'], X_test['ethnicity']],
+                      {'gender':model_1, 'ethnicity':model_1})
+```
+
+<img src="./docs/img/multiple_attributes.png"
+     alt="Two-Attribute compare_models Example"
+     width="90%"
+     />
+
+### Measuring
 
 FairMLHealth now also includes stratified table features to aid in identifying the source of unfairness or other bias: a data table, performance table, and bias table. Note that these stratified tables can evaluate multiple features at once, and that there are two options for identifying which features to assess.
 
@@ -109,8 +143,9 @@ measure.data(X_test, y_test, features=['gender'])
 measure.data(X_test[['gender']], y_test)
 ```
 
-<img src="./docs/img/data_report.png"
-     alt="Data Report"
+<img src="./docs/img/main/data_table.png"
+     alt="data table example"
+     width="90%"
      />
 
 ### Stratified Performance Tables
@@ -121,8 +156,9 @@ The stratified performance analysis table evaluates model performance specific t
 measure.performance(X_test[['gender']], y_test, model_1.predict(X_test))
 ```
 
-<img src="./docs/img/performance_report.png"
-     alt="Performance Report Example"
+<img src="./docs/img/main/binary_performance_full.png"
+     alt="performance table example"
+     width="90%"
      />
 
 #### Stratified Bias Fairness Tables
@@ -137,38 +173,10 @@ See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and
 measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
 
-<img src="./docs/img/bias_report.png"
-     alt="Fairness Report Example"
+<img src="./docs/img/main/binary_bias.png.png"
+     alt="bias table example"
+     width="90%"
      />
-
-### Comparing Results for Multiple Models
-
-The **compare** feature can be used to generate side-by-side fairness comparisons of multiple models. Model performance metrics such as accuracy and precision are also provided to facilitate comparison.
-
-Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
-
-```python
-comparison = report.compare(X_test, y_test, prtc_attr, model_dict)
-```
-
-<img src="./docs/img/compare_models.png"
-     alt="Two-Model compare_models Example"
-     height="400px"
-     />
-
-The compare feature can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
-
-```python
-report.compare(X_test, y_test,
-                     [X_test['gender'], X_test['ethnicity']],
-                      {'gender':model_1, 'ethnicity':model_1})
-```
-
-<img src="./docs/img/multiple_attributes.png"
-     alt="Two-Attribute compare_models Example"
-     height="400px"
-     />
-
 
 ### Other Examples
 For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./examples_and_tutorials/ Example-BinaryClassificationTemplate.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
