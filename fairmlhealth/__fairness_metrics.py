@@ -24,9 +24,9 @@ def format_undefined(func):
         msg = ("The ratio is ill-defined and being set to 0.0 because" +
                 f" '{funcname}' for privileged samples is 0.")
         with catch_warnings(record=True) as w:
-            filterwarnings("ignore", category=UserWarning, message=msg)
+            filterwarnings("ignore", message=msg)
             res = func(*args, **kwargs)
-        if w is not None:
+        if len(w) > 0:
             return np.nan
         else:
             return res

@@ -654,7 +654,7 @@ def __format_summary(measures:dict, summary_type:str="binary"):
     df = pd.DataFrame.from_dict(measures, orient="index")
     # Reshape to display metrics in index. This will drop any measures with
     # undefined values.
-    invalid_measures = [c for c in df.columns if df[c].isnull().all()]
+    undefined = [c for c in df.columns if df[c].isnull().all()]
     df = df.stack().to_frame()
     df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
@@ -682,7 +682,8 @@ def __format_summary(measures:dict, summary_type:str="binary"):
     df = df.sort_values('sortorder').drop('sortorder', axis=1)
     df.set_index(['Metric', 'Measure'], inplace=True)
     # Alert user of any dropped measures
-    warn(f"The following measures are undefined and have been dropped: {invalid_measures}")
+    if any(undefined):
+        warn(f"The following measures are undefined and have been dropped: {undefined}")
     return df
 
 
