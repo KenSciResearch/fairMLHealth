@@ -6,7 +6,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 
 
-## [0.1.22] - 2021-08-03
+## [0.1.23] - 2021-08-03
 ### Correct Column References
 - Bug: private names appearing in measure tables
 - Updated references to private columns
