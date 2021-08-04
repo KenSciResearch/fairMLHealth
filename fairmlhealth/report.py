@@ -143,8 +143,15 @@ class FairCompare(ABC):
         self.prtc_attr = protected_attr
         self.priv_grp = priv_grp
         self.y = target_data
-        self.pred_type = pred_type
         self.sig_fig = 4
+
+        # Tool does not yet handle multiclass, but will be able to distinguish
+        #   binary from multiclass in the future
+        valid_pred_types = ["classification", "regression"]
+        if pred_type not in valid_pred_types:
+            msg = f"pred_type must be one of {valid_pred_types}. Got {pred_type}"
+            raise valid.ValidationError(msg)
+        self.pred_type = pred_type
 
         # The user is forced to pass either models or predictions as None to
         # simplify attribute management. If models are passed, they will be used
@@ -260,29 +267,36 @@ class FairCompare(ABC):
                                " for this model.") + e
                         raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
-                    # Since most fairness measures do not require probabilities,
-                    #   y_prob is optional
-                    try:
-                        y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
-                    except BaseException:
-                        y_prob = None
-                        missing_probs.append(mdl_name)
-                    self.probs[mdl_name] = y_prob
+                    if self.pred_type != "regression":
+                        # Since most fairness measures do not require probabilities,
+                        #   y_prob is optional
+                        try:
+                            y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
+                        except BaseException:
+                            y_prob = None
+                            missing_probs.append(mdl_name)
+                        self.probs[mdl_name] = y_prob
 
             elif not all(m is None for m in model_objs):
                 raise valid.ValidationError(
                     "Incomplete set of models detected. Can't process a mix of"
                     + " models and predictions")
             else:
-                if any(p is None for p in pred_objs):
+                if self.pred_type == "regression":
+                    pass
+                elif any(p is None for p in pred_objs):
                     raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-                missing_probs = [p for p in prob_objs if p is None]
+                else:
+                    missing_probs = [p for p in prob_objs if p is None]
         else:
-            if any(p is None for p in pred_objs):
+            if self.pred_type == "regression":
+                pass
+            elif any(p is None for p in pred_objs):
                 raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-            missing_probs = [p for p in prob_objs if p is None]
+            else:
+                missing_probs = [p for p in prob_objs if p is None]
 
         if any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
