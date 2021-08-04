@@ -681,7 +681,7 @@ def __format_table(strat_tbl, sig_fig:int=6):
     """
     tbl = __sort_table(strat_tbl)
     # Ensure that private names do not appear in the table
-    new_cols = strat_tbl.columns.tolist()
+    new_cols = tbl.columns.tolist()
     ycol = y_cols()
     for _y in ycol['priv_names'].keys():
         priv, disp = ycol['priv_names'][_y], ycol['disp_names'][_y]
