@@ -471,7 +471,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -670,6 +670,14 @@ def __format_table(strat_tbl, sig_fig:int=6):
         __format_summary to format summary tables.
     """
     tbl = __sort_table(strat_tbl)
+    # Ensure that private names do not appear in the table
+    new_cols = strat_tbl.columns.tolist()
+    ycol = y_cols()
+    for _y in ycol['priv_names'].keys():
+        priv, disp = ycol['priv_names'][_y], ycol['disp_names'][_y]
+        new_cols = [c.replace(priv, disp) for c in new_cols]
+    tbl.columns = new_cols
+    # Enforce string type for Feature Name
     tbl['Feature Name'] = tbl['Feature Name'].astype(str)
     tbl = tbl.round(sig_fig)
     return tbl
@@ -714,7 +722,7 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -762,7 +770,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -806,7 +814,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -901,8 +909,8 @@ def __sort_table(strat_tbl):
     Returns:
         pandas DataFrame: sorted strat_tbl
     """
-    _y = y_cols()['col_names']['yt']
-    _yh = y_cols()['col_names']['yh']
+    _y = y_cols()['priv_names']['yt']
+    _yh = y_cols()['priv_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
                  f'Mean {_y}', f'Mean {_yh}']
     head_cols = [c for c in head_names if c in strat_tbl.columns]
