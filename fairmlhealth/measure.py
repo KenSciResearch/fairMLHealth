@@ -571,7 +571,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         summary_type = "multiclass"
         raise ValueError(
             "tool cannot yet process multiclass classification models")
-    # Generate a dictionary of measure values to be converted t a dataframe
+    # Generate a dictionary of measure values to be converted to a dataframe
     labels = analytical_labels(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
     measures = {labels['gf_label']: update_summary(summary, pa_name, y_true,
@@ -585,10 +585,8 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         _y, _yh= y_true.columns[0], y_pred.columns[0]
         X[_y], X[_yh] = y_true.values, y_pred.values
         measures[labels['mp_label']] = __classification_performance(X, _y, _yh)
-    # Convert scores to a formatted dataframe and return
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    output = __format_summary(df, summary_type)
+
+    output = __format_summary(measures, summary_type)
     return output
 
 
@@ -645,9 +643,20 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
+def __format_summary(measures:dict, summary_type:str="binary"):
     """ Formatting specific to the summary tables
     """
+
+    metrics = (analytical_labels(summary_type)).values()
+    if not all(m in metrics for m in measures.keys()):
+        raise ValidationError("errant metrics found in summary dict")
+    # Convert to a dataframe.
+    df = pd.DataFrame.from_dict(measures, orient="index")
+    # Reshape to display metrics in index. This will drop any measures with
+    # undefined values.
+    invalid_measures = [c for c in df.columns if df[c].isnull().all()]
+    df = df.stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
     # Fix Display Names
     df.rename_axis(('Metric', 'Measure'), inplace=True)
@@ -672,6 +681,8 @@ def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
     df['sortorder'] = df['Metric'].map(metric_order)
     df = df.sort_values('sortorder').drop('sortorder', axis=1)
     df.set_index(['Metric', 'Measure'], inplace=True)
+    # Alert user of any dropped measures
+    warn(f"The following measures are undefined and have been dropped: {invalid_measures}")
     return df
 
 
@@ -679,6 +690,7 @@ def __format_table(strat_tbl, sig_fig:int=6):
     """ Formatting for stratified tables not including the summary tables. Use
         __format_summary to format summary tables.
     """
+    #
     tbl = __sort_table(strat_tbl)
     # Ensure that private names do not appear in the table
     new_cols = tbl.columns.tolist()
@@ -879,15 +891,14 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1,
                           ).rename(columns={0: 'Score'})
         for row in strat_tbl.iterrows():
             mp_vals[row[0]] = row[1]['Score']
-    # Convert scores to a formatted dataframe and return
+    # Store measures in dict for formatting
     labels = analytical_labels("regression")
     measures = {labels['gf_label']: grp_vals,
                 labels['if_label']: if_vals,
                 labels['mp_label']: mp_vals,
                 labels['dt_label']: dt_vals}
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    output = __format_summary(df, "regression")
+
+    output = __format_summary(measures, "regression")
     return output
 
 

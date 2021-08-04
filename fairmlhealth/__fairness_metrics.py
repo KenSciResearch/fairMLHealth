@@ -2,12 +2,11 @@
 from aif360.sklearn.metrics import difference, ratio
 import numpy as np
 import pandas as pd
-from sklearn.metrics import precision_score
 from warnings import catch_warnings, filterwarnings
 
 from .__performance_metrics import (
     epsilon, false_positive_rate, true_positive_rate,
-    true_negative_rate, false_negative_rate)
+    true_negative_rate, false_negative_rate, precision)
 
 
 
@@ -37,7 +36,7 @@ def format_undefined(func):
 
 @format_undefined
 def ppv_ratio(y_true, y_pred, pa_name, priv_grp):
-    return ratio(precision_score, y_true, y_pred,
+    return ratio(precision, y_true, y_pred,
                      prot_attr=pa_name, priv_group=priv_grp)
 
 
@@ -66,7 +65,7 @@ def fnr_ratio(y_true, y_pred, pa_name, priv_grp):
 
 
 def ppv_diff(y_true, y_pred, pa_name, priv_grp):
-    return difference(precision_score, y_true, y_pred,
+    return difference(precision, y_true, y_pred,
                       prot_attr=pa_name, priv_group=priv_grp)
 
 
