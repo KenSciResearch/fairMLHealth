@@ -655,6 +655,16 @@ def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
     # may be redundant with some Data Metrics measures
     if ('Model Performance', 'Obs.') in df.index:
         df.drop(('Model Performance', 'Obs.'), axis=0, inplace=True)
+    # Ensure that private names do not appear in the summary (columns nor index)
+    new_cols = df.columns.tolist()
+    idx = df.index.to_frame()
+    ycol = y_cols()
+    for _y in ycol['priv_names'].keys():
+        priv, disp = ycol['priv_names'][_y], ycol['disp_names'][_y]
+        idx['Measure'] = idx['Measure'].str.replace(priv, disp)
+        new_cols = [c.replace(priv, disp) for c in new_cols]
+    df.index = pd.MultiIndex.from_frame(idx)
+    df.columns = new_cols
     # Fix the order in which the metrics appear
     gfl, ifl, mpl, dtl = analytical_labels(summary_type).values()
     metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
