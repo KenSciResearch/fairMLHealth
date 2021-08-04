@@ -274,15 +274,21 @@ class FairCompare(ABC):
                     "Incomplete set of models detected. Can't process a mix of"
                     + " models and predictions")
             else:
-                if any(p is None for p in pred_objs):
+                if self.pred_type == "regression":
+                    pass
+                elif any(p is None for p in pred_objs):
                     raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-                missing_probs = [p for p in prob_objs if p is None]
+                else:
+                    missing_probs = [p for p in prob_objs if p is None]
         else:
-            if any(p is None for p in pred_objs):
+            if self.pred_type == "regression":
+                    pass
+            elif any(p is None for p in pred_objs):
                 raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-            missing_probs = [p for p in prob_objs if p is None]
+            else:
+                missing_probs = [p for p in prob_objs if p is None]
 
         if any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
