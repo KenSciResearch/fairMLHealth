@@ -62,8 +62,8 @@ From: [Verma & Rubin, 2018](#vermarubin)
 
 | Metric | Measure | Equation | Interpretation |
 |:---- |:---- |:---- |:---- |
-|&nbsp; |Selection Rate| $\sum_{i = 0}^N(\hat{y}_i)/N$ | - |
-|**Group Fairness Measures** |Demographic (Statistical) Parity Difference | $P(\hat{y} = 1 \lvert unprivileged) - P(\hat{y} = 1 \rvert privileged)$ |(-) favors privileged group <br> (+) favors unprivileged group |
+|**Group Fairness Measures - Binary Classification**  |Selection Rate| $\sum_{i = 0}^N(\hat{y}_i)/N$ | - |
+|&nbsp;|Demographic (Statistical) Parity Difference | $P(\hat{y} = 1 \lvert unprivileged) - P(\hat{y} = 1 \rvert privileged)$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Disparate Impact Ratio (Demographic Parity Ratio)| $\dfrac{P(\hat{y} = 1\ \rvert\ unprivileged)}{P(\hat{y} = 1\ \rvert\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp; |Positive Rate Difference| $precision({\hat{y}}_{unprivileged}) - precision({\hat{y}}{unprivileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Average Odds Difference| $\dfrac{(FPR_{unprivileged} - FPR_{privileged}) + (TPR_{unprivileged} - TPR_{privileged})}{2}$ |(-) favors privileged group <br> (+) favors unprivileged group |
@@ -71,6 +71,10 @@ From: [Verma & Rubin, 2018](#vermarubin)
 |&nbsp; |Equal Opportunity Difference| $recall({\hat{y}}_{unprivileged}) - recall({\hat{y}}_{privileged})$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Equalized Odds Difference| $max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )$ |(-) favors privileged group <br> (+) favors unprivileged group |
 |&nbsp; |Equalized Odds Ratio| $min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )$ |< 1 favors privileged group <br>  > 1 favors unprivileged group |
+|**Group Fairness Measures - Regression**| Mean Prediction Ratio| $mean\_prediction\_ratio = \frac{\mu(\hat{y}_{unprivileged})}{\mu(\hat{y}_{privileged})}$ | |
+|&nbsp;  | Mean Prediction Difference| $mean\_prediction\_difference = \mu(\hat{y}_{unprivileged}) - \mu(\hat{y}_{privileged})$ | |
+|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \frac{(\mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert)}{\mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert)}" >| |
+|&nbsp;  | MAE Difference| <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}_{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}_{privileged}\rvert))"> | |
 |**Individual Fairness Measures** |Consistency Score | $1 - \frac{1}{n\cdot{N_{n_neighbors}}} * \sum_{i=1}^n \lvert \hat{y}_i - \sum_{j\in\mathcal{N}_{neighbors}(x_i)} \hat{y}_j \rvert$ | 1 is consistent <br> 0 is inconsistent |
 |&nbsp; |Generalized Entropy Index| $GE = \mathcal{E}(\alpha) = \begin{cases} \frac{1}{n \alpha (\alpha-1)}\sum_{i = 1}^n\left[\left(\frac{b_i}{\mu}\right)^\alpha - 1\right],& \alpha \ne 0, 1  \\ \frac{1}{n}\sum_{i = 1}^n\frac{b_{i}}{\mu}\ln\frac{b_{i}}{\mu},& \alpha = 1 \\ -\frac{1}{n}\sum_{i = 1}^n\ln\frac{b_{i}}{\mu},& \alpha = 0 \end{cases}$ | - |
 |&nbsp; |Generalized Entropy Error| $GE(\hat{y}_i - y_i + 1)$ | - |
