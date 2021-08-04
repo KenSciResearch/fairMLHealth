@@ -84,8 +84,6 @@ Measure_model is designed to generate an analysis table of multiple fairness met
 ``` python
 # Generate a pandas dataframe of measures
 fairness_measures = report.compare(X_test, y_test, prtc_attr, model_1)
-# Display and color measures that are out of range
-measure.flag(fairness_measures)
 ```
 
 <img src="./docs/img/measure_model.png"
@@ -151,7 +149,6 @@ Below is an example output comparing the two example models defined above. Missi
 
 ```python
 comparison = report.compare(X_test, y_test, prtc_attr, model_dict)
-measure.flag(comparison)
 ```
 
 <img src="./docs/img/compare_models.png"
