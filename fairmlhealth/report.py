@@ -300,8 +300,8 @@ class FairCompare(ABC):
 
         if any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
-                f"generated for the following models: {missing_probs}. " +
-                "Dependent metrics will be skipped.")
+                    f"generated for the following models: {missing_probs}. " +
+                    "Dependent metrics will be skipped.")
 
         return None
 
