@@ -142,7 +142,7 @@ regression_model = LinearRegression().fit(X_train, y_train)
 
 # Generate the report.
 # Note that for regression models, the prediction type (pred_type) must be declared as such.
-report.compare(X_test, y_test, X_test['gender'], model_1, pred_type="regression")
+report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="regression")
 ```
 <img src="./docs/img/main/reg_oneModel.png"
      alt="regression comparison example"
@@ -151,7 +151,7 @@ report.compare(X_test, y_test, X_test['gender'], model_1, pred_type="regression"
 
 ``` python
 # Display the same report with no flags and no model performance
-report.compare(X_test, y_test, X_test['gender'], model_1, pred_type="regression",
+report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="regression",
                 flag_oor=False, skip_performance=True))
 ```
 <img src="./docs/img/main/reg_skipPerformance.png"
@@ -186,7 +186,7 @@ measure.data(X_test[['gender']], y_test)
      />
 
 ```python
-#
+# Display a similar report for multiple targets, dropping the summary row
 measure.data(X=X_test, # used to define rows
              Y=X_test, # used to define columns
              features=['gender', 'col1'], # optional subset of X
@@ -202,7 +202,7 @@ measure.data(X=X_test, # used to define rows
 
 #### Stratified Performance Tables
 
-The stratified performance table evaluates model performance specific to each feature-value subset. For classification models with the *predict_proba()* method, additional ROC_AUC and PR_AUC values will be included if possible.
+The stratified performance table evaluates model performance specific to each feature-value subset. These tables are compatible with both classification and regression models. For classification models with the *predict_proba()* method, additional ROC_AUC and PR_AUC values will be included if possible.
 
 ```python
 # Binary classification example
@@ -217,7 +217,7 @@ measure.performance(X_test[['gender']], y_test, model_1.predict(X_test))
 # Regression example
 measure.performance(X_test[['gender']],
                     y_true=y_test,
-                    y_pred=model_1.predict(X_test),
+                    y_pred=regression_model.predict(X_test),
                     pred_type="regression")
 ```
 <img src="./docs/img/main/reg_performance.png"
@@ -227,32 +227,56 @@ measure.performance(X_test[['gender']],
 
 #### Stratified Bias Tables
 
-The stratified bias analysis table applies fairness-related metrics specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row **2** in the table below displays measures for **"col1"** with a value of **"2"**. For this row, "2" is considered to be the privileged group, while all other non-null values (namely "1" and "3") are considered unprivileged.
+The stratified bias analysis table apply fairness-related metrics for each feature-value pair. It assumes a given feature-value as the "privileged" group relative to all other possible values for the feature. For example, row **2** in the table below displays measures for **"col1"** with a value of **"2"**. For this row, "2" is considered to be the privileged group, while all other non-null values (namely "1" and "3") are considered unprivileged.
 
-To simplify the table, fairness measures have been reduced to their component parts. For example, the Equal Odds Ratio be determined by comparing the True Positive Rate (TPR) Ratios with False Positive Rate (FPR) Ratios.
+To simplify the table, fairness measures have been reduced to their component parts. For example, the Equal Odds Ratio has been reduced to the True Positive Rate (TPR) Ratio and False Positive Rate (FPR) Ratio.
 
 ```python
+# Binary classification example
 # Note that flag_oor is set to False by default for this feature
 measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
-<img src="./docs/img/main/binary_bias_noFlag.png.png"
+<img src="./docs/img/main/binary_bias_noFlag.png"
      alt="bias table example"
      width="90%"
      />
 
-Note that the *flag* function is compatible with both **measure.bias()** and **measure.summary()**, which will be demonstrated in the next section. However, to enable colored cells the tool returns a pandas Styler rather than a DataTable. For this reason, *flag_oor* is set to False by default (as shown in the example above). Flagging can be turned on by passing *flag_oor=True* to either function. As an added feature, optional custom ranges can be passed to either **measure.bias()** or **measure.summary()** to facilitate regression evaluation, shown in the example below.
+Note that the *flag* function is compatible with both **measure.bias()** and **measure.summary()** (which is demonstrated in the next section). However, to enable colored cells the tool returns a pandas Styler rather than a DataTable. For this reason, *flag_oor* is set to False by default (as shown in the example above). Flagging can be turned on by passing *flag_oor=True* to either function. As an added feature, optional custom ranges can be passed to either **measure.bias()** or **measure.summary()** to facilitate regression evaluation, shown in the example below.
 
 ```python
+# Custom "fair" ranges may be passed as dictionaries of tuples whose keys are case-insensive measure names
+my_ranges = {'MAE Difference':(-0.1, 0.1),  'mean prediction difference':(-2, 2)}
+
 # Note that flag_oor is set to False by default for this feature
-measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
+measure.bias(X_test[['gender', 'col1']],
+             y_test,
+             regression_model.predict(X_test),
+             pred_type="regression",
+             flag_oor=True,
+             custom_ranges=my_ranges)
 ```
-<img src="./docs/img/main/binary_bias_noFlag.png.png"
+<img src="./docs/img/main/reg_bias_customBounds.png"
      alt="bias table example"
      width="90%"
      />
 
 
 #### Summary Table
+The **measure** module also contains a summary function that works similarly to report.compare(). While it can only be applied to one model at a time, it can accept custom "fair" ranges, and accept cohort groups as will be [shown in the next section](#cohort).
+```python
+# Example summary output for the regression model
+measure.summary(X_test[['gender', 'col1']],
+                y_test,
+                regression_model.predict(X_test),
+                prtc_attr=X_test['gender'],
+                pred_type="regression",
+                flag_oor=True,
+                custom_ranges={ 'mean prediction difference':(-0.5, 2)})
+```
+<img src="./docs/img/main/reg_summary_customBounds.png"
+     alt="bias table example"
+     width="90%"
+     />
 
 #### <a name="cohort"></a> Analysis by Cohorts
 
