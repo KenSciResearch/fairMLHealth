@@ -47,7 +47,7 @@ If you are not able to resolve your issue through these troubleshooting tips, pl
 
 ## FairMLHealth Usage
 Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
-* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Binary.ipynb)
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
 * [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
 Note that while the examples below use pandas, the library is designed to accept either pandas objects or numpy arrays.
@@ -319,7 +319,7 @@ measure.summary(X_test[['col2']],
 
 ## Additional Library Resources
 More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
-* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Binary.ipynb)
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
 * [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
 For a deep discussion of fairness evaluation, see [Evaluating Fairness](./docs/resources/Evaluating_Fairness.md) in our [documentation and resources](./docs/resources) section. In the same folder you'll find a [Measures QuickReference](./docs/resources/Measures_QuickReference.md), plus additional [References and Resources](./docs/resources/References_and_Resources.md)

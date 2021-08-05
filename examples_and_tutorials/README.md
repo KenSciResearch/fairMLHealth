@@ -5,7 +5,7 @@
 
 ## Examples
 For simple examples of tool usage, see:
-* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/reorg/examples_and_tutorials/Example-ToolUsage_Binary.ipynb)
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/reorg/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
 * [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/reorg/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
 For a completed template, see:
