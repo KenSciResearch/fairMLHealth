@@ -159,10 +159,9 @@ def iterate_cohorts(func:Callable):
                 new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
                 try:
-                    df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
-                        prtc_attr=pa, **sub_args)
+                    df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp, prtc_attr=pa, **sub_args)
                 except ValidationError as e:
-                    # Skip groups
+                    # Skip groups for which subsetting led to insufficient target representation
                     m = getattr(e, 'message') if 'message' in dir(e) else None
                     if m == "Only one target classification found.":
                         df = pd.DataFrame()
@@ -177,8 +176,8 @@ def iterate_cohorts(func:Callable):
                 results.append(df)
             # Report issues to the user
             if len(errant_list) == len(cgrp.groups.keys()):
-                msg = ("Invalid cohort specification. Each cohort. must have at "
-                       +f"least {minobs} observations.")
+                msg = ("Invalid cohort specification. None of the cohort subsets "
+                       +f"could be processed. least {minobs} observations.")
                 raise ValidationError(msg)
             elif any(errant_list):
                 msg = ("Could not evaluate function for group(s): "
@@ -238,7 +237,6 @@ class FairRanges():
             all_vals = y.append(yh)
             bnds['mean prediction difference'] = self.__calc_diff_range(all_vals)
             bnds['mae difference'] = self.__calc_diff_range(aerr)
-            #import pdb; pdb.set_trace()
         else:
             bnds.pop('mean prediction difference')
             bnds.pop('mae difference')
