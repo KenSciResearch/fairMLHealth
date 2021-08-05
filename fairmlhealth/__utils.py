@@ -199,12 +199,12 @@ def iterate_cohorts(func:Callable):
 
 class FairRanges():
     __diffs = ["auc difference" , "balanced accuracy difference",
-                "equalized odds difference", "fpr diff", "tpr diff", "ppv diff"
+                "equal odds difference", "fpr diff", "tpr diff", "ppv diff"
                 "positive predictive parity difference",
                 "statistical parity difference", "mean prediction difference",
                 "mae difference", "r2 difference"]
     __ratios = ["balanced accuracy ratio", "disparate impact ratio ",
-                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio",
+                "equal odds ratio", "fpr ratio", "tpr ratio", "ppv ratio",
                 "mean prediction ratio", "mae ratio", "r2 ratio"]
     __stats =  ['consistency score']
 
