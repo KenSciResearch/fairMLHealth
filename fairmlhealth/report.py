@@ -47,9 +47,9 @@ def classification_performance(y_true, y_pred, target_labels=None,
 
 
 def compare(test_data, targets, protected_attr, models=None,
-                   predictions=None, probabilities=None,
-                   pred_type="classification", flag_oor=True,
-                   output_type:str=None):
+            predictions=None, probabilities=None,
+            pred_type="classification", flag_oor=True,
+            skip_performance=False, output_type:str=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -70,6 +70,8 @@ def compare(test_data, targets, protected_attr, models=None,
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
+        skip_performance (bool): If true, removes performance measures from the
+            output. Defaults to False.
         output_type (str): One of ["styler", "dataframe", "html", None]. Updates
             the output type of the comparison table, defaults to None, which
             returns either a pandas Dataframe (if flag_oor=False) or a pandas
@@ -82,7 +84,9 @@ def compare(test_data, targets, protected_attr, models=None,
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
                        predictions, probabilities, pred_type, verboseMode=True)
-    table = comp.compare_measures(flag_oor=flag_oor, output_type=output_type)
+    table = comp.compare_measures(flag_oor=flag_oor,
+                                    skip_performance=skip_performance,
+                                    output_type=output_type)
     return table
 
 
@@ -178,13 +182,16 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self, flag_oor=True, output_type:str=None):
+    def compare_measures(self, flag_oor=True, skip_performance:bool=False,
+                         output_type:str=None):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
 
         Args:
             flag_oor (bool): if True, will apply flagging function to highlight
                 fairness metrics which are considered to be outside the "fair" range
+            skip_performance (bool): If true, removes performance measures from the
+                output. Defaults to False.
             output_type (str): One of ["styler", "dataframe", "html", None].
                 Updates the output type of the comparison table, defaults to None,
                 which returns either a pandas Dataframe (if flag_oor=False) or a pandas
@@ -213,8 +220,9 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(model_name, skip_performance=False,
-                                         flag_oor=False)
+                res = self.measure_model(model_name,
+                                        skip_performance=skip_performance,
+                                        flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
