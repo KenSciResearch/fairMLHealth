@@ -142,9 +142,19 @@ regression_model = LinearRegression().fit(X_train, y_train)
 
 # Generate the report.
 # Note that for regression models, the prediction type (pred_type) must be declared as such.
-report.compare(X_test, y_test, X_test['gender'], model_1,  pred_type="regression")
+report.compare(X_test, y_test, X_test['gender'], model_1, pred_type="regression")
 ```
 <img src="./docs/img/main/reg_oneModel.png"
+     alt="regression comparison example"
+     width="90%"
+     />
+
+``` python
+# Display the same report with no flags and no model performance
+report.compare(X_test, y_test, X_test['gender'], model_1, pred_type="regression",
+                flag_oor=False, skip_performance=True))
+```
+<img src="./docs/img/main/reg_skipPerformance.png"
      alt="regression comparison example"
      width="90%"
      />
