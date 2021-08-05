@@ -494,8 +494,8 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     valid.limit_alert(strat_feats, item_name="features", limit=200)
 
     # Bias is not yet available for multiclass predictions
-    valid.validate_binary_attr(y_true, name="y_true", expected_len=None)
-    valid.validate_binary_attr(y_pred, name="y_pred", expected_len=None)
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
 
     #
     results = __apply_biasGroups(strat_feats, df,
@@ -584,8 +584,8 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     pa_name = prtc_attr.columns.tolist()[0]
 
     # Summary is not yet available for multiclass predictions
-    valid.validate_binary_attr(y_true, name="y_true", expected_len=None)
-    valid.validate_binary_attr(y_pred, name="y_pred", expected_len=None)
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
 
     # Prevent processing for more than 2 classes until measures enabled
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
@@ -780,8 +780,8 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None
     valid.limit_alert(strat_feats, item_name="features")
 
     # Performance is not yet available for multiclass predictions
-    valid.validate_binary_attr(y_true, name="y_true", expected_len=None)
-    valid.validate_binary_attr(y_pred, name="y_pred", expected_len=None)
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
 
     #
     results = __apply_featureGroups(strat_feats, df,
