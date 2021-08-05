@@ -6,11 +6,9 @@ Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
 '''
 
-from .notebook_tester import validate_notebook, list_warnings
+from .notebook_tester import validate_notebook, check_results
 from .__testing_utilities import is_test_environment
 import os
-import sys
-import warnings
 
 
 def test_tutorial_evaluatingbinaryclassification():
@@ -29,20 +27,5 @@ def test_tutorial_evaluatingbinaryclassification():
                                "examples_and_tutorials", nb_name)
         nb, err = validate_notebook(nb_path, timeout=1800)
 
-        if any(err):
-            for e in err:
-                for t in e['traceback']:
-                    print(t)
-            raise AssertionError("Notebook Broken")
-        else:
-            pass
-
-        warns = list_warnings(nb)
-        if any(warns):
-            for t in warns:
-                if isinstance(t['text'], list):
-                    wrn = t['text'][0]
-                else:
-                    wrn = t['text']
-                warnings.warn(wrn)
+        check_results(nb, err)
 
