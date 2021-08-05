@@ -48,7 +48,8 @@ def classification_performance(y_true, y_pred, target_labels=None,
 
 def compare(test_data, targets, protected_attr, models=None,
                    predictions=None, probabilities=None,
-                   pred_type="classification", flag_oor=True):
+                   pred_type="classification", flag_oor=True,
+                   output_type:str=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -69,13 +70,19 @@ def compare(test_data, targets, protected_attr, models=None,
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
+        output_type (str): One of ["styler", "dataframe", "html", None]. Updates
+            the output type of the comparison table, defaults to None, which
+            returns either a pandas Dataframe (if flag_oor=False) or a pandas
+            Styler (if flag_oor=True). Flagged comparisons cannot be returned as
+            pandas DataFrame.
 
     Returns:
-        pandas dataframe of fairness and performance measures for each model
+        pandas.Styler | pandas.DataFrame | HTML
+        type determined by output_type and flag_oor arguments
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
                        predictions, probabilities, pred_type, verboseMode=True)
-    table = comp.compare_measures(flag_oor=flag_oor)
+    table = comp.compare_measures(flag_oor=flag_oor, output_type=output_type)
     return table
 
 
@@ -171,18 +178,30 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self, flag_oor=True):
+    def compare_measures(self, flag_oor=True, output_type:str=None):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
 
         Args:
             flag_oor (bool): if True, will apply flagging function to highlight
-            fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range)
+                fairness metrics which are considered to be outside the "fair" range
+            output_type (str): One of ["styler", "dataframe", "html", None].
+                Updates the output type of the comparison table, defaults to None,
+                which returns either a pandas Dataframe (if flag_oor=False) or a pandas
+                Styler (if flag_oor=True). Flagged comparisons cannot be returned as
+                pandas DataFrame.
+
+        Returns:
+            pandas.Styler | pandas.DataFrame | HTML
+            type determined by output_type and flag_oor arguments
         """
         # Model objects are assumed to be held in a dict
         if not valid.is_dictlike(self.models):
             self.__set_dicts()
+        #
+        self.__validate_output_type(output_type, flag_oor)
+        if output_type is None and flag_oor is False:
+            output_type = "dataframe"
         #
         if len(self.models) == 0:
             warnings.warn("No models to compare.")
@@ -202,21 +221,28 @@ class FairCompare(ABC):
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
-                    output = flag(output, sig_fig=4)
+                    as_styler = True if output_type.lower() != "html" else False
+                    output = flag(output, sig_fig=4, as_styler=as_styler)
                 else:
-                    #
-                    output = pd.Styler(output)
+                    if output_type.lower() == "styler":
+                        output = output.style
+                    elif output_type.lower() == "html":
+                        output = output.to_html()
+                    else:
+                        pass
             else:
                 output = None
             return output
 
     def measure_model(self, model_name, **kwargs):
-        """ Returns a pandas dataframe containing fairness measures for the
-                model_name specified
+        """ Creates a table of fairness-related measures for the model_name specified
 
         Args:
             model_name (str): a key corresponding to the model of interest,
                 as found in the object's "models" dictionary
+
+        Returns:
+            pandas.DataFrame
         """
         self.__validate(model_name)
         msg = f"Could not measure fairness for {model_name}"
@@ -240,6 +266,22 @@ class FairCompare(ABC):
                           **kwargs)
             return res
 
+    def __validate_output_type(self, output_type:str=None, flag_request:bool=None):
+        valid_outputs = ["styler", "html", "dataframe", None]
+        if not isinstance(output_type, str) and output_type is not None:
+            raise TypeError(f"output_type must be string, one of {valid_outputs}")
+        elif output_type is None and flag_request is False: # acceptable combination
+            return None
+        # test output_type as string to facilitate remaining
+        output_str = "" if output_type is None else output_type.lower()
+        if output_str not in valid_outputs and output_type is not None:
+            raise ValueError(f"output_type must be one of {valid_outputs}")
+        elif output_str == "dataframe" and flag_request == True:
+            msg = "Flags can only be used for html or pandas styler outputs, not dataframe"
+            raise ValueError(msg)
+        else:
+            return None
+
     def __check_models_predictions(self, enforce=True):
         """ If any predictions are missing, generates predictions for each model.
             Assumes that models and data have been validated.
@@ -253,6 +295,7 @@ class FairCompare(ABC):
         pred_objs = [*self.preds.values()]
         prob_objs = [*self.probs.values()]
         missing_probs = []
+        has_probs = None
         #
         if enforce:
             if not any(m is None for m in model_objs):
@@ -270,16 +313,18 @@ class FairCompare(ABC):
                                " for this model.") + e
                         raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
-                    if self.pred_type != "regression":
-                        # Since most fairness measures do not require probabilities,
-                        #   y_prob is optional
+                    # Since most fairness measures do not require probabilities,
+                    #   y_prob is optional
+                    has_probs = getattr(mdl, 'predict_proba', None)
+                    if has_probs is not None:
                         try:
                             y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
                         except BaseException:
                             y_prob = None
                             missing_probs.append(mdl_name)
                         self.probs[mdl_name] = y_prob
-
+                    else:
+                        pass
             elif not all(m is None for m in model_objs):
                 raise valid.ValidationError(
                     "Incomplete set of models detected. Can't process a mix of"
@@ -290,7 +335,7 @@ class FairCompare(ABC):
                 elif any(p is None for p in pred_objs):
                     raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-                else:
+                elif has_probs is not None:
                     missing_probs = [p for p in prob_objs if p is None]
         else:
             if self.pred_type == "regression":
@@ -298,7 +343,7 @@ class FairCompare(ABC):
             elif any(p is None for p in pred_objs):
                 raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-            else:
+            elif has_probs is not None:
                 missing_probs = [p for p in prob_objs if p is None]
 
         if any(missing_probs):
