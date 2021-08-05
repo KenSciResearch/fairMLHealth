@@ -208,10 +208,13 @@ measure.data(X=X_test, # used to define rows
 The stratified performance table evaluates model performance specific to each feature-value subset. These tables are compatible with both classification and regression models. For classification models with the *predict_proba()* method, additional ROC_AUC and PR_AUC values will be included if possible.
 
 ```python
-# Binary classification example
-measure.performance(X_test[['gender']], y_test, model_1.predict(X_test))
+# Binary classification performance table with probabilities included
+measure.performance(X_test[['gender']],
+                    y_true=y_test,
+                    y_pred=model_1.predict(X_test),
+                    y_prob=model_1.predict_proba(X_test)[:,1])
 ```
-<img src="./docs/img/main/bin_performance.png"
+<img src="./docs/img/main/bin_performance_probs.png"
      alt="performance table example, binary classification"
      width="90%"
      />
