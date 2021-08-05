@@ -96,6 +96,15 @@ def iterate_cohorts(func:Callable):
         else:
             return None
 
+    def add_group_info(errant_list, grp_cols, grp_vals):
+        grpname = ""
+        for i, c in enumerate(grp_cols):
+            if len(grpname) > 0:
+                grpname += " & "
+            grpname += f"{c} {grp_vals[i]}"
+        errant_list.append(grpname)
+        return  None
+
     def wrapper(cohorts:valid.MatrixLike=None, **kwargs):
         """ Iterates for each cohort subset
 
@@ -122,52 +131,58 @@ def iterate_cohorts(func:Callable):
             cohorts = prep.prep_data(cohorts)
             #
             cix = cohorts.index
-            cols = cohorts.columns.tolist()
-            cgrp = cohorts.groupby(cols)
+            grp_cols = cohorts.columns.tolist()
+            cgrp = cohorts.groupby(grp_cols)
             valid.limit_alert(cgrp, "permutations of cohorts", 8,
                         issue="This may slow processing time and reduce utility.")
-            # cohorts with too few observations, will cause terminating errors.
-            # Note that this doesn't validate that there's enough data for each
-            # feature-value pair: that should be handled by the function being wrapped
-            minobs = valid.MIN_OBS
-            if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
-                err = ("Some cohort groups have too few observations to be measured."
-                       + f" At least {minobs} are required for each group.")
-                raise ValidationError(err)
             #
             results = []
-            errant_groups = []
+            errant_list = []
+            minobs = valid.MIN_OBS
             for k in cgrp.groups.keys():
-                grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
+                grp_vals = cgrp.get_group(k)[grp_cols].head(1).values[0]
                 # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
+                # Test subset for sufficent data. cohorts with too few observations
+                # will cause terminating errors.
                 x = subset(X, ixs)
+                if x.shape[0] < minobs:
+                    add_group_info(errant_list, grp_cols, grp_vals)
+                    continue
+                # subset remaining arguments
                 y = subset(Y, ixs)
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
                 yp = subset(y_prob, ixs)
                 pa = subset(prtc_attr, ixs)
+                #
                 new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
                 df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
                         prtc_attr=pa, **sub_args)
-                # Empty dataframes indicate issues with evaluation of the function
+                # Empty dataframes indicate issues with evaluation of the function,
+                # likely caused by presence of i.e. only one feature-value pair.
                 if len(df) == 0:
-                    grpname = ""
-                    for i, c in enumerate(cols):
-                        if len(grpname) > 0:
-                            grpname += " & "
-                        grpname += f"{c} {grp_vals[i]}"
-                    errant_groups.append(grpname)
-                ix = [(c, grp_vals[i]) for i, c in enumerate(cols)]
+                    add_group_info(errant_list, grp_cols, grp_vals)
+                ix = [(c, grp_vals[i]) for i, c in enumerate(grp_cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
-            output = pd.concat(results, axis=0)
-            if any(errant_groups):
+            # Report issues to the user
+            if len(errant_list) == len(cgrp.groups.keys()):
+                msg = ("Invalid cohort specification. Each cohort. must have at "
+                       +f"least {minobs} observations.")
+                raise ValidationError(msg)
+            elif any(errant_list):
                 msg = ("Could not evaluate function for group(s): "
-                       +"{errant_groups}. This is commonly caused when only a "
-                       " single feature-value pair is available.")
+                       +"{errant_list}. This is commonly caused when there is "
+                       + " too little data or there is only a single "
+                       + "feature-value pair is available in a given cohort. "
+                       + f"Each cohort must have  {minobs} observations.")
                 warn(msg)
+            else:
+                pass
+            # Combine results and return
+            output = pd.concat(results, axis=0)
             return output
         else:
             return func(**kwargs)
