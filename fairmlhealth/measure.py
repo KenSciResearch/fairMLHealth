@@ -8,7 +8,6 @@ Contributors:
 
 import aif360.sklearn.metrics as aif
 from functools import reduce
-from IPython.display import HTML
 import logging
 from numbers import Number
 import numpy as np

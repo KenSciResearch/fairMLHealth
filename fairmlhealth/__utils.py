@@ -3,7 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
-from typing import Callable
+from typing import Callable, Dict, Tuple
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -207,7 +207,7 @@ class FairRanges():
     def mad(self, arr):
         return np.median(np.abs(arr - np.median(arr)))
 
-    def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
+    def load_fair_ranges(self, custom_ranges:Dict[str, Tuple[Number, Number]]=None,
                          y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
         """
         Args:
@@ -271,8 +271,8 @@ class Flagger():
     def __init__(self):
         self.reset()
 
-    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True,
-                   boundaries=None):
+    def apply_flag(self, df:pd.DataFrame, caption:str="", sig_fig:int=4, as_styler:bool=True,
+                   boundaries:Dict[str, Tuple[Number, Number]]=None):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
@@ -316,7 +316,7 @@ class Flagger():
         if as_styler:
             return styled
         else:
-            return HTML(styled.render())
+            return styled.render()
 
     def reset(self):
         """ Clears the __Flagger settings
