@@ -157,9 +157,9 @@ def validate_notebook_requirements():
         raise ValidationError(err)
     else:
         pass
-
 class ValidationError(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
 
 def __validate_binVal(arr, name:str="array", fuzzy:bool=True):
