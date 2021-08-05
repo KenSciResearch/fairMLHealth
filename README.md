@@ -165,7 +165,7 @@ report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="re
 
 ### Detailed Analyses - measure.py
 
-FairMLHealth also provides tools for detailed analysis of model variance by way of stratified data, performance, and bias tables. Beyond evaluating fairness, these tools are intended for flexible use in any generic assessment of model bais. Tables can evaluate multiple features at once. *An important update starting in Version 1.0.0 is that all of these features are now contained in the **measure.py** module (previously named reports.py).*
+FairMLHealth also provides tools for detailed analysis of model variance by way of stratified data, performance, and bias tables. Beyond evaluating fairness, these tools are intended for flexible use in any generic assessment of model bais to evaluate multiple features at once. *An important update starting in Version 1.0.0 is that all of these features are now contained in the **measure.py** module (previously named reports.py).*
 
 All tables display a summary row for "All Features, All Values". This summary can be turned off by passing ***add_overview=False*** to measure.data().
 
