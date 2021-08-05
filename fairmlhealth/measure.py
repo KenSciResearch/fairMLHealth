@@ -13,6 +13,7 @@ import logging
 from numbers import Number
 import numpy as np
 import pandas as pd
+from typing import Dict, Tuple
 
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                             balanced_accuracy_score)
@@ -33,8 +34,8 @@ from .__utils import format_errwarn, iterate_cohorts
 
 
 def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
-                sig_fig:int=4, flag_oor=False, cohorts:valid.MatrixLike=None,
-                **kwargs):
+         sig_fig:int=4, flag_oor=False, cohorts:valid.MatrixLike=None,
+         custom_ranges:Dict[str, Tuple[Number, Number]]=None, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
@@ -52,6 +53,9 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
             group. Defaults to 1.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Raises:
         ValueError
@@ -72,9 +76,10 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
     # Significant figures must be handled by the flag funcion (if called) since
     #   the Styler will reset significant digits
     if flag_oor:
-        custom_bounds = kwargs.pop('custom_ranges', {})
-        ranges = fair_ranges(custom_bounds, y_true, y_pred, df.columns.tolist())
-        df = flag(df, sig_fig=sig_fig, custom_ranges=ranges)
+        if not isinstance(custom_ranges, dict):
+            custom_ranges ={}
+        valid.validate_fair_boundaries(custom_ranges, df.columns.tolist())
+        df = flag(df, sig_fig=sig_fig, custom_ranges=custom_ranges)
     else:
         df = df.round(sig_fig)
     return df
@@ -125,7 +130,7 @@ def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
 
 
 def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
-         as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
+         as_styler:bool = True, custom_ranges:Dict[str, Tuple[Number, Number]]=None):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
 
@@ -136,12 +141,15 @@ def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
             highlighted table (to which other styles/highlights can be added).
             Otherwise, returns the table as an embedded HTML object. Defaults
             to False .
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    cbounds = custom_ranges
-    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler, cbounds)
+    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler,
+                                      boundaries=custom_ranges)
 
 
 def performance(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -185,9 +193,10 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     return df
 
 
-def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
+def summary(X, y_true, y_pred, y_prob=None, prtc_attr:str=None, flag_oor=False,
             pred_type="classification", priv_grp=1, sig_fig:int=4,
-            cohorts:valid.MatrixLike=None, **kwargs):
+            cohorts:valid.MatrixLike=None,
+            custom_ranges:Dict[str, Tuple[Number, Number]]=None, **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
     relative to their input data
 
@@ -207,6 +216,9 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
             group. Defaults to 1.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Raises:
         ValueError
@@ -227,7 +239,11 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     # Significant figures must be handled by the flag funcion (if called) since
     #   the Styler will reset significant digits
     if flag_oor:
-        df = flag(df, sig_fig=sig_fig)
+        if not isinstance(custom_ranges, dict):
+            custom_ranges ={}
+        measures = df.index.get_level_values("Measure").tolist()
+        valid.validate_fair_boundaries(custom_ranges, measures)
+        df = flag(df, sig_fig=sig_fig, custom_ranges=custom_ranges)
     else:
         df = df.round(sig_fig)
     return df
@@ -543,9 +559,9 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
             summary_dict[name_update[k]] = val
         for k in drop_keys:
             summary_dict.pop(k)
-        summary_dict['Equalized Odds Difference'] = \
+        summary_dict['Equal Odds Difference'] = \
             fcmtrc.eq_odds_diff(y_true, y_pred, prtc_attr=pa_name)
-        summary_dict['Equalized Odds Ratio'] = \
+        summary_dict['Equal Odds Ratio'] = \
             fcmtrc.eq_odds_ratio(y_true, y_pred, prtc_attr=pa_name)
         if y_prob is not None:
             try:

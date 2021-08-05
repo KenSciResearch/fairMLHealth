@@ -203,6 +203,9 @@ class FairCompare(ABC):
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
                     output = flag(output, sig_fig=4)
+                else:
+                    #
+                    output = pd.Styler(output)
             else:
                 output = None
             return output
@@ -227,14 +230,14 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary(self.X[model_name],
-                                 self.prtc_attr[model_name],
-                                 self.y[model_name],
-                                 self.preds[model_name],
-                                 self.probs[model_name],
-                                 pred_type=self.pred_type,
-                                 sig_fig=self.sig_fig,
-                                 **kwargs)
+            res = summary(X=self.X[model_name],
+                          y_true=self.y[model_name],
+                          y_pred=self.preds[model_name],
+                          y_prob=self.probs[model_name],
+                          prtc_attr=self.prtc_attr[model_name],
+                          pred_type=self.pred_type,
+                          sig_fig=self.sig_fig,
+                          **kwargs)
             return res
 
     def __check_models_predictions(self, enforce=True):

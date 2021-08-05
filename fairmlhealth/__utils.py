@@ -309,6 +309,7 @@ class Flagger():
         with catch_warnings(record=False):
             filterwarnings("ignore", category=DeprecationWarning)
             styled = styled.set_precision(sig_fig)
+
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested
@@ -348,14 +349,16 @@ class Flagger():
             clr = f'{self.flag_type}:{self.flag_color}'
             return [clr if is_oor(name, v) else ""  for v in vals]
 
-    def __set_boundaries(self, boundaries):
+    def __set_boundaries(self, custom_boundaries):
         lbls = [str(l).lower() for l in self.labels]
-        if boundaries is None:
-            bnd = FairRanges().load_fair_ranges()
-            # Mismatched keys may lead to errant belief that a measure is within
-            # the fair range when actually there was a mistake (eg. key was
-            # misspelled)
-            boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
+        if custom_boundaries is None:
+            custom_boundaries = {}
+        # FairRanges will automatically join defaults with custom boundaries
+        bnd = FairRanges().load_fair_ranges(custom_boundaries)
+        # Mismatched keys may lead to errant belief that a measure is within
+        # the fair range when actually there was a mistake (eg. key was
+        # misspelled)
+        boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 
@@ -382,7 +385,7 @@ class Flagger():
             if isinstance(self.df.index, pd.MultiIndex):
                 if "Measure" in self.df.index.names:
                     label_type = "index"
-                    labels = self.df.index.get_level_values(1)
+                    labels = self.df.index.get_level_values("Measure")
                 else:
                     label_type = "columns"
                     labels = self.df.columns.tolist()
