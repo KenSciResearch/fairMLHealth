@@ -10,6 +10,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Updated references and images in main README.md
 - Updated ToolUsage notebooks in support of main README.md
 - Regression measure descriptions added to docs/references
+- Updated templates
 
 ## [0.1.27] - 2021-08-05
 ### Bug Fixes
