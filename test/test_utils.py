@@ -85,12 +85,12 @@ class TestCohorts:
                                 cohorts=self.cohorts[0])
 
     def test_cohort_summary(self):
-        measure.summary(self.df,
-                        self.df['prtc_attr'],
-                        self.df['classification'],
-                        self.df['avg_classification'],
-                        cohorts=self.cohorts[0],
-                        pred_type="classification")
+       _ = measure.summary(X=self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
+                            cohorts=self.cohorts[0],
+                            pred_type="classification")
 
 
 @pytest.mark.usefixtures("load_data")
