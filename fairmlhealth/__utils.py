@@ -166,8 +166,8 @@ def iterate_cohorts(func:Callable):
                     m = getattr(e, 'message') if 'message' in dir(e) else None
                     if m == "Only one target classification found.":
                         df = pd.DataFrame()
-                else:
-                    raise ValidationError(m)
+                    else:
+                        raise ValidationError(m)
                 # Empty dataframes indicate issues with evaluation of the function,
                 # likely caused by presence of i.e. only one feature-value pair.
                 if len(df) == 0:
