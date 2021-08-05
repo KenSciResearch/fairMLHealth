@@ -10,7 +10,9 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 ### Report Update
 - Allow flexible return type for any report.compare result
 - Update tests for report.py
-- Update method for testing if a model predicts probabilities
+- Update method for testing if a model predicts probabilities in FairCompare
+- Allow user to skip performance measures when using report.compare
+
 
 ## [0.1.25] - 2021-08-05
 ### Custom Boundary Bug
