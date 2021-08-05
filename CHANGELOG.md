@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+
+## [0.1.26] - 2021-08-05
+### Report Update
+- Allow flexible return type for any report.compare result
+- Update tests for report.py
+- Update method for testing if a model predicts probabilities
+
 ## [0.1.25] - 2021-08-05
 ### Custom Boundary Bug
 - Fix bug that prevented custom boundaries from updating
