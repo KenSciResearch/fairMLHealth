@@ -1,5 +1,5 @@
 # fairMLHealth
-Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
+Tools and tutorials for evaluating bias in healthcare machine learning.
 
 ## New in Version 1.0.0!
 We've reorganized library to make things more intuitive and added some useful new features:
