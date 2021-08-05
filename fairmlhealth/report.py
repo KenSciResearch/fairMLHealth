@@ -189,14 +189,15 @@ class FairCompare(ABC):
 
         Args:
             flag_oor (bool): if True, will apply flagging function to highlight
-                fairness metrics which are considered to be outside the "fair" range
+                fairness metrics which are considered to be outside the "fair"
+                range
             skip_performance (bool): If true, removes performance measures from the
                 output. Defaults to False.
             output_type (str): One of ["styler", "dataframe", "html", None].
                 Updates the output type of the comparison table, defaults to None,
-                which returns either a pandas Dataframe (if flag_oor=False) or a pandas
-                Styler (if flag_oor=True). Flagged comparisons cannot be returned as
-                pandas DataFrame.
+                which returns either a pandas Dataframe (if flag_oor=False) or a
+                pandas Styler (if flag_oor=True). Flagged comparisons cannot be
+                returned as pandas DataFrame.
 
         Returns:
             pandas.Styler | pandas.DataFrame | HTML
