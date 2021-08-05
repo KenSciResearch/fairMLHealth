@@ -210,6 +210,7 @@ class FairCompare(ABC):
         self.__validate_output_type(output_type, flag_oor)
         if output_type is None and flag_oor is False:
             output_type = "dataframe"
+        output_type = "" if output_type is None else output_type.lower()
         #
         if len(self.models) == 0:
             warnings.warn("No models to compare.")
@@ -230,7 +231,7 @@ class FairCompare(ABC):
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
-                    as_styler = True if output_type.lower() != "html" else False
+                    as_styler = True if output_type != "html" else False
                     output = flag(output, sig_fig=4, as_styler=as_styler)
                 else:
                     if output_type.lower() == "styler":
