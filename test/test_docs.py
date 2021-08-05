@@ -6,7 +6,7 @@ documentation that is expected.
 import os
 from pathlib import Path
 import pytest
-from .__utils import (get_urls, get_url_status,  is_test_environment,
+from .__test__utils import (get_urls, get_url_status,  is_test_environment,
                       is_url_valid, URLError)
 
 

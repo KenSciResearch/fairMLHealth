@@ -6,7 +6,7 @@ Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
 '''
 
-from . import __utils
+from . import __test__utils as utils
 import json
 import nbformat
 import os
@@ -17,14 +17,14 @@ import tempfile
 
 def find_broken_urls(nb):
     ''' Validates most urls with some exceptions (see documentation for
-    __utils.is_url_valid)
+    utils.is_url_valid)
     '''
     url_list = list_urls(nb)
     broken_urls = []
     for url in url_list:
-        is_valid = __utils.is_url_valid(url)
+        is_valid = utils.is_url_valid(url)
         if type(is_valid)==bool and not is_valid:
-            code = __utils.get_url_status(url, tryonce=True)
+            code = utils.get_url_status(url, tryonce=True)
             err = f"{repr(url)} ({code} Error)"
             broken_urls.append(err)
     return broken_urls
@@ -82,7 +82,7 @@ def list_urls(nb):
     for cell in nb.cells:
         if "http" in cell['source']:
             search_text = cell['source']
-            urls += __utils.get_urls(search_text)
+            urls += utils.get_urls(search_text)
     return urls
 
 
