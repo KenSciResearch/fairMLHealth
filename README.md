@@ -324,7 +324,7 @@ More information about these and other examples can be found in our [examples_an
 
 For a deep discussion of fairness evaluation, see [Evaluating Fairness](./docs/resources/Evaluating_Fairness.md) in our [documentation and resources](./docs/resources) section. In the same folder you'll find a [Measures QuickReference](./docs/resources/Measures_QuickReference.md), plus additional [References and Resources](./docs/resources/References_and_Resources.md)
 
-For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](./examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
+For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](./examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](./examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
 
 Templates are available in the [templates folder](./templates):
 * [Binary Classification Assessment Template](./templates/Template-BinaryClassificationAssessment.ipynb)
