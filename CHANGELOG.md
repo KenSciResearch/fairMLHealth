@@ -6,6 +6,12 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 
 
+## [0.1.24] - 2021-08-03
+### Undefined Ratios and Fairness Metric Testing
+- Added code to return NaN values in cases where a fairness ratio has a zero denominator
+- Updates to test__fairnessmetrics to increase robustness.
+- Ceiling placed on the version number for AIF360 in setup.py
+
 ## [0.1.23] - 2021-08-03
 ### Correct Column References
 - Bug: private names appearing in measure tables

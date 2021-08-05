@@ -27,6 +27,9 @@ def analytical_labels(pred_type: str = "binary"):
 
 def prep_arraylike(arr:valid.ArrayLike, name:str=None, expected_len:int=None):
     valid.validate_array(arr, name, expected_len)
+    if isinstance(arr, pd.DataFrame):
+        raise ValidationError(
+            "This function accepts only 1D numpy arrays or pandas Series objects.")
     series = pd.Series(arr, name=name).reset_index(drop=True)
     return series
 
