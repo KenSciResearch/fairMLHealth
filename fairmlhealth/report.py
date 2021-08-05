@@ -203,9 +203,6 @@ class FairCompare(ABC):
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
                     output = flag(output, sig_fig=4)
-                else:
-                    #
-                    output = pd.Styler(output)
             else:
                 output = None
             return output
