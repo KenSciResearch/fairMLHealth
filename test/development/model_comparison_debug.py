@@ -32,11 +32,11 @@ model_2 = DecisionTreeClassifier().fit(X_train, y_train)
 prtc_attr = X_test['gender']
 
 # Test that measure_model
-report.measure_model(X_test, y_test, prtc_attr, model_1)
+report.compare(X_test, y_test, prtc_attr, model_1)
 
 
 # Pass the data and models to the compare models function, as above
-report.compare_models(X_test, y_test, prtc_attr,
+report.compare(X_test, y_test, prtc_attr,
                                   {'model_1': model_1, 'model_2': model_2})
 
 

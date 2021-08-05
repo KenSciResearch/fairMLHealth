@@ -8,11 +8,11 @@ Contributors:
 
 import aif360.sklearn.metrics as aif
 from functools import reduce
-from IPython.display import HTML
 import logging
 from numbers import Number
 import numpy as np
 import pandas as pd
+from typing import Dict, Tuple
 
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                             balanced_accuracy_score)
@@ -33,8 +33,8 @@ from .__utils import format_errwarn, iterate_cohorts
 
 
 def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
-                sig_fig:int=4, flag_oor=False, cohorts:valid.MatrixLike=None,
-                **kwargs):
+         sig_fig:int=4, flag_oor=False, cohorts:valid.MatrixLike=None,
+         custom_ranges:Dict[str, Tuple[Number, Number]]=None, **kwargs):
     """ Generates a table of stratified bias metrics
 
     Args:
@@ -52,6 +52,9 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
             group. Defaults to 1.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Raises:
         ValueError
@@ -72,9 +75,10 @@ def bias(X, y_true, y_pred, features:list=None, pred_type="classification",
     # Significant figures must be handled by the flag funcion (if called) since
     #   the Styler will reset significant digits
     if flag_oor:
-        custom_bounds = kwargs.pop('custom_ranges', {})
-        ranges = fair_ranges(custom_bounds, y_true, y_pred, df.columns.tolist())
-        df = flag(df, sig_fig=sig_fig, custom_ranges=ranges)
+        if not isinstance(custom_ranges, dict):
+            custom_ranges ={}
+        valid.validate_fair_boundaries(custom_ranges, df.columns.tolist())
+        df = flag(df, sig_fig=sig_fig, custom_ranges=custom_ranges)
     else:
         df = df.round(sig_fig)
     return df
@@ -125,7 +129,7 @@ def fair_ranges(custom_ranges:"dict[str, tuple[Number, Number]]" = None,
 
 
 def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
-         as_styler:bool = True, custom_ranges:"dict[str, tuple[Number, Number]]" = None):
+         as_styler:bool = True, custom_ranges:Dict[str, Tuple[Number, Number]]=None):
     """ Generates embedded html pandas styler table containing a highlighted
         version of a model comparison dataframe
 
@@ -136,12 +140,15 @@ def flag(df:valid.MatrixLike, caption:str = "", sig_fig:int = 4,
             highlighted table (to which other styles/highlights can be added).
             Otherwise, returns the table as an embedded HTML object. Defaults
             to False .
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Returns:
         Embedded html or pandas.io.formats.style.Styler
     """
-    cbounds = custom_ranges
-    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler, cbounds)
+    return utils.Flagger().apply_flag(df, caption, sig_fig, as_styler,
+                                      boundaries=custom_ranges)
 
 
 def performance(X, y_true, y_pred, y_prob=None, features:list=None,
@@ -185,9 +192,10 @@ def performance(X, y_true, y_pred, y_prob=None, features:list=None,
     return df
 
 
-def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
+def summary(X, y_true, y_pred, y_prob=None, prtc_attr:str=None, flag_oor=False,
             pred_type="classification", priv_grp=1, sig_fig:int=4,
-            cohorts:valid.MatrixLike=None, **kwargs):
+            cohorts:valid.MatrixLike=None,
+            custom_ranges:Dict[str, Tuple[Number, Number]]=None, **kwargs):
     """ Generates a summary of fairness measures for a set of predictions
     relative to their input data
 
@@ -207,6 +215,9 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
             group. Defaults to 1.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
+            used by the flag function if requested. Keys should be measure names
+            (case-insensitive).
 
     Raises:
         ValueError
@@ -227,7 +238,11 @@ def summary(X, prtc_attr, y_true, y_pred, y_prob=None, flag_oor=False,
     # Significant figures must be handled by the flag funcion (if called) since
     #   the Styler will reset significant digits
     if flag_oor:
-        df = flag(df, sig_fig=sig_fig)
+        if not isinstance(custom_ranges, dict):
+            custom_ranges ={}
+        measures = df.index.get_level_values("Measure").tolist()
+        valid.validate_fair_boundaries(custom_ranges, measures)
+        df = flag(df, sig_fig=sig_fig, custom_ranges=custom_ranges)
     else:
         df = df.round(sig_fig)
     return df
@@ -471,7 +486,7 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -543,9 +558,9 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
             summary_dict[name_update[k]] = val
         for k in drop_keys:
             summary_dict.pop(k)
-        summary_dict['Equalized Odds Difference'] = \
+        summary_dict['Equal Odds Difference'] = \
             fcmtrc.eq_odds_diff(y_true, y_pred, prtc_attr=pa_name)
-        summary_dict['Equalized Odds Ratio'] = \
+        summary_dict['Equal Odds Ratio'] = \
             fcmtrc.eq_odds_ratio(y_true, y_pred, prtc_attr=pa_name)
         if y_prob is not None:
             try:
@@ -567,10 +582,12 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class == 2:
         summary_type = "binary"
+    elif n_class < 2:
+        raise ValidationError("Only one target classification found.")
     else:
         summary_type = "multiclass"
-        raise ValueError(
-            "tool cannot yet process multiclass classification models")
+        raise ValidationError(
+            "fairMLHealth cannot yet process multiclass classification models")
     # Generate a dictionary of measure values to be converted t a dataframe
     labels = analytical_labels(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
@@ -585,10 +602,8 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         _y, _yh= y_true.columns[0], y_pred.columns[0]
         X[_y], X[_yh] = y_true.values, y_pred.values
         measures[labels['mp_label']] = __classification_performance(X, _y, _yh)
-    # Convert scores to a formatted dataframe and return
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    output = __format_summary(df, summary_type)
+
+    output = __format_summary(measures, summary_type)
     return output
 
 
@@ -645,23 +660,47 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __format_summary(df:pd.DataFrame, summary_type:str="binary"):
+def __format_summary(measures:dict, summary_type:str="binary"):
     """ Formatting specific to the summary tables
     """
+
+    metrics = (analytical_labels(summary_type)).values()
+    if not all(m in metrics for m in measures.keys()):
+        raise ValidationError("errant metrics found in summary dict")
+    # Convert to a dataframe.
+    df = pd.DataFrame.from_dict(measures, orient="index")
+    # Reshape to display metrics in index. This will drop any measures with
+    # undefined values.
+    undefined = [c for c in df.columns if df[c].isnull().all()]
+    df = df.stack().to_frame()
+    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
     df.columns = ['Value']
-    # Fix the order in which the metrics appear
-    gfl, ifl, mpl, dtl = analytical_labels(summary_type)
-    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
-    df.reset_index(inplace=True)
-    df['sortorder'] = df['level_0'].map(metric_order)
-    df = df.sort_values('sortorder').drop('sortorder', axis=1)
     # Fix Display Names
-    df.set_index(['level_0', 'level_1'], inplace=True)
     df.rename_axis(('Metric', 'Measure'), inplace=True)
     # Drop Obs. from Model Performance since it may be ambiguous and
     # may be redundant with some Data Metrics measures
     if ('Model Performance', 'Obs.') in df.index:
         df.drop(('Model Performance', 'Obs.'), axis=0, inplace=True)
+    # Ensure that private names do not appear in the summary (columns nor index)
+    new_cols = df.columns.tolist()
+    idx = df.index.to_frame()
+    ycol = y_cols()
+    for _y in ycol['priv_names'].keys():
+        priv, disp = ycol['priv_names'][_y], ycol['disp_names'][_y]
+        idx['Measure'] = idx['Measure'].str.replace(priv, disp)
+        new_cols = [c.replace(priv, disp) for c in new_cols]
+    df.index = pd.MultiIndex.from_frame(idx)
+    df.columns = new_cols
+    # Fix the order in which the metrics appear
+    gfl, ifl, mpl, dtl = analytical_labels(summary_type).values()
+    metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
+    df.reset_index(inplace=True)
+    df['sortorder'] = df['Metric'].map(metric_order)
+    df = df.sort_values('sortorder').drop('sortorder', axis=1)
+    df.set_index(['Metric', 'Measure'], inplace=True)
+    # Alert user of any dropped measures
+    if any(undefined):
+        warn(f"The following measures are undefined and have been dropped: {undefined}")
     return df
 
 
@@ -669,7 +708,16 @@ def __format_table(strat_tbl, sig_fig:int=6):
     """ Formatting for stratified tables not including the summary tables. Use
         __format_summary to format summary tables.
     """
+    #
     tbl = __sort_table(strat_tbl)
+    # Ensure that private names do not appear in the table
+    new_cols = tbl.columns.tolist()
+    ycol = y_cols()
+    for _y in ycol['priv_names'].keys():
+        priv, disp = ycol['priv_names'][_y], ycol['disp_names'][_y]
+        new_cols = [c.replace(priv, disp) for c in new_cols]
+    tbl.columns = new_cols
+    # Enforce string type for Feature Name
     tbl['Feature Name'] = tbl['Feature Name'].astype(str)
     tbl = tbl.round(sig_fig)
     return tbl
@@ -714,7 +762,7 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, y_prob, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -762,7 +810,7 @@ def __strat_reg_performance(X, y_true, y_pred, features:list=None,
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -806,7 +854,7 @@ def __regression_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
         raise ValueError(msg)
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
-    _y, _yh, _yp = y_cols(df)['col_names'].values()
+    _y, _yh, _yp = y_cols(df)['priv_names'].values()
     pred_cols = [n for n in [_y, _yh, _yp] if n is not None]
     strat_feats = [f for f in df.columns.tolist() if f not in pred_cols]
     if any(y is None for y in [_y, _yh]):
@@ -861,15 +909,14 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1,
                           ).rename(columns={0: 'Score'})
         for row in strat_tbl.iterrows():
             mp_vals[row[0]] = row[1]['Score']
-    # Convert scores to a formatted dataframe and return
+    # Store measures in dict for formatting
     labels = analytical_labels("regression")
     measures = {labels['gf_label']: grp_vals,
                 labels['if_label']: if_vals,
                 labels['mp_label']: mp_vals,
                 labels['dt_label']: dt_vals}
-    df = pd.DataFrame.from_dict(measures, orient="index").stack().to_frame()
-    df = pd.DataFrame(df[0].values.tolist(), index=df.index)
-    output = __format_summary(df, "regression")
+
+    output = __format_summary(measures, "regression")
     return output
 
 
@@ -901,8 +948,8 @@ def __sort_table(strat_tbl):
     Returns:
         pandas DataFrame: sorted strat_tbl
     """
-    _y = y_cols()['disp_names']['yt']
-    _yh = y_cols()['disp_names']['yh']
+    _y = y_cols()['priv_names']['yt']
+    _yh = y_cols()['priv_names']['yh']
     head_names = ['Feature Name', 'Feature Value', 'Obs.',
                  f'Mean {_y}', f'Mean {_yh}']
     head_cols = [c for c in head_names if c in strat_tbl.columns]

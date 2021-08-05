@@ -3,7 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
-from typing import Callable
+from typing import Callable, Dict, Tuple
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -96,6 +96,15 @@ def iterate_cohorts(func:Callable):
         else:
             return None
 
+    def add_group_info(errant_list, grp_cols, grp_vals):
+        grpname = ""
+        for i, c in enumerate(grp_cols):
+            if len(grpname) > 0:
+                grpname += " & "
+            grpname += f"{c} {grp_vals[i]}"
+        errant_list.append(grpname)
+        return  None
+
     def wrapper(cohorts:valid.MatrixLike=None, **kwargs):
         """ Iterates for each cohort subset
 
@@ -122,52 +131,66 @@ def iterate_cohorts(func:Callable):
             cohorts = prep.prep_data(cohorts)
             #
             cix = cohorts.index
-            cols = cohorts.columns.tolist()
-            cgrp = cohorts.groupby(cols)
+            grp_cols = cohorts.columns.tolist()
+            cgrp = cohorts.groupby(grp_cols)
             valid.limit_alert(cgrp, "permutations of cohorts", 8,
                         issue="This may slow processing time and reduce utility.")
-            # cohorts with too few observations, will cause terminating errors.
-            # Note that this doesn't validate that there's enough data for each
-            # feature-value pair: that should be handled by the function being wrapped
-            minobs = valid.MIN_OBS
-            if cohorts.reset_index().groupby(cols)['index'].count().lt(minobs).any():
-                err = ("Some cohort groups have too few observations to be measured."
-                       + f" At least {minobs} are required for each group.")
-                raise ValidationError(err)
             #
             results = []
-            errant_groups = []
+            errant_list = []
+            minobs = valid.MIN_OBS
             for k in cgrp.groups.keys():
-                grp_vals = cgrp.get_group(k)[cols].head(1).values[0]
+                grp_vals = cgrp.get_group(k)[grp_cols].head(1).values[0]
                 # Subset each argument to those observations matching the group
                 ixs = cix.astype('int64').isin(cgrp.groups[k])
+                # Test subset for sufficent data. cohorts with too few observations
+                # will cause terminating errors.
                 x = subset(X, ixs)
+                if x.shape[0] < minobs:
+                    add_group_info(errant_list, grp_cols, grp_vals)
+                    continue
+                # subset remaining arguments
                 y = subset(Y, ixs)
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
                 yp = subset(y_prob, ixs)
                 pa = subset(prtc_attr, ixs)
+                #
                 new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
+                try:
+                    df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
                         prtc_attr=pa, **sub_args)
-                # Empty dataframes indicate issues with evaluation of the function
+                except ValidationError as e:
+                    # Skip groups
+                    m = getattr(e, 'message') if 'message' in dir(e) else None
+                    if m == "Only one target classification found.":
+                        df = pd.DataFrame()
+                    else:
+                        raise ValidationError(m)
+                # Empty dataframes indicate issues with evaluation of the function,
+                # likely caused by presence of i.e. only one feature-value pair.
                 if len(df) == 0:
-                    grpname = ""
-                    for i, c in enumerate(cols):
-                        if len(grpname) > 0:
-                            grpname += " & "
-                        grpname += f"{c} {grp_vals[i]}"
-                    errant_groups.append(grpname)
-                ix = [(c, grp_vals[i]) for i, c in enumerate(cols)]
+                    add_group_info(errant_list, grp_cols, grp_vals)
+                ix = [(c, grp_vals[i]) for i, c in enumerate(grp_cols)]
                 df = prepend_cohort(df, ix)
                 results.append(df)
-            output = pd.concat(results, axis=0)
-            if any(errant_groups):
+            # Report issues to the user
+            if len(errant_list) == len(cgrp.groups.keys()):
+                msg = ("Invalid cohort specification. Each cohort. must have at "
+                       +f"least {minobs} observations.")
+                raise ValidationError(msg)
+            elif any(errant_list):
                 msg = ("Could not evaluate function for group(s): "
-                       +"{errant_groups}. This is commonly caused when only a "
-                       " single feature-value pair is available.")
+                       +"{errant_list}. This is commonly caused when there is "
+                       + " too little data or there is only a single "
+                       + "feature-value pair is available in a given cohort. "
+                       + f"Each cohort must have  {minobs} observations.")
                 warn(msg)
+            else:
+                pass
+            # Combine results and return
+            output = pd.concat(results, axis=0)
             return output
         else:
             return func(**kwargs)
@@ -192,7 +215,7 @@ class FairRanges():
     def mad(self, arr):
         return np.median(np.abs(arr - np.median(arr)))
 
-    def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
+    def load_fair_ranges(self, custom_ranges:Dict[str, Tuple[Number, Number]]=None,
                          y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
         """
         Args:
@@ -256,13 +279,12 @@ class Flagger():
     def __init__(self):
         self.reset()
 
-    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True,
-                   boundaries=None):
+    def apply_flag(self, df:pd.DataFrame, caption:str="", sig_fig:int=4, as_styler:bool=True,
+                   boundaries:Dict[str, Tuple[Number, Number]]=None):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
-            df (pandas dataframe): model_comparison.compare_models or
-                model_comparison.measure_model dataframe
+            df (pandas dataframe): report.compare dataframe
             caption (str, optional): Optional caption for table. Defaults to "".
             as_styler (bool, optional): If True, returns a pandas Styler of the
                 highlighted table (to which other styles/highlights can be added).
@@ -295,13 +317,14 @@ class Flagger():
         with catch_warnings(record=False):
             filterwarnings("ignore", category=DeprecationWarning)
             styled = styled.set_precision(sig_fig)
+
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested
         if as_styler:
             return styled
         else:
-            return HTML(styled.render())
+            return styled.render()
 
     def reset(self):
         """ Clears the __Flagger settings
@@ -334,14 +357,16 @@ class Flagger():
             clr = f'{self.flag_type}:{self.flag_color}'
             return [clr if is_oor(name, v) else ""  for v in vals]
 
-    def __set_boundaries(self, boundaries):
+    def __set_boundaries(self, custom_boundaries):
         lbls = [str(l).lower() for l in self.labels]
-        if boundaries is None:
-            bnd = FairRanges().load_fair_ranges()
-            # Mismatched keys may lead to errant belief that a measure is within
-            # the fair range when actually there was a mistake (eg. key was
-            # misspelled)
-            boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
+        if custom_boundaries is None:
+            custom_boundaries = {}
+        # FairRanges will automatically join defaults with custom boundaries
+        bnd = FairRanges().load_fair_ranges(custom_boundaries)
+        # Mismatched keys may lead to errant belief that a measure is within
+        # the fair range when actually there was a mistake (eg. key was
+        # misspelled)
+        boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 
@@ -368,7 +393,7 @@ class Flagger():
             if isinstance(self.df.index, pd.MultiIndex):
                 if "Measure" in self.df.index.names:
                     label_type = "index"
-                    labels = self.df.index.get_level_values(1)
+                    labels = self.df.index.get_level_values("Measure")
                 else:
                     label_type = "columns"
                     labels = self.df.columns.tolist()

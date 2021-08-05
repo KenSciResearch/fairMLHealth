@@ -1,5 +1,5 @@
 # Evaluating Fairness in Machine Learning
-
+by Christine Allen
 
 ## About
 All machine learning (ML) models can be assumed to hold biases, just as all humans hold biases. Building models that will work for all patients starts with understanding that bias through measurement and evaluation.
@@ -127,7 +127,8 @@ For the following explanations of specific measures, we'll use the results of a 
 ----
 ## Group Fairness Measures
 
-### Demographic Parity  <a id="dem_parity"></a>
+### Binary Classifcation
+#### Demographic Parity  <a id="dem_parity"></a>
 A model has **Demographic Parity** if the predicted positive rates (selection rates) are approximately the same for all groups of the protected attribute. Two common measures are the Statistical Parity Difference and the Disparate Impact Ratio.
 
 The *Statistical Parity Difference* is the difference in the probability of prediction between the two groups. A difference of 0 indicates that the model is perfectly fair relative to the protected attribute (it favors neither the privileged nor the unprivileged group). Values between -0.1 and 0.1 are considered reasonably fair.
@@ -136,20 +137,19 @@ The *Statistical Parity Difference* is the difference in the probability of pred
 The *Disparate Impact Ratio* is the ratio between the probability of positive prediction for the unprivileged group and the probability of positive prediction for the privileged group. A ratio of 1 indicates that the model is fair relative to the protected attribute (it favors neither the privileged nor the unprivileged group).  Values between 0.8 and 1.2 are considered reasonably fair.
 > <img src="https://render.githubusercontent.com/render/math?math=disparate\_impact\_ratio = \dfrac{P(\hat{y} = 1\ |\ unprivileged)}{P(\hat{y} = 1\ |\ privileged)} = \dfrac{selection\_rate(\hat{y}_{unprivileged})}{selection\_rate(\hat{y}_{privileged})}">
 
-### Equal Odds
+#### Equal Odds
 Odds are equalized if P(+) is approximately the same for all groups of the protected attribute.
 
-The *Equalized Odds Difference* is the greater between the difference in TPR and the difference in FPR. This provides a comparable measure to the Average Odds Difference found in [AIF360](https://github.com/IBM/AIF360). A value of 0 indicates that all groups have the same TPR, FPR, TNR, and FNR, and that the model is "fair" relative to the protected attribute.
-> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
+The *Equal Odds Difference* is calculated by this tool as the greater between the difference in TPR and the difference in FPR, where difference is calculated as the unprivileged value minus the privileged value. An Equal Odds Difference of 0 indicates that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_odds\_difference = max( (FPR_{unprivileged} - FPR_{privileged}), (TPR_{unprivileged} - TPR_{privileged}) )">
 
-The *Equalized Odds Ratio* is the smaller between the TPR Ratio and FPR Ratio, where the ratios are defined as the ratio of the smaller of the between-group rates vs the larger of the between-group rates. A value of 1 means that all groups have the same TPR, FPR, TNR, and FNR. This measure is comparable to the Equal Opportunity Difference (found in [AIF360](https://github.com/IBM/AIF360)).
-> <img src="https://render.githubusercontent.com/render/math?math=equalized\_odds\_ratio = min( \dfrac{FPR_{smaller}}{FPR_{larger}}, \dfrac{TPR_{smaller}}{TPR_{larger}} )">
+The *Equal Odds Ratio* is calculated by this tool as the ratio of maximimum divergence from 1 between the TPR Ratio and FPR Ratio, where the TPR and FPR ratios are calculated as the rate of the unpriviliged group divided by the rate of the privileged group. A value of 1 means that all groups have the same TPR and FPR, and that the model is within the "fair" range relative to the protected attribute.
+> <img src="https://render.githubusercontent.com/render/math?math=equal\_odds\_ratio = max( |(FPR_unprivileged/FPR_privileged) - 1|, |(TPR_unprivileged/TPR_privileged) - 1|)">
 
-*Equal Opportunity Difference (or Ratio)* compares the recall scores (TPR) between the unprivileged and privileged groups.
+*Equal Opportunity Difference (or Ratio)* compares only the TPRs (recall scores) between the unprivileged and privileged groups.
 > <img src="https://render.githubusercontent.com/render/math?math=equal\_opportunity\_difference = recall(\hat{y}_{unprivileged}) - recall(\hat{y}_{privileged})">
 
-
-### Measures of Disparate Performance
+#### Measures of Disparate Performance
 These measures evaluate whether model performance is similar for all groups of the protected attribute.
 
 The *Positive Predictive Parity Difference (or Ratio)* compares the Positive Predictive Value (PPV, aka. precision), between groups.
@@ -158,17 +158,41 @@ The *Positive Predictive Parity Difference (or Ratio)* compares the Positive Pre
 The *Balanced Accuracy Difference (or Ratio)* compares the Balanced Accuracy between groups, where balanced accuracy is the mean of the sensitivity and specificity. **Since many models are biased due to data imbalance, this can be an important measure.**
 > <img src="https://render.githubusercontent.com/render/math?math=balanced\_accuacy\_difference = (Sensitivity_{unprivileged} + Specificity_{unprivileged})/2 - (Sensitivity_{privileged} + Specificity_{privileged})/2">
 
+
+### <a name="regression_ranges"></a>Regression
+
+Currently available literature has significantly more information, more measures, and more examples for binary classification problems than for regression problems. This is likely for several reasons. For one, binary classifcation problems are simpler. It is often easier to assign "good" verses "bad" outcomes, and thus to define fair predictions. Moreover, in many cases, regression problems can be converted to binary classification problems by using some inherent threshold for decisionmaking. For example, in a hypothetical scenerio where palliative care is offered to patients for whom their pain score is predicted to be above the 30th percentile, there is a clear demarcation in the distribution of services. However, not all regression problems lead to outcomes with such clear boundaries. The human evaluation of such scores may depend upon other factors that may ambiguously alter a given threshold, factors whose evaluation could be beyond the scope of the regression problem. Furthermore, depending upon how scores are used, there may be multiple, if not overlapping, ranges for "good" verses "bad" regression predictions. Lastly, the normalization process for target distributions requires statistical judgement, which impedes the definition of a single metric or set of boundaries applicable to all regressions.
+
+For these reasons, only a few measures are included in the fairmlhealth tool. These were chosen for their likeness to well-known measures of fair classification. The "fair" range to be used for these metrics requires judgement on the part of the analyst. Default ranges in fairMLHealth have been set to [0.8, 1.2] for ratios, 10% of the total prediction range for *Mean Prediction Difference*, and 10% of the MAE range for *MAE Difference*.
+
+#### Relative Mean Prediction
+The *Mean Prediction Ratio* compares the mean prediction between groups as the ratio of the unprivileged group over the privileged group.
+> <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_ratio = \mu(\hat{y}_{unprivileged}) / \mu(\hat{y}_{privileged})">
+
+The *Mean Prediction Difference* compares the mean prediction between groups as the difference between the unprivileged group and the privileged group.
+> <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_difference = \mu(\hat{y}_{unprivileged}) - \mu(\hat{y}_{privileged})">
+
+#### Relative Mean Absolute Error (MAE)
+The *MAE Ratio* compares the error between groups as the ratio of the MAE for the unprivileged group over that of the privileged group.
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert)">
+
+The *MAE Difference* compares the error between groups as the difference of the MAE for the unprivileged group and that of the privileged group.
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert))">
+
+
 ## Comparing Group Fairness (Statistical) Measures <a id="comparing_group_measures"></a>
 The highlighted rows in our example FairMLHealth Fairness Report [above](#fairness_report) indicates that the Disparate Impact ratio is out of range; but what is that range and how is it determined? In 1978, the United States Equal Employment Opportunity Commission adopted the "Four-Fifths Rule", a guideline stating that, "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact."[EOC (1978)](#fourfifths_ref) This rubric has since been adopted for measures of fairness in ML. This translates to a "fair" range of selection rate ratios that are between 0.8 and 1.2.
 
 The four-fifths rule works well when comparing prediction performance metrics whose values are above 0.5. However, the rule fails when comparing small values, as is the case in this example and which is as shown in the example stratified table. The ratios between two such small values can easily be well above 1.2, even though the true difference is only a few percentage points. For this reason it's useful to compare both the ratios and the differences when evaluating group measures.
 
-Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
+Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equal Odds Ratio, which also appears outside of the "fair" range. The Equal Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
+
+Note that the "fair" range to be used for regression metrics does not necessarily follow these rules and will require some judgement on the part of the user, particularly in the evaluation of between-group difference (i.e. *Mean Prediction Difference* and *MAE Difference*).
 
 |Group Measure Type |Examples |"Fair" Range |Favored Group |
 |- |- |- |- |
-|Statistical Ratio |Disparate Impact Ratio, Equalized Odds Ratio | 0.8 <= "Fair" <= 1.2 | < 1 favors privileged group, > 1 favors unprivileged |
-|Statistical Difference |Equalized Odds Difference, Predictive Parity Difference | -0.1 <= "Fair" <= 0.1 | < 0 favors privileged group, > 0 favors unprivileged |
+|Statistical Ratio |Disparate Impact Ratio, Equal Odds Ratio | 0.8 <= "Fair" <= 1.2 | < 1 favors privileged group, > 1 favors unprivileged |
+|Statistical Difference |Equal Odds Difference, Predictive Parity Difference | -0.1 <= "Fair" <= 0.1 | < 0 favors privileged group, > 0 favors unprivileged |
 
 ### Problems with Group Fairness Measures
 Although these statistically-based measures make intuitive sense, they are not applicable in every situation. For example, Demographic Parity is inapplicable where the base rates significantly differ between groups. Also, by evaluating protected attributes in pre-defined groups, these measures may miss certain nuance. For example, a model may perform unfairly for certain sub-groups of the unprivileged class (e.g., black females), but not for the unprivileged group as a whole.
@@ -252,7 +276,7 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 
 
 ## Comparing Models
-In this section we will compare the results of multiple models using FairMLHealth's **compare_models** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+In this section we will compare the results of multiple models using FairMLHealth's **compare** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 <h3 style="text-align: center"><u> Example FairMLHealth Model Comparison Report </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_model_comparison.png"
@@ -386,5 +410,3 @@ Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness bey
 * [FAT Forensics](https://github.com/fat-forensics/fat-forensics)
 * [ML Fairness Gym](https://github.com/google/ml-fairness-gym)
 * [Themis ML](https://themis-ml.readthedocs.io/en/latest/)
-
-

@@ -116,7 +116,7 @@ def simplify_tutorial_report(comparison_report_df):
         introducing FairLearn
 
         Args:
-            comparison_report_df (pandas df): a fairMLHealth model_comparison
+            comparison_report_df (pandas df): a fairMLHealth report
             report
 
         Returns:

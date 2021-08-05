@@ -129,8 +129,8 @@ def synth_dataset(N:int=16):
                         'C': np.random.randint(1, N, N),
                         'D': np.random.randint(1, int(2*N), N),
                         'E': np.random.uniform(-10, 10, N),
-                        'F': np.random.randint(1, 2, N),
                         'prtc_attr': [0, 1]*int(N/2),
+                        'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
                         'other': [1, 0, 0, 1]*int(N/4),
                         'continuous_target': np.random.uniform(0, 8, N),
                         'binary_target': np.random.randint(0, 2, N),
@@ -145,13 +145,15 @@ def synth_dataset(N:int=16):
     df.loc[half_correct.eq(0), 'avg_cont_pred'] = \
         df['continuous_target'].apply(lambda x: x + np.random.uniform(-6, 6))
 
-    # Add predictions with known biases in one direction or the other.
+    # add predictions that are biased in one direction or the other
+    against_0 = pd.Series([1, 1, 0, 1]*int(N/4))
     df['binary_bias_against0'] = df['binary_target']
-    df.loc[df['prtc_attr'].eq(0) & (df.index > 4), 'binary_bias_against0'] = \
+    df.loc[against_0.eq(0), 'binary_bias_against0'] = \
         df['binary_target'].apply(lambda x: int(not x))
 
+    toward_0 = pd.Series([1, 1, 1, 0]*int(N/4))
     df['binary_bias_toward0'] = df['binary_target']
-    df.loc[df['prtc_attr'].eq(1) & (df.index > 4), 'binary_bias_toward0'] = \
+    df.loc[toward_0.eq(0), 'binary_bias_toward0'] = \
         df['binary_target'].apply(lambda x: int(not x))
 
     return df

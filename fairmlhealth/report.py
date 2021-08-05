@@ -18,11 +18,6 @@ from .measure import summary, flag, __regression_performance
 from . import __preprocessing as prep, __validation as valid
 
 
-"""
-    Model Comparison Tools
-"""
-
-''' Mini Reports '''
 
 def classification_performance(y_true, y_pred, target_labels=None,
                                sig_fig:int=4):
@@ -51,41 +46,10 @@ def classification_performance(y_true, y_pred, target_labels=None,
     return report
 
 
-def measure_model(test_data, targets, protected_attr, model=None,
-                  predictions=None, probabilities=None,
-                  pred_type="classification", flag_oor=True):
-    """ Generates a report of fairness measures for the model
-
-    Args:
-        test_data (pandas DataFrame or compatible type):
-        targets (1D array-like):
-        protected_attr (1D array-like):
-        model (scikit model or other model object with a *.predict() function
-            Defaults to None. If None, must pass predictions.
-        predictions (1D array-like): Set of predictions
-            corresponding to targets. Defaults to None. Ignored
-            if model argument is passed.
-        probabilities (1D array-like): Set of probabilities
-            corresponding to predictions. Defaults to None. Ignored
-            if models argument is passed.
-        flag_oor (bool): if True, will apply flagging function to highlight
-            fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range). Defaults to False.
-
-    Returns:
-        pandas dataframe of fairness measures for the model
-    """
-    comp = FairCompare(test_data, targets, protected_attr, model,
-                       predictions, probabilities, pred_type, verboseMode=True)
-    model_name = list(comp.models.keys())[0]
-    table = comp.measure_model(model_name, flag_oor=flag_oor,
-                               skip_performance=False)
-    return table
-
-
-def compare_models(test_data, targets, protected_attr, models=None,
-                   predictions=None, probabilities=None,
-                   pred_type="classification", flag_oor=True):
+def compare(test_data, targets, protected_attr, models=None,
+            predictions=None, probabilities=None,
+            pred_type="classification", flag_oor=True,
+            skip_performance=False, output_type:str=None):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -106,13 +70,23 @@ def compare_models(test_data, targets, protected_attr, models=None,
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
+        skip_performance (bool): If true, removes performance measures from the
+            output. Defaults to False.
+        output_type (str): One of ["styler", "dataframe", "html", None]. Updates
+            the output type of the comparison table, defaults to None, which
+            returns either a pandas Dataframe (if flag_oor=False) or a pandas
+            Styler (if flag_oor=True). Flagged comparisons cannot be returned as
+            pandas DataFrame.
 
     Returns:
-        pandas dataframe of fairness and performance measures for each model
+        pandas.Styler | pandas.DataFrame | HTML
+        type determined by output_type and flag_oor arguments
     """
     comp = FairCompare(test_data, targets, protected_attr, models,
                        predictions, probabilities, pred_type, verboseMode=True)
-    table = comp.compare_measures(flag_oor=flag_oor)
+    table = comp.compare_measures(flag_oor=flag_oor,
+                                    skip_performance=skip_performance,
+                                    output_type=output_type)
     return table
 
 
@@ -180,8 +154,15 @@ class FairCompare(ABC):
         self.prtc_attr = protected_attr
         self.priv_grp = priv_grp
         self.y = target_data
-        self.pred_type = pred_type
         self.sig_fig = 4
+
+        # Tool does not yet handle multiclass, but will be able to distinguish
+        #   binary from multiclass in the future
+        valid_pred_types = ["classification", "regression"]
+        if pred_type not in valid_pred_types:
+            msg = f"pred_type must be one of {valid_pred_types}. Got {pred_type}"
+            raise valid.ValidationError(msg)
+        self.pred_type = pred_type
 
         # The user is forced to pass either models or predictions as None to
         # simplify attribute management. If models are passed, they will be used
@@ -201,18 +182,35 @@ class FairCompare(ABC):
         #
         self.__setup()
 
-    def compare_measures(self, flag_oor=True, skip_performance=False):
+    def compare_measures(self, flag_oor=True, skip_performance:bool=False,
+                         output_type:str=None):
         """ Returns a pandas dataframe containing fairness and performance
             measures for all available models
 
         Args:
             flag_oor (bool): if True, will apply flagging function to highlight
-            fairness metrics which are considered to be outside the "fair" range
-            (Out Of Range)
+                fairness metrics which are considered to be outside the "fair"
+                range
+            skip_performance (bool): If true, removes performance measures from the
+                output. Defaults to False.
+            output_type (str): One of ["styler", "dataframe", "html", None].
+                Updates the output type of the comparison table, defaults to None,
+                which returns either a pandas Dataframe (if flag_oor=False) or a
+                pandas Styler (if flag_oor=True). Flagged comparisons cannot be
+                returned as pandas DataFrame.
+
+        Returns:
+            pandas.Styler | pandas.DataFrame | HTML
+            type determined by output_type and flag_oor arguments
         """
         # Model objects are assumed to be held in a dict
         if not valid.is_dictlike(self.models):
             self.__set_dicts()
+        #
+        self.__validate_output_type(output_type, flag_oor)
+        if output_type is None and flag_oor is False:
+            output_type = "dataframe"
+        output_type = "" if output_type is None else output_type.lower()
         #
         if len(self.models) == 0:
             warnings.warn("No models to compare.")
@@ -224,26 +222,37 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(model_name, flag_oor=False,
-                                         skip_performance=skip_performance)
+                res = self.measure_model(model_name,
+                                        skip_performance=skip_performance,
+                                        flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
-                    output = flag(output, sig_fig=4)
+                    as_styler = True if output_type != "html" else False
+                    output = flag(output, sig_fig=4, as_styler=as_styler)
+                else:
+                    if output_type.lower() == "styler":
+                        output = output.style
+                    elif output_type.lower() == "html":
+                        output = output.to_html()
+                    else:
+                        pass
             else:
                 output = None
             return output
 
     def measure_model(self, model_name, **kwargs):
-        """ Returns a pandas dataframe containing fairness measures for the
-                model_name specified
+        """ Creates a table of fairness-related measures for the model_name specified
 
         Args:
             model_name (str): a key corresponding to the model of interest,
                 as found in the object's "models" dictionary
+
+        Returns:
+            pandas.DataFrame
         """
         self.__validate(model_name)
         msg = f"Could not measure fairness for {model_name}"
@@ -257,15 +266,31 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary(self.X[model_name],
-                                 self.prtc_attr[model_name],
-                                 self.y[model_name],
-                                 self.preds[model_name],
-                                 self.probs[model_name],
-                                 pred_type=self.pred_type,
-                                 sig_fig=self.sig_fig,
-                                 **kwargs)
+            res = summary(X=self.X[model_name],
+                          y_true=self.y[model_name],
+                          y_pred=self.preds[model_name],
+                          y_prob=self.probs[model_name],
+                          prtc_attr=self.prtc_attr[model_name],
+                          pred_type=self.pred_type,
+                          sig_fig=self.sig_fig,
+                          **kwargs)
             return res
+
+    def __validate_output_type(self, output_type:str=None, flag_request:bool=None):
+        valid_outputs = ["styler", "html", "dataframe", None]
+        if not isinstance(output_type, str) and output_type is not None:
+            raise TypeError(f"output_type must be string, one of {valid_outputs}")
+        elif output_type is None and flag_request is False: # acceptable combination
+            return None
+        # test output_type as string to facilitate remaining
+        output_str = "" if output_type is None else output_type.lower()
+        if output_str not in valid_outputs and output_type is not None:
+            raise ValueError(f"output_type must be one of {valid_outputs}")
+        elif output_str == "dataframe" and flag_request == True:
+            msg = "Flags can only be used for html or pandas styler outputs, not dataframe"
+            raise ValueError(msg)
+        else:
+            return None
 
     def __check_models_predictions(self, enforce=True):
         """ If any predictions are missing, generates predictions for each model.
@@ -280,6 +305,7 @@ class FairCompare(ABC):
         pred_objs = [*self.preds.values()]
         prob_objs = [*self.probs.values()]
         missing_probs = []
+        has_probs = None
         #
         if enforce:
             if not any(m is None for m in model_objs):
@@ -297,35 +323,43 @@ class FairCompare(ABC):
                                " for this model.") + e
                         raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
-                    if self.pred_type == "classification":
-                        # Since most fairness measures do not require probabilities,
-                        #   y_prob is optional
+                    # Since most fairness measures do not require probabilities,
+                    #   y_prob is optional
+                    has_probs = getattr(mdl, 'predict_proba', None)
+                    if has_probs is not None:
                         try:
                             y_prob = mdl.predict_proba(self.X[mdl_name])[:, 1]
                         except BaseException:
                             y_prob = None
                             missing_probs.append(mdl_name)
                         self.probs[mdl_name] = y_prob
-
+                    else:
+                        pass
             elif not all(m is None for m in model_objs):
                 raise valid.ValidationError(
                     "Incomplete set of models detected. Can't process a mix of"
                     + " models and predictions")
             else:
-                if any(p is None for p in pred_objs):
+                if self.pred_type == "regression":
+                    pass
+                elif any(p is None for p in pred_objs):
                     raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-                missing_probs = [p for p in prob_objs if p is None]
+                elif has_probs is not None:
+                    missing_probs = [p for p in prob_objs if p is None]
         else:
-            if any(p is None for p in pred_objs):
+            if self.pred_type == "regression":
+                pass
+            elif any(p is None for p in pred_objs):
                 raise valid.ValidationError(
                         "Cannot measure without either models or predictions")
-            missing_probs = [p for p in prob_objs if p is None]
+            elif has_probs is not None:
+                missing_probs = [p for p in prob_objs if p is None]
 
         if self.pred_type == "classification" and any(missing_probs):
             warnings.warn("Please note that probabilities could not be " +
-                f"generated for the following models: {missing_probs}. " +
-                "Dependent metrics will be skipped.")
+                    f"generated for the following models: {missing_probs}. " +
+                    "Dependent metrics will be skipped.")
 
         return None
 
@@ -403,7 +437,6 @@ class FairCompare(ABC):
                 self.__validate(m)
         except valid.ValidationError as ve:
             raise valid.ValidationError(f"Error loading FairCompare. {ve}")
-
 
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation

@@ -1,6 +1,5 @@
+''' Test functions for fairmlhealth.__utils.py
 '''
-'''
-
 
 from logging import warning
 from fairmlhealth import measure, report, __validation as valid
@@ -36,37 +35,39 @@ class TestCohorts:
     """ Validates that standard inputs are processed without error
     """
     def test_no_cohort(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'],
-                            self.df['classification'],
-                            self.df['avg_classification'],
+        _ = measure.summary(X=self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
                             pred_type="classification")
 
     def test_one_cohort_cols(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'],
-                            self.df['classification'],
-                            self.df['avg_classification'],
-                            pred_type="classification",
+        _ = measure.summary(self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
                             cohorts=self.cohorts[0])
 
     def test_multi_cohort_cols(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'],
-                            self.df['classification'],
-                            self.df['avg_classification'],
-                            pred_type="classification",
+        _ = measure.summary(self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
                             cohorts=self.cohorts)
 
     def test_toomany_cohorts(self):
         tmc = self.df['A'].reset_index()
         with pytest.raises(valid.ValidationError):
-            _ = measure.summary(self.df, self.df['prtc_attr'],
-                                self.df['classification'],
-                                self.df['avg_classification'],
-                                pred_type="classification",
+            _ = measure.summary(self.df,
+                                y_true=self.df['classification'],
+                                y_pred=self.df['avg_classification'],
+                                prtc_attr=self.df['prtc_attr'],
                                 cohorts=tmc['index'])
 
     def test_cohort_bias(self):
-        _ = measure.bias(self.df, self.df['prtc_attr'],
-                            self.df['classification'],
+        _ = measure.bias(self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
                             pred_type="classification",
                             cohorts=self.cohorts)
 
@@ -83,29 +84,29 @@ class TestCohorts:
                                 cohorts=self.cohorts[0])
 
     def test_cohort_summary(self):
-        measure.summary(self.df,
-                        self.df['prtc_attr'],
-                        self.df['classification'],
-                        self.df['avg_classification'],
-                        cohorts=self.cohorts[0],
-                        pred_type="classification")
+       _ = measure.summary(X=self.df,
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
+                            cohorts=self.cohorts[0],
+                            pred_type="classification")
 
 
 @pytest.mark.usefixtures("load_data")
 class TestFlag():
     def test_summary_default_flags_classification(self):
         _ = measure.summary(self.df,
-                            self.df['prtc_attr'],
-                            self.df['classification'],
-                            self.df['avg_classification'],
+                            y_true=self.df['classification'],
+                            y_pred=self.df['avg_classification'],
+                            prtc_attr=self.df['prtc_attr'],
                             pred_type="classification",
                             flag_oor=True)
 
     def test_summary_default_flags_regression(self):
-        _ = measure.summary(self.df,
-                            self.df['prtc_attr'],
-                            self.df['regression'],
-                            self.df['avg_regression'],
+        _ = measure.summary(X=self.df,
+                            y_true=self.df['regression'],
+                            y_pred=self.df['avg_regression'],
+                            prtc_attr=self.df['prtc_attr'],
                             pred_type="regression",
                             flag_oor=True)
 
@@ -123,8 +124,8 @@ class TestFlag():
                             pred_type="regression",
                             flag_oor=True)
 
-    def test_compare_models_flags(self):
-        result = report.compare_models(self.df,
+    def test_compare_flags(self):
+        result = report.compare(self.df,
                                        self.df['classification'],
                                        self.df['prtc_attr'],
                                        predictions=[self.df['avg_classification'],
@@ -135,9 +136,9 @@ class TestFlag():
 
     def test_flag_with_cohort_summary(self):
         measure.summary(self.df,
-                        self.df['prtc_attr'],
-                        self.df['classification'],
-                        self.df['avg_classification'],
+                        y_true=self.df['classification'],
+                        y_pred=self.df['avg_classification'],
+                        prtc_attr=self.df['prtc_attr'],
                         cohorts=self.cohorts[0],
                         pred_type="classification",
                         flag_oor=True)

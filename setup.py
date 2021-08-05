@@ -53,7 +53,7 @@ setup(
                     },
     python_requires='>=3.6,<4',
     install_requires=[
-                      'aif360>=0.3.0',
+                      'aif360>=0.3.0,<=0.4.0',
                       'ipython',
                       'jupyter',
                       'numpy>=1.16',

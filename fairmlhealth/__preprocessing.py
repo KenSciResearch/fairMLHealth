@@ -27,6 +27,9 @@ def analytical_labels(pred_type: str = "binary"):
 
 def prep_arraylike(arr:valid.ArrayLike, name:str=None, expected_len:int=None):
     valid.validate_array(arr, name, expected_len)
+    if isinstance(arr, pd.DataFrame):
+        raise ValidationError(
+            "This function accepts only 1D numpy arrays or pandas Series objects.")
     series = pd.Series(arr, name=name).reset_index(drop=True)
     return series
 
@@ -125,7 +128,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     if y_true is not None:
         y_true = prep_targets(y_true, prtc_attr)
         if not any(y_true.columns) or y_true.columns[0] == 0:
-            _y = y_cols()['col_names']['yt']
+            _y = y_cols()['priv_names']['yt']
             y_true.columns = [_y]
         else:
             _y = y_true.columns[0]
@@ -162,7 +165,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
         standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
                             y_prob=y_prob)
     # Attach y variables and subset to expected columns
-    _y, _yh, _yp = y_cols()['col_names'].values()
+    _y, _yh, _yp = y_cols()['priv_names'].values()
     df = X.copy()
     pred_cols = []
     if y_true is not None:
@@ -199,17 +202,20 @@ def y_cols(df=None):
                 of known names; names that are not found will be dropped from
                 the results. Defaults to None.
     '''
-    y_names = {'col_names': {'yt': '__y_true',
-                            'yh': '__y_pred',
-                            'yp': '__y_prob'},
-              'disp_names': {'yt': 'Target',
-                             'yh': 'Pred.',
-                             'yp': 'Prob.'}
+    y_names = {
+                # Private names used in processing
+                'priv_names': {'yt': '___y_true',
+                                'yh': '___y_pred',
+                                'yp': '___y_prob'},
+                # Display names
+                'disp_names': {'yt': 'Target',
+                                'yh': 'Prediction',
+                                'yp': 'Probability'}
             }
     #
     if df is not None:
-        for k in y_names['col_names'].keys():
-            if y_names['col_names'][k] not in df.columns:
-                y_names['col_names'][k] = None
+        for k in y_names['priv_names'].keys():
+            if y_names['priv_names'][k] not in df.columns:
+                y_names['priv_names'][k] = None
     return y_names
 
