@@ -7,7 +7,7 @@ from fairmlhealth import stat_utils
 import numpy as np
 import pytest
 import pandas as pd
-from .__test_utils import synth_dataset
+from .__test__utils import synth_dataset
 np.random.seed(506)
 
 
