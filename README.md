@@ -3,9 +3,9 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
 
 ## New in Version 1.0.0!
 We've reorganized library to make things more intuitive and added some useful new features:
-* evaluate measures for regression analysis
-* stack stratified tables by cohort groups
-* use a single **compare** function to compare any number of models
+* Evaluate measures for regression analysis
+* Stack stratified tables by cohort groups
+* Use a single **compare** function to compare any number of models
 
 ## Tool Contents
 - ### [Documentation and References](docs/README.md)
