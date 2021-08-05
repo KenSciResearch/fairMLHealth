@@ -2,10 +2,11 @@
 Validation tests for fairmlhealth
 '''
 
-from fairmlhealth.__fairness_metrics import eq_odds_diff, eq_odds_ratio
-from numpy import isclose
+import fairmlhealth.__fairness_metrics as fairmetric
+from numpy import isnan
 import pandas as pd
 import pytest
+from fairmlhealth import stat_utils
 from .__testing_utilities import synth_dataset
 
 
@@ -28,14 +29,12 @@ class TestFairnessMetrics:
     """
     def test_eo_diff(self):
         # rounding and temporary values added until unfair predictions are corrected in an upcoming PR
-        assert eq_odds_diff(self.y, self.y) == 0
-        assert round(eq_odds_diff(self.y, self.avg_fair), 2) == 0.17 #0
-        assert eq_odds_diff(self.y, self.bias_against0) == -0.5
-        assert round(eq_odds_diff(self.y, self.bias_toward0), 2) == 0.67 #0.5
+        assert fairmetric.eq_odds_diff(self.y, self.y) == 0
+        assert round(fairmetric.eq_odds_diff(self.y, self.avg_fair), 2) == 0.17 #0
+
 
     def test_eo_ratio(self):
         # Temporary values added until unfair predictions are corrected in an upcoming PR
-        assert eq_odds_ratio(self.y, self.y) == 0
-        assert eq_odds_ratio(self.y, self.avg_fair) == 1.5 #1
-        assert eq_odds_ratio(self.y, self.bias_against0) == 0
-        assert eq_odds_ratio(self.y, self.bias_toward0) == 3 #2
+        assert isnan(fairmetric.eq_odds_ratio(self.y, self.y))
+        assert fairmetric.eq_odds_ratio(self.y, self.avg_fair) == 1.5 #1
+

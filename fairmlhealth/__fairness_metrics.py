@@ -1,4 +1,9 @@
+''' Custom Fairness Metrics
 
+    Note that ratio and difference computation is handled by AIF360's
+    sklearn.metrics module. As of the V 0.4.0 release, these are calculated as
+    [unprivileged/privileged] and [unprivileged - privileged], respectively
+'''
 from aif360.sklearn.metrics import difference, ratio
 import numpy as np
 import pandas as pd
