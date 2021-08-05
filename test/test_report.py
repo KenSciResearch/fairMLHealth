@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 import pytest
 import pandas as pd
 from .__testing_utilities import synth_dataset
-
+import fairmlhealth.__validation as valid
 
 
 @pytest.fixture(scope="class")
@@ -38,7 +38,7 @@ def load_data(request):
 
 
 @pytest.mark.usefixtures("load_data")
-class TestCompModFunction:
+class TestCompareFunction:
     """ Test proper functioning of the compare function. Result
         should be a pandas dataframe
     """
@@ -91,13 +91,39 @@ class TestCompModFunction:
         result = report.compare(*args, flag_oor=False)
         self.is_result_valid(result)
 
+    def test_embeddedHTML_noFlag(self):
+        result = report.compare([self.X, self.X],
+                                self.y, self.prtc_attr,
+                                predictions=[self.y, self.y],
+                                probabilities=[self.y, self.y],
+                                flag_oor=False,
+                                output_type="html")
+        assert isinstance(result, str)
+
+    def test_embeddedHTML_withFlag_valid(self):
+        result = report.compare([self.X, self.X],
+                                self.y, self.prtc_attr,
+                                predictions=[self.y, self.y],
+                                probabilities=[self.y, self.y],
+                                flag_oor=True,
+                                output_type="html")
+        assert isinstance(result, str)
+
+    def test_outputType_withFlag_invalid(self):
+        with pytest.raises(ValueError):
+            _ = report.compare([self.X, self.X],
+                                self.y, self.prtc_attr,
+                                predictions=[self.y, self.y],
+                                probabilities=[self.y, self.y],
+                                flag_oor=True,
+                                output_type="dataframe")
 
 @pytest.mark.usefixtures("load_data")
-class TestCompModValidations:
+class TestCompareValidations:
     """ Validations for the compare function
     """
     def test_mismatch_input_numbers(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {1: self.prtc_attr},
@@ -105,7 +131,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_missing_models(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
@@ -113,7 +139,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_invalid_X_member(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
@@ -121,7 +147,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_invalid_y_member(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: None},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
@@ -129,7 +155,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_invalid_prtc_member(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: None},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
@@ -137,7 +163,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_invalid_model_member(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: None},
@@ -145,7 +171,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_differing_keys(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({5: self.X, 6: self.X},
                                 {0: self.y, 1: self.y},
                                 {0: self.prtc_attr, 1: self.prtc_attr},
@@ -153,7 +179,7 @@ class TestCompModValidations:
                                 flag_oor=False)
 
     def test_missing_keys(self):
-        with pytest.raises(Exception):
+        with pytest.raises(valid.ValidationError):
             report.compare({0: self.X, 1: self.X},
                                 {0: self.y, 1: self.y},
                                 None,

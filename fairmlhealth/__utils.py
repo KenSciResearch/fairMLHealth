@@ -3,7 +3,7 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 '''
 from numbers import Number
-from typing import Callable
+from typing import Callable, Dict, Tuple
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
@@ -207,7 +207,7 @@ class FairRanges():
     def mad(self, arr):
         return np.median(np.abs(arr - np.median(arr)))
 
-    def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
+    def load_fair_ranges(self, custom_ranges:Dict[str, Tuple[Number, Number]]=None,
                          y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
         """
         Args:
@@ -271,8 +271,8 @@ class Flagger():
     def __init__(self):
         self.reset()
 
-    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True,
-                   boundaries=None):
+    def apply_flag(self, df:pd.DataFrame, caption:str="", sig_fig:int=4, as_styler:bool=True,
+                   boundaries:Dict[str, Tuple[Number, Number]]=None):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
@@ -309,13 +309,14 @@ class Flagger():
         with catch_warnings(record=False):
             filterwarnings("ignore", category=DeprecationWarning)
             styled = styled.set_precision(sig_fig)
+
         #
         setattr(styled, "fair_ranges", self.boundaries)
         # return pandas styler if requested
         if as_styler:
             return styled
         else:
-            return HTML(styled.render())
+            return styled.render()
 
     def reset(self):
         """ Clears the __Flagger settings
@@ -348,14 +349,16 @@ class Flagger():
             clr = f'{self.flag_type}:{self.flag_color}'
             return [clr if is_oor(name, v) else ""  for v in vals]
 
-    def __set_boundaries(self, boundaries):
+    def __set_boundaries(self, custom_boundaries):
         lbls = [str(l).lower() for l in self.labels]
-        if boundaries is None:
-            bnd = FairRanges().load_fair_ranges()
-            # Mismatched keys may lead to errant belief that a measure is within
-            # the fair range when actually there was a mistake (eg. key was
-            # misspelled)
-            boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
+        if custom_boundaries is None:
+            custom_boundaries = {}
+        # FairRanges will automatically join defaults with custom boundaries
+        bnd = FairRanges().load_fair_ranges(custom_boundaries)
+        # Mismatched keys may lead to errant belief that a measure is within
+        # the fair range when actually there was a mistake (eg. key was
+        # misspelled)
+        boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 
@@ -382,7 +385,7 @@ class Flagger():
             if isinstance(self.df.index, pd.MultiIndex):
                 if "Measure" in self.df.index.names:
                     label_type = "index"
-                    labels = self.df.index.get_level_values(1)
+                    labels = self.df.index.get_level_values("Measure")
                 else:
                     label_type = "columns"
                     labels = self.df.columns.tolist()

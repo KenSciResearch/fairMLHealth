@@ -39,8 +39,8 @@ class TestStandardCassificationReports:
     """ Validates that standard inputs are processed without error
     """
     def test_classification_summary(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'], self.df['y'],
-                                   self.df['avg'], pred_type="classification")
+        _ = measure.summary(X=self.df, y_true=self.df['y'], y_pred=self.df['avg'],
+                            prtc_attr=self.df['prtc_attr'], pred_type="classification")
 
     def test_classification_data(self):
         _ = measure.data(self.df, self.df['y'])
@@ -60,8 +60,8 @@ class TestStandardRegressionReports:
         without error. Will be finalized for release of V2.0
     """
     def __dev_test_regression_summary(self):
-        _ = measure.summary(self.df, self.df['prtc_attr'], self.df['y'],
-                                   self.df['avg'], pred_type="regression")
+        _ = measure.summary(X=self.df, y_true=self.df['y'], y_pred=self.df['avg'],
+                            prtc_attr=self.df['prtc_attr'], pred_type="regression")
 
     def __dev_test_regression_data(self):
         _ = measure.data(self.df, self.df['y'])
