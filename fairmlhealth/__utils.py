@@ -158,8 +158,16 @@ def iterate_cohorts(func:Callable):
                 #
                 new_args = ['X', 'Y', 'y_true', 'y_pred', 'y_prob', 'prtc_attr']
                 sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
+                try:
+                    df = func(X=x, Y=y, y_true=yt, y_pred=yh, y_prob=yp,
                         prtc_attr=pa, **sub_args)
+                except ValidationError as e:
+                    # Skip groups
+                    m = getattr(e, 'message') if 'message' in dir(e) else None
+                    if m == "Only one target classification found.":
+                        df = pd.DataFrame()
+                else:
+                    raise ValidationError(m)
                 # Empty dataframes indicate issues with evaluation of the function,
                 # likely caused by presence of i.e. only one feature-value pair.
                 if len(df) == 0:
