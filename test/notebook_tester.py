@@ -17,7 +17,7 @@ import tempfile
 
 def find_broken_urls(nb):
     ''' Validates most urls with some exceptions (see documentation for
-        __testing_utilities.is_url_valid)
+    utils.is_url_valid)
     '''
     url_list = list_urls(nb)
     broken_urls = []
