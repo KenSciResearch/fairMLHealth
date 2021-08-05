@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+
+## [0.1.29] - 2021-08-05
+### Tutorial Update
+-
+
 ## [0.1.28] - 2021-08-05
 ### Documentation Update
 - Updated references and images in main README.md
