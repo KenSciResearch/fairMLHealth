@@ -582,11 +582,13 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class == 2:
         summary_type = "binary"
+    elif n_class < 2:
+        raise ValidationError("Only one target classification found.")
     else:
         summary_type = "multiclass"
-        raise ValueError(
-            "tool cannot yet process multiclass classification models")
-    # Generate a dictionary of measure values to be converted to a dataframe
+        raise ValidationError(
+            "fairMLHealth cannot yet process multiclass classification models")
+    # Generate a dictionary of measure values to be converted t a dataframe
     labels = analytical_labels(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
     measures = {labels['gf_label']: update_summary(summary, pa_name, y_true,
