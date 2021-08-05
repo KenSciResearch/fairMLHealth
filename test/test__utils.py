@@ -1,6 +1,5 @@
+''' Test functions for fairmlhealth.__utils.py
 '''
-'''
-
 
 from logging import warning
 from fairmlhealth import measure, report, __validation as valid
