@@ -103,6 +103,11 @@ def list_warnings(nb):
     return wrns
 
 
+class NotebookError(Exception):
+    def __init__(self, message:str, traceback:str):
+        self.message = message
+
+
 def validate_notebook(nb_path, timeout=60):
     """ Executes the notebook via nbconvert and collects the output
 
@@ -140,6 +145,7 @@ def validate_notebook(nb_path, timeout=60):
     broken_urls = find_broken_urls(nb)
     if any(broken_urls):
         broken_urls = ["broken url: " + u for u in broken_urls]
-        errors += broken_urls
+        traceback = f"Error in {nb_path}: {broken_urls}"
+        errors += NotebookError(broken_urls, traceback)
 
     return nb, errors
