@@ -104,22 +104,22 @@ For the following explanations of specific measures, we'll use the results of a 
 
 <a id="fairness_report"></a>
 <h3 style="text-align: center"><u> Example FairMLHealth Fairness Report </u> </h3>
-<p style="text-align: center"><img src="./img/evaluation_example_report.png"
+<p style="text-align: center"><img src="./img/evaluating_fairness/example_report.png"
      alt="Example FairMLHealth Fairness Report"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Table </u> </h3>
-<p style="text-align: center"><img src="./img/evaluation_stratified_data.png"
+<p style="text-align: center"><img src="./img/evaluating_fairness/stratified_data.png"
      alt="Example FairMLHealth Stratified Data Table"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Table </u> </h3>
-<p style="text-align: center"><img src="./img/evaluation_example_stratified_performance.png"
+<p style="text-align: center"><img src="./img/evaluating_fairness/example_stratified_performance.png"
      alt="Example FairMLHealth Stratified Performance Table"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Table </u> </h3>
-<p style="text-align: center"><img src="./img/evaluation_example_stratified_fairness.png"
+<p style="text-align: center"><img src="./img/evaluating_fairness/example_stratified_fairness.png"
      alt="Example FairMLHealth Stratified Fairness Table"
      /></p>
 
@@ -279,7 +279,7 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 In this section we will compare the results of multiple models using FairMLHealth's **compare** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 <h3 style="text-align: center"><u> Example FairMLHealth Model Comparison Report </u> </h3>
-<p style="text-align: center"><img src="./img/evaluation_model_comparison.png"
+<p style="text-align: center"><img src="./img/evaluating_fairness/model_comparison.png"
      alt="Example FairMLHealth Model Comparison Report"
      /></p>
 
