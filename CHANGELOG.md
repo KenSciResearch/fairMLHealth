@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.25] - 2021-08-05
+### Custom Boundary Bug
+- Fix bug that prevented custom boundaries from updating
 
 ## [0.1.24] - 2021-08-03
 ### Undefined Ratios and Fairness Metric Testing
