@@ -82,6 +82,7 @@ def validate_array(arr, name="array", expected_len:int=0):
 
 
 def validate_binary_attr(arr, name="attribute", expected_len:int=0):
+    expected_len = arr.shape[0] if expected_len is None else expected_len
     validate_array(arr, name, expected_len)
     __validate_binVal(arr, name, fuzzy=False)
     __validate_values(arr, name)

@@ -492,6 +492,11 @@ def __classification_bias(*, X, y_true, y_pred, features:list=None, **kwargs):
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     valid.limit_alert(strat_feats, item_name="features", limit=200)
+
+    # Bias is not yet available for multiclass predictions
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
+
     #
     results = __apply_biasGroups(strat_feats, df,
                                  __fair_classification_measures, _y, _yh)
@@ -578,6 +583,10 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob, priv_grp)
     pa_name = prtc_attr.columns.tolist()[0]
 
+    # Summary is not yet available for multiclass predictions
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
+
     # Prevent processing for more than 2 classes until measures enabled
     n_class = np.unique(np.append(y_true.values, y_pred.values)).shape[0]
     if n_class == 2:
@@ -588,6 +597,7 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
         summary_type = "multiclass"
         raise ValidationError(
             "fairMLHealth cannot yet process multiclass classification models")
+
     # Generate a dictionary of measure values to be converted t a dataframe
     labels = analytical_labels(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
@@ -768,6 +778,11 @@ def __strat_class_performance(X, y_true, y_pred, y_prob=None, features:list=None
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     valid.limit_alert(strat_feats, item_name="features")
+
+    # Performance is not yet available for multiclass predictions
+    valid.__validate_binVal(y_true, name="y_true", fuzzy=True)
+    valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
+
     #
     results = __apply_featureGroups(strat_feats, df,
                                     __classification_performance, _y, _yh, _yp)
