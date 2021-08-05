@@ -12,7 +12,29 @@ import nbformat
 import os
 import subprocess
 import tempfile
+import warnings
 
+
+
+def check_results(nb, err):
+    ''' '''
+    if any(err):
+        for e in err:
+            if isinstance(e, str):
+                print(e)
+            else:
+                for t in e['traceback']:
+                    print(t)
+        raise AssertionError("Notebook Broken")
+
+    warns = list_warnings(nb)
+    if any(warns):
+        for t in warns:
+            if isinstance(t['text'], list):
+                wrn = t['text'][0]
+            else:
+                wrn = t['text']
+            warnings.warn(wrn)
 
 
 def find_broken_urls(nb):

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.27] - 2021-08-05
+### Bug Fixes
+- Attach messages to validation errors
+- Prevent errant requests for classification analysis on regeression models
+- Update notebook tests so that error and warning evaluation is centralized, can handle broken url strings
 
 ## [0.1.26] - 2021-08-05
 ### Report Update
@@ -12,7 +17,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - Update tests for report.py
 - Update method for testing if a model predicts probabilities in FairCompare
 - Allow user to skip performance measures when using report.compare
-
 
 ## [0.1.25] - 2021-08-05
 ### Custom Boundary Bug
