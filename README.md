@@ -1,13 +1,13 @@
-# New in Version 1.0.0!
+# fairMLHealth
+Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
+
+## New in Version 1.0.0!
 We've reorganized library to make things more intuitive and added some useful new features:
 * evaluate measures for regression analysis
 * stack stratified tables by cohort groups
 * use a single **compare** function to compare any number of models
 
-# fairMLHealth
-Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.
-
-## Resources
+## Tool Contents
 - ### [Documentation and References](docs/README.md)
     - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
     - [Our Publications](docs/publications/README.md)
@@ -314,12 +314,14 @@ measure.summary(X_test[['col2']],
      />
 
 
-### Additional Resources
+## Additional Library Resources
 More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
 * [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Binary.ipynb)
 * [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
-For a deeper discussion of the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
+For a deep discussion of fairness evaluation, see [Evaluating Fairness](./docs/resources/Evaluating_Fairness.md) in our [documentation and resources](./docs/resources) section. In the same folder you'll find a [Measures QuickReference](./docs/resources/Measures_QuickReference.md), plus additional [References and Resources](./docs/resources/References_and_Resources.md)
+
+For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
 
 Templates are available in the [templates folder](./templates):
 * [Binary Classification Assessment Template](./templates/Template-BinaryClassificationAssessment.ipynb)
