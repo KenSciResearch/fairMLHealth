@@ -12,7 +12,29 @@ import nbformat
 import os
 import subprocess
 import tempfile
+import warnings
 
+
+
+def check_results(nb, err):
+    ''' '''
+    if any(err):
+        for e in err:
+            if isinstance(e, str):
+                print(e)
+            else:
+                for t in e['traceback']:
+                    print(t)
+        raise AssertionError("Notebook Broken")
+
+    warns = list_warnings(nb)
+    if any(warns):
+        for t in warns:
+            if isinstance(t['text'], list):
+                wrn = t['text'][0]
+            else:
+                wrn = t['text']
+            warnings.warn(wrn)
 
 
 def find_broken_urls(nb):
@@ -103,11 +125,6 @@ def list_warnings(nb):
     return wrns
 
 
-class NotebookError(Exception):
-    def __init__(self, message:str, traceback:str):
-        self.message = message
-
-
 def validate_notebook(nb_path, timeout=60):
     """ Executes the notebook via nbconvert and collects the output
 
@@ -145,7 +162,6 @@ def validate_notebook(nb_path, timeout=60):
     broken_urls = find_broken_urls(nb)
     if any(broken_urls):
         broken_urls = ["broken url: " + u for u in broken_urls]
-        traceback = f"Error in {nb_path}: {broken_urls}"
-        errors += NotebookError(broken_urls, traceback)
+        errors += broken_urls
 
     return nb, errors
