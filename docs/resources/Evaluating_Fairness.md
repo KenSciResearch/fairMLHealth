@@ -104,22 +104,22 @@ For the following explanations of specific measures, we'll use the results of a 
 
 <a id="fairness_report"></a>
 <h3 style="text-align: center"><u> Example FairMLHealth Fairness Report </u> </h3>
-<p style="text-align: center"><img src="./img/tool_examples/bin_oneModel.png"
+<p style="text-align: center"><img src="../img/tool_examples/bin_oneModel.png"
      alt="Example FairMLHealth Fairness Report"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Table </u> </h3>
-<p style="text-align: center"><img src="./img/tool_examples/data_table.png"
+<p style="text-align: center"><img src="../img/tool_examples/data_table.png"
      alt="Example FairMLHealth Stratified Data Table"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Table </u> </h3>
-<p style="text-align: center"><img src="./img/tool_examples/bin_performance_probs.png"
+<p style="text-align: center"><img src="../img/tool_examples/bin_performance_probs.png"
      alt="Example FairMLHealth Stratified Performance Table"
      /></p>
 
 <h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Table </u> </h3>
-<p style="text-align: center"><img src="./img/tool_examples/bin_bias.png"
+<p style="text-align: center"><img src="../img/tool_examples/bin_bias.png"
      alt="Example FairMLHealth Stratified Fairness Table"
      /></p>
 
@@ -213,7 +213,7 @@ Consistency scores measure the similarity between specific predictions and the p
 
 ### The Generalized Entropy Index and Related Measures
 The *Generalized Entropy (GE) Index* was proposed as a metric for income inequality [[Shorrocks (1980)]](#shorrocks_ref)), although it originated as a measure of redundancy in information theory. In 2018, [Speicher *et al.*](#speicher2018_ref) proposed its use for ML models. These measures are dimensionless, and therefore are most useful in comparison relative to each other. Values closer to zero indicate greater fairness, and increasing values indicating decreased fairness.
-> <img src="./img/generalized_entropy_equation.png">
+> <img src="../img/generalized_entropy_equation.png">
 
 #### Special Cases
 The *Theil Index* occurs where the <img src="https://render.githubusercontent.com/render/math?math=GE"> alpha is equal to one. Although it is dimensionless like other indices of generalized entropy, it can be transformed into an Atkinson index, which has a range between 0 and 1.
@@ -279,7 +279,7 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 In this section we will compare the results of multiple models using FairMLHealth's **compare** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 <h3 style="text-align: center"><u> Example FairMLHealth Model Comparison Report </u> </h3>
-<p style="text-align: center"><img src="./img/bin_multiModel.png"
+<p style="text-align: center"><img src="../img/tool_examples/bin_multiModel.png"
      alt="Example FairMLHealth Model Comparison Report"
      /></p>
 
