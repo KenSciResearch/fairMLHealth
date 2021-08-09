@@ -99,7 +99,7 @@ fairness_measures = report.compare(X_test, y_test, X_test['gender', model_1)
 ```
 Note that the Equal Odds Ratio has been dropped from the example below. This because the false positive rate is approximately zero for both the entire dataset and for the privileged class, leading to a zero in the denominator of the False Positive Rate Ratio: $\frac{{FPR}_{unprivileged}}{{FPR}_{privileged}}$. The result is therefore undefined and cannot be compared in the Equal Odds Ratio.
 
-<img src="./docs/img/main/binary_oneModel.png"
+<img src="./docs/img/tool_examples/bin_oneModel.png"
      alt="single model compare example"
      width="800px"
     />
@@ -113,7 +113,7 @@ The **compare** tool can also be used to measure two different models or two dif
 report.compare(X_test, y_test, X_test['gender'],
                {'model 1':model_1, 'model 2':model_2})
 ```
-<img src="./docs/img/main/binary_multiModel.png"
+<img src="./docs/img/tool_examples/bin_multiModel.png"
      alt="two model comparison example"
      width="90%"
      />
@@ -125,7 +125,7 @@ report.compare(X_test, y_test,
                [X_test['gender'], X_test['ethnicity']],
                {'Gender':model_1, 'Ethnicity':model_1})
 ```
-<img src="./docs/img/main/binary_multiAttribute.png"
+<img src="./docs/img/tool_examples/bin_multiAttribute.png"
      alt="multiple attribute comparison example"
      width="90%"
      />
@@ -147,7 +147,7 @@ regression_model = LinearRegression().fit(X_train, y_train)
 # Note that for regression models, the prediction type (pred_type) must be declared as such.
 report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="regression")
 ```
-<img src="./docs/img/main/reg_oneModel.png"
+<img src="./docs/img/tool_examples/reg_oneModel.png"
      alt="regression comparison example"
      width="90%"
      />
@@ -157,7 +157,7 @@ report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="re
 report.compare(X_test, y_test, X_test['gender'], regression_model, pred_type="regression",
                 flag_oor=False, skip_performance=True))
 ```
-<img src="./docs/img/main/reg_skipPerformance.png"
+<img src="./docs/img/tool_examples/reg_skipPerformance.png"
      alt="regression comparison example with skipped performance"
      width="90%"
      />
@@ -183,7 +183,7 @@ measure.data(X_test, y_test, features=['gender'])
 measure.data(X_test[['gender']], y_test)
 
 ```
-<img src="./docs/img/main/data_table.png"
+<img src="./docs/img/tool_examples/data_table.png"
      alt="data table example"
      width="90%"
      />
@@ -198,7 +198,7 @@ measure.data(X=X_test, # used to define rows
              )
 
 ```
-<img src="./docs/img/main/data_table_multiTarget_noOverview.png"
+<img src="./docs/img/tool_examples/data_table_multiTarget_noOverview.png"
      alt="multi-target data table example"
      width="90%"
      />
@@ -214,7 +214,7 @@ measure.performance(X_test[['gender']],
                     y_pred=model_1.predict(X_test),
                     y_prob=model_1.predict_proba(X_test)[:,1])
 ```
-<img src="./docs/img/main/bin_performance_probs.png"
+<img src="./docs/img/tool_examples/bin_performance_probs.png"
      alt="performance table example, binary classification"
      width="90%"
      />
@@ -226,7 +226,7 @@ measure.performance(X_test[['gender']],
                     y_pred=regression_model.predict(X_test),
                     pred_type="regression")
 ```
-<img src="./docs/img/main/reg_performance.png"
+<img src="./docs/img/tool_examples/reg_performance.png"
      alt="performance table example, regression"
      width="90%"
      />
@@ -242,7 +242,7 @@ To simplify the table, fairness measures have been reduced to their component pa
 # Note that flag_oor is set to False by default for this feature
 measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
-<img src="./docs/img/main/binary_bias_noFlag.png"
+<img src="./docs/img/tool_examples/bin_bias_noFlag.png"
      alt="bias table example, binary classification"
      width="90%"
      />
@@ -261,7 +261,7 @@ measure.bias(X_test[['gender', 'col1']],
              flag_oor=True,
              custom_ranges=my_ranges)
 ```
-<img src="./docs/img/main/reg_bias_customBounds.png"
+<img src="./docs/img/tool_examples/reg_bias_customBounds.png"
      alt="bias table example, regression"
      width="90%"
      />
@@ -280,7 +280,7 @@ measure.summary(X_test[['gender', 'col1']],
                 flag_oor=True,
                 custom_ranges={ 'mean prediction difference':(-0.5, 2)})
 ```
-<img src="./docs/img/main/reg_summary_customBounds.png"
+<img src="./docs/img/tool_examples/reg_summary_customBounds.png"
      alt="summary example"
      width="90%"
      />
@@ -296,7 +296,7 @@ cohort_labels = X_test['gender']
 measure.bias(X_test['col3'], y_test, model_1.predict(X_test),
                     flag_oor=True, cohorts=cohort_labels)
 ```
-<img src="./docs/img/main/bin_bias_singleCohort.png"
+<img src="./docs/img/tool_examples/bin_bias_singleCohort.png"
      alt="bias table example with single cohorts"
      width="90%"
      />
@@ -314,7 +314,7 @@ measure.summary(X_test[['col2']],
                 cohorts=X_test[['ethnicity', 'col3']]
                )
 ```
-<img src="./docs/img/main/bin_summary_multiCohort.png"
+<img src="./docs/img/tool_examples/bin_summary_multiCohort.png"
      alt="summary example with multiple cohorts"
      width="90%"
      />
