@@ -40,10 +40,14 @@ Installing from a local copy of the repo:
 
     pip install <path_to_fairMLHealth_dir>
 
-### Troubleshooting
-For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
+### Troubleshooting Installation Issues
 
-If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
+*Trouble with the Installation?*
+     - Step 1: Verify that you're using a compatible version of python.
+     - Step 2: If step 1 does not resolve your issue, verify that all required packages are properly installed.
+     - Step 3: For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
+
+If you are not able to resolve your issue through the troubleshooting tips above, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
 
 ## FairMLHealth Usage
 Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
@@ -99,7 +103,7 @@ fairness_measures = report.compare(X_test, y_test, X_test['gender', model_1)
 ```
 Note that the Equal Odds Ratio has been dropped from the example below. This because the false positive rate is approximately zero for both the entire dataset and for the privileged class, leading to a zero in the denominator of the False Positive Rate Ratio: $\frac{{FPR}_{unprivileged}}{{FPR}_{privileged}}$. The result is therefore undefined and cannot be compared in the Equal Odds Ratio.
 
-<img src="./docs/img/tool_examples/bin_oneModel.png"
+<img src="./docs/img/tool_examples/binary_oneModel.png"
      alt="single model compare example"
      width="800px"
     />
@@ -113,7 +117,7 @@ The **compare** tool can also be used to measure two different models or two dif
 report.compare(X_test, y_test, X_test['gender'],
                {'model 1':model_1, 'model 2':model_2})
 ```
-<img src="./docs/img/tool_examples/bin_multiModel.png"
+<img src="./docs/img/tool_examples/binary_multiModel.png"
      alt="two model comparison example"
      width="90%"
      />
@@ -125,7 +129,7 @@ report.compare(X_test, y_test,
                [X_test['gender'], X_test['ethnicity']],
                {'Gender':model_1, 'Ethnicity':model_1})
 ```
-<img src="./docs/img/tool_examples/bin_multiAttribute.png"
+<img src="./docs/img/tool_examples/binary_multiAttribute.png"
      alt="multiple attribute comparison example"
      width="90%"
      />
@@ -242,7 +246,7 @@ To simplify the table, fairness measures have been reduced to their component pa
 # Note that flag_oor is set to False by default for this feature
 measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
-<img src="./docs/img/tool_examples/bin_bias_noFlag.png"
+<img src="./docs/img/tool_examples/binary_bias_noFlag.png"
      alt="bias table example, binary classification"
      width="90%"
      />
