@@ -101,7 +101,7 @@ model_2 = DecisionTreeClassifier().fit(X_train, y_train)
 fairness_measures = report.compare(X_test, y_test, X_test['gender', model_1)
 
 ```
-Note that the Equal Odds Ratio has been dropped from the example below. This because the false positive rate is approximately zero for both the entire dataset and for the privileged class, leading to a zero in the denominator of the False Positive Rate Ratio: $\frac{{FPR}_{unprivileged}}{{FPR}_{privileged}}$. The result is therefore undefined and cannot be compared in the Equal Odds Ratio.
+Note that the Equal Odds Ratio has been dropped from the example below. This because the false positive rate is approximately zero for both the entire dataset and for the privileged class, leading to a zero in the denominator of the False Positive Rate Ratio. The result is therefore undefined and cannot be compared in the Equal Odds Ratio.
 
 <img src="./docs/img/tool_examples/bin_oneModel.png"
      alt="single model compare example"

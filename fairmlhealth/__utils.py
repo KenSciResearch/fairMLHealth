@@ -232,7 +232,8 @@ class FairRanges:
     ]
     __ratios = [
         "balanced accuracy ratio",
-        "disparate impact ratio ",
+        "disparate impact ratio",
+        "selection ratio",
         "equal odds ratio",
         "fpr ratio",
         "tpr ratio",
@@ -283,7 +284,7 @@ class FairRanges:
         if custom_ranges is not None:
             if valid.is_dictlike(custom_ranges):
                 for k, v in custom_ranges.items():
-                    bnds[str(k).lower()] = v
+                    bnds[str(k).lower().strip()] = v
             else:
                 raise TypeError("custom boundaries must be dict-like object if defined")
         #
@@ -394,9 +395,9 @@ class Flagger:
         #
         clr = f"{self.flag_type}:{self.flag_color}"
         if self.label_type == "index":
-            name = vals.name[1].lower()
+            name = vals.name[1].lower().strip()
         else:
-            name = vals.name.lower()
+            name = vals.name.lower().strip()
         #
         if name not in self.boundaries.keys():
             return ["" for v in vals]
@@ -413,7 +414,7 @@ class Flagger:
         # Mismatched keys may lead to errant belief that a measure is within
         # the fair range when actually there was a mistake (eg. key was
         # misspelled)
-        boundaries = {k: v for k, v in bnd.items() if k.lower() in lbls}
+        boundaries = {k: v for k, v in bnd.items() if k.lower().strip() in lbls}
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 

@@ -124,29 +124,3 @@ def cb_round(series: pd.Series, base: float = 5, sig_dec: int = 0):
     result = series.apply(lambda x: round(base * round(float(x) / base), sig_dec))
     return result
 
-
-def feature_table(df: pd.DataFrame):
-    """ Displays a table containing statistics on the features available in the
-            passed df
-
-        Args:
-            df (pandas df): dataframe containing MIMIC data for the tutorial
-    """
-    if df is None or not isinstance(df, pd.DataFrame):
-        raise valid.ValidationError(
-            "feature_table is designed for pandas DataFrame objects only"
-        )
-    print(
-        f"\n This data subset has {df.shape[0]} total observations"
-        + f" and {df.shape[1]-2} input features \n"
-    )
-    feat_df = pd.DataFrame({"feature": df.columns.tolist()}).query(
-        'feature not in ["ADMIT_ID", "length_of_stay"]'
-    )
-    feat_df["Raw Feature"] = feat_df["feature"].str.split("_").str[0]
-    count_df = (
-        feat_df.groupby("Raw Feature", as_index=False)["feature"]
-        .count()
-        .rename(columns={"feature": "Category Count (Encoded Features)."})
-    )
-    return count_df
