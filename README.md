@@ -11,8 +11,8 @@ We've reorganized library to make things more intuitive and added some useful ne
 - ### [Documentation and References](docs/README.md)
     - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
     - [Our Publications](docs/publications/README.md)
+    - [Quick Reference of Measures](docs/resources/Measures_QuickReference.md)
     - [References and Resources](docs/resources/References_and_Resources.md)
-    - [Summary Tables (Quick Reference of Measures)](docs/resources/Measures_QuickReference.md)
 
 - ### [Examples and Tutorials](examples_and_tutorials/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
@@ -103,7 +103,7 @@ fairness_measures = report.compare(X_test, y_test, X_test['gender', model_1)
 ```
 Note that the Equal Odds Ratio has been dropped from the example below. This because the false positive rate is approximately zero for both the entire dataset and for the privileged class, leading to a zero in the denominator of the False Positive Rate Ratio: $\frac{{FPR}_{unprivileged}}{{FPR}_{privileged}}$. The result is therefore undefined and cannot be compared in the Equal Odds Ratio.
 
-<img src="./docs/img/tool_examples/binary_oneModel.png"
+<img src="./docs/img/tool_examples/bin_oneModel.png"
      alt="single model compare example"
      width="800px"
     />
@@ -117,7 +117,7 @@ The **compare** tool can also be used to measure two different models or two dif
 report.compare(X_test, y_test, X_test['gender'],
                {'model 1':model_1, 'model 2':model_2})
 ```
-<img src="./docs/img/tool_examples/binary_multiModel.png"
+<img src="./docs/img/tool_examples/bin_multiModel.png"
      alt="two model comparison example"
      width="90%"
      />
@@ -129,7 +129,7 @@ report.compare(X_test, y_test,
                [X_test['gender'], X_test['ethnicity']],
                {'Gender':model_1, 'Ethnicity':model_1})
 ```
-<img src="./docs/img/tool_examples/binary_multiAttribute.png"
+<img src="./docs/img/tool_examples/bin_multiAttribute.png"
      alt="multiple attribute comparison example"
      width="90%"
      />
@@ -246,7 +246,7 @@ To simplify the table, fairness measures have been reduced to their component pa
 # Note that flag_oor is set to False by default for this feature
 measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
-<img src="./docs/img/tool_examples/binary_bias_noFlag.png"
+<img src="./docs/img/tool_examples/bin_bias_noFlag.png"
      alt="bias table example, binary classification"
      width="90%"
      />

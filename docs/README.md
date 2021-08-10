@@ -2,7 +2,7 @@
 
 ## [Resources](resources)
 * [Evaluating Fairness](resources/Evaluating_Fairness.md)
-* [Summary Tables (Quick Reference of Measures)](resources/Measures_QuickReference.md)
+* [Quick Reference of Measures](resources/Measures_QuickReference.md)
 * [References and Outside Resources](resources/References_and_Resources.md)
 
 ## [Publications](publications/README.md)
