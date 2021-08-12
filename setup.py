@@ -15,7 +15,7 @@ def _get_version():
     return json.load(open(version_file))['version']
 
 
-# Set strings that should be defined elsewhere. ToDo: define elsewhere
+
 long_description = ("A library facilitating fairness measurement" +
                     " and deployment of fairness-aware ML algorithms")
 
