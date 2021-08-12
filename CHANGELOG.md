@@ -25,7 +25,6 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 - Doctstings on public-facing functions given added detail components of the code.
 - The "feature_table" function was moved into utils.py so that it can be used publicly.
-
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
 - Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
