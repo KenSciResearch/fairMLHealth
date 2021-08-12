@@ -7,7 +7,7 @@ Upon recommendation from the AIF360 development team
 '''
 
 from .notebook_tester import validate_notebook, list_warnings
-from .__utils import is_test_environment
+from .__test__utils import is_test_environment
 import os
 import sys
 import warnings
@@ -26,7 +26,7 @@ def test_tutorial_evaluatingbinaryclassification():
         this_dir = os.path.dirname(os.path.abspath(__file__))
         nb_name = "Tutorial-EvaluatingFairnessInBinaryClassification.ipynb"
         nb_path = os.path.join(this_dir, "..",
-                               "tutorials_and_examples", nb_name)
+                               "examples_and_tutorials", nb_name)
         nb, err = validate_notebook(nb_path, timeout=1800)
 
         if any(err):

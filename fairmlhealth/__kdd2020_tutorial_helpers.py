@@ -10,22 +10,26 @@ Contributors:
 # Copyright (c) KenSci and contributors.
 # Licensed under the MIT License.
 
-from . import mimic_data, utils
+from .__validation import validate_notebook_requirements
+from . import stat_utils, __mimic_data as mimic_data
 import pandas as pd
 from warnings import warn
 
-'''
+"""
 Global variable for backward compatibility with KDD2020 tutorial. Used to
     reduce verbosity of comparison tables.
-'''
+"""
 TUTORIAL_ON = False
-DeprecationWarning("The KDD2020 tutorial notebook is no longer supported." +
-                   " Some portions of this tutorial may no longer function," +
-                   " or may have changed since the KDD 2020 design")
+DeprecationWarning(
+    "The KDD2020 tutorial notebook is no longer supported."
+    + " Some portions of this tutorial may no longer function,"
+    + " or may have changed since the KDD 2020 design"
+)
+
 
 def start_tutorial():
     # Don't start the tutorial unless required packages are present
-    utils.validate_notebook_requirements()
+    validate_notebook_requirements()
     global TUTORIAL_ON
     TUTORIAL_ON = True
 
@@ -39,17 +43,18 @@ def is_kdd_tutorial():
     return TUTORIAL_ON
 
 
-'''
+"""
 Formatting Helpers
-'''
+"""
 
 
-def highlight_col(df, color='magenta'):
-    return f'background-color: {color}'
+def highlight_col(df, color="magenta"):
+    return f"background-color: {color}"
 
 
-def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
-                   h_type='field'):
+def highlight_vals(
+    df, values, colname=None, criteria=None, color="magenta", h_type="field"
+):
     """ Returns a list of strings setting the background color at each index of
         df where a[column] is in the list of values
 
@@ -65,10 +70,11 @@ def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
     Raises:
         ValueError
     """
-    if (criteria is not None and values is not None):
-        print("Cannot process both criteria and values.",
-              "Defaulting to criteria entry")
-    if h_type not in ['text', 'field']:
+    if criteria is not None and values is not None:
+        print(
+            "Cannot process both criteria and values.", "Defaulting to criteria entry"
+        )
+    if h_type not in ["text", "field"]:
         raise ValueError("Wrong h_type sent")
     if not isinstance(colname, (list, tuple)):
         colname = list(colname)
@@ -85,28 +91,30 @@ def highlight_vals(df, values, colname=None, criteria=None, color='magenta',
         if criteria is not None:
             test_vals += df.query(" ".join([col, criteria]))
         highlight[col] = bool(df[col] in values)
-    if h_type == 'text':
-        return [f'color: {color}'
-                if highlight.any() else '' for v in highlight]
-    elif h_type == 'field':
-        return [f'background-color: {color}'
-                if highlight.any() else '' for v in highlight]
+    if h_type == "text":
+        return [f"color: {color}" if highlight.any() else "" for v in highlight]
+    elif h_type == "field":
+        return [
+            f"background-color: {color}" if highlight.any() else "" for v in highlight
+        ]
 
 
-'''
+"""
 Loaders and Printers
-'''
+"""
 
 
 def load_mimic3_example(mimic_dirpath):
     return mimic_data.load_mimic3_example(mimic_dirpath)
 
-def feature_table(df):
-    return utils.feature_table(df)
 
-'''
+def feature_table(df):
+    return stat_utils.feature_table(df)
+
+
+"""
 Tutorial-Specific Helpers
-'''
+"""
 
 
 def simplify_tutorial_report(comparison_report_df):
@@ -121,12 +129,18 @@ def simplify_tutorial_report(comparison_report_df):
         Returns:
             an updated version of the comparison_report_df
     """
-    print("Note: this report has been simplified for this tutorial.",
-          "For a more extensive report, omit the simplify_tutorial_report function")
-    fl_measures = ["demographic_parity_difference", "demographic_parity_ratio",
-                   "equalized_odds_difference", "equalized_odds_ratio"]
+    print(
+        "Note: this report has been simplified for this tutorial.",
+        "For a more extensive report, omit the simplify_tutorial_report function",
+    )
+    fl_measures = [
+        "demographic_parity_difference",
+        "demographic_parity_ratio",
+        "equalized_odds_difference",
+        "equalized_odds_ratio",
+    ]
     ix_vals = comparison_report_df.index
     ix_vals = [v.replace(" ", "_").lower() for v in ix_vals]
     drop_meas = [ix_vals.index(v) for v in ix_vals if v in fl_measures]
     df = comparison_report_df.drop(drop_meas, axis=0)
-    return(df)
+    return df

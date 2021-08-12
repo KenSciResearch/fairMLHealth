@@ -4,21 +4,27 @@ Tools and tutorials for evaluation of fairness and bias in healthcare applicatio
 
 ## Resources
 - ### [Documentation and References](docs/README.md)
-    - [Summary Tables (Quick Reference of Measures)](docs/resources/Measures_QuickReference.md)
-    - [References and Resources](docs/resources/References_and_Resources.md)
-    - [Our Publications](docs/publications/README.md)
     - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
+    - [Our Publications](docs/publications/README.md)
+    - [References and Resources](docs/resources/References_and_Resources.md)
+    - [Summary Tables (Quick Reference of Measures)](docs/resources/Measures_QuickReference.md)
 
-- ### Tools
-    - Methods for generating fairness comparison tables
-    - Features used by templates and tutorials to facilitate comparison of multiple metrics
+- ### [Examples and Tutorials](examples_and_tutorials/README.md)
+    - Tutorials for measuring and analyzing fairness as it applies to machine learning
+    - Examples for using the templates and tools
+
+- ### [FairMLHealth](fairmlhealth/README.md)
+    - **Measure**:
+        - Stratified tables useful in data and model validation
+        - Tools for detailed analysis across multiple indicators (e.g. when location of bias is undetermined)
+    - **Report**:
+        - Tools stylized for inclusion in publications and analytical reports
+        - Tools for reporting on operationalized models
+    - **Statistical Utilities**:
+        - Generalized tools that can be used in bias analysis as well as in other applications
 
 - ### [Templates](templates/README.md)
     - Quickstart notebooks that serve as skeletons for your model analysis
-
-- ### [Tutorials and Examples](tutorials_and_examples/README.md)
-    - Tutorials for measuring and analyzing fairness as it applies to machine learning
-    - Examples for using the templates and tools
 
 ## Installation <a id="installation_instructions"></a>
 Installing directly from GitHub:
@@ -35,12 +41,12 @@ For some metrics, FairMLHealth relies on AIF360, which has a few known installat
 If you are not able to resolve your issue through these troubleshooting tips, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
 
 ## FairMLHealth Usage
-For a functioning notebook of the usage examples below, see [Example-ToolUsage](./tutorials_and_examples/Example-USAGE.ipynb)
+For a functioning notebook of the usage examples below, see [Example-ToolUsage](./examples_and_tutorials/Example-ToolUSAGE.ipynb)
 ### Example Setup
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the compare_measures function.
 
 ```python
-from fairmlhealth import model_comparison as fhmc, reports
+from fairmlhealth import report, measure
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
@@ -70,13 +76,13 @@ model_dict = {'model_1': model_1, 'model_2': model_2}
 ### Measuring
 The primary feature of this library is the model comparison tool. The current version supports assessment of binary prediction models through use of the measure_models and compare_models functions.
 
-Measure_model is designed to generate a report of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
+Measure_model is designed to generate an analysis table of multiple fairness metrics for a single model. Here it is shown wrapped in a "flag" function to emphasize values that are outside of the "fair" range.
 
 ``` python
 # Generate a pandas dataframe of measures
-fairness_measures = fhmc.measure_model(X_test, y_test, prtc_attr, model_1)
+fairness_measures = report.measure_model(X_test, y_test, prtc_attr, model_1)
 # Display and color measures that are out of range
-reports.flag(fairness_measures)
+measure.flag(fairness_measures)
 ```
 
 <img src="./docs/img/measure_model.png"
@@ -86,48 +92,48 @@ reports.flag(fairness_measures)
 
 ### Evaluating
 
-FairMLHealth now also includes stratified reporting features to aid in identifying the source of unfairness or other bias: a data_report, classification_performance report, and classification_fairness report. Note that these stratified reports can evaluate multiple features at once, and that there are two options for identifying which features to assess.
+FairMLHealth now also includes stratified table features to aid in identifying the source of unfairness or other bias: a data table, performance table, and bias table. Note that these stratified tables can evaluate multiple features at once, and that there are two options for identifying which features to assess.
 
-Note that the flag tool has not yet been updated to work with stratified reports.
+Note that the flag tool has not yet been updated to work with stratified tables.
 
-#### Stratified Data Reports
+#### Stratified Data Tables
 
-The data reporter is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
+The data analysis table is shown below with each of the two data argument options. It evaluates basic statistics specific to each feature-value, in addition to relative statistics for the target value.
 
 ```python
 # Arguments Option 1: pass full set of data, subsetting with *features* argument
-reports.data_report(X_test, y_test, features=['gender'])
+measure.data(X_test, y_test, features=['gender'])
 
 # Arguments Option 2: pass the data subset of interest without using the *features* argument
-reports.data_report(X_test[['gender']], y_test)
+measure.data(X_test[['gender']], y_test)
 ```
 
 <img src="./docs/img/data_report.png"
      alt="Data Report"
      />
 
-### Stratified Performance Reports
+### Stratified Performance Tables
 
-The stratified classification_performance reporter evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
+The stratified performance analysis table evaluates model performance specific to each feature-value subset. If prediction probabilities (via the *predict_proba()* method) are available to the model, additional ROC_AUC and PR_AUC values will be included.
 
 ```python
-reports.performance_report(X_test[['gender']], y_test, model_1.predict(X_test))
+measure.performance(X_test[['gender']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/performance_report.png"
      alt="Performance Report Example"
      />
 
-#### Stratified Fairness Reports
+#### Stratified Bias Fairness Tables
 
-The stratified classification_fairness reporter evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
+The stratified bias analysis table evaluates model fairness specific to each feature-value subset. It assumes each feature-value as the "privileged" group relative to all other possible values for the feature. For example, row 3 in the table below displaying measures of "col1" value of "2" where 2 is considered to be the privileged group and all other values (1, 2, 45, and 50) are considered unprivileged.
 
-To simplify the report, fairness measures have been simplified to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
+To simplify the table, fairness measures have been reduced to their component parts. For example, measures of Equalized Odds can be determined by combining the True Positive Rate (TPR) Ratios & Differences with False Positive Rate (FPR) Ratios & Differences.
 
 See also: [Fairness Quick References](../docs/Fairness_Quick_References.pdf) and the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb)
 
 ```python
-reports.bias_report(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
+measure.bias(X_test[['gender', 'col1']], y_test, model_1.predict(X_test))
 ```
 
 <img src="./docs/img/bias_report.png"
@@ -141,8 +147,8 @@ The compare_models feature can be used to generate side-by-side fairness compari
 Below is an example output comparing the two example models defined above. Missing values have been added for metrics requiring prediction probabilities (which the second model does not have).
 
 ```python
-comparison = fhmc.compare_models(X_test, y_test, prtc_attr, model_dict)
-reports.flag(comparison)
+comparison = report.compare_models(X_test, y_test, prtc_attr, model_dict)
+measure.flag(comparison)
 ```
 
 <img src="./docs/img/compare_models.png"
@@ -153,7 +159,7 @@ reports.flag(comparison)
 The compare_models function can also be used to measure two different protected attributes. Protected attributes are measured separately and cannot yet be combined together with this tool.
 
 ```python
-fhmc.compare_models(X_test, y_test,
+report.compare_models(X_test, y_test,
                      [X_test['gender'], X_test['ethnicity']],
                       {'gender':model_1, 'ethnicity':model_1})
 ```
@@ -165,7 +171,7 @@ fhmc.compare_models(X_test, y_test,
 
 
 ### Other Examples
-For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+For a more detailed example of how to use this package, please see the [Example Binary Classification Assessment](./examples_and_tutorials/ Example-BinaryClassificationTemplate.ipynb) and the the [Tutorial for Evaluating Fairness in Binary Classification](./Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 
 ## Connect with Us!
@@ -209,7 +215,7 @@ See also: [Publications](./docs/publications)
 * TCSS 593: *Research Seminar In Data Science* Spring 2021 Department of Computer Science, University of Washington Tacoma
 * EE 520: *Predictive Learning From Data Spring 2021* Department of Electrical Engineering, University of Washington Bothell
 * CSS 581: *Machine Learning Autumn 2020* Department of Computer Science, University of Washington Bothell
- 
+
 ## Key Contributors
 * [Muhammad Aurangzeb Ahmad](http://www.aurumahmad.com)
 * Christine Allen

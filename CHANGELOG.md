@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.17] - 2021-07-31
+### Library Reorganization
+
+- Major changes to the structure of the library intended to make it more intuitive:
+    - fairMLHealth modules were renamed to clarify scope and purpose. This will facilitate adding new features in upcoming PRs:
+        - **reports.py** is now named **measure.py**
+        - **model_comparison** is now named **report.py**
+        - utils.py is now split into stat_utils.py and __utils.py
+            - __utils.py contains back-end functions for which validation is assumed to have been run
+            - stat_utils.py contains supplemental functions that may be useful in statistical analysis or data munging
+    - newly-renamed measure.py has also been reorganized so that functions are in alphabetical order and names are more intuitive. (this should have been a separate PR. apologies in advance).
+    - load_mimic_data.py is now "__mimic_data.py"
+    - the "tutorials_and_examples" folder has been renamed "examples_and_tutorials" so that it will be easier to find (e.g. seen adjacent to the "docs" folder)
+
+
 ## [0.1.16] - 2021-07-30
 ### Documentation Update
 
@@ -12,22 +27,22 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 - The "feature_table" function was moved into utils.py so that it can be used publicly.
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
-- Enables regression versions of reporting functions, with basic measures added for the regression version of bias_report.
+- Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.
 - Adds tutorial, template, and example notebooks for regression features
 - Improves management of significant figures as required to enable flagging of regression outputs
 
 ## [0.1.14] - 2021-06-25
 ### Cohorting Feature
-- Adds cohorting wrapper which iterates to create separate reports by group
+- Adds cohorting wrapper which iterates to create separate analysis tables by group
 
 ## [0.1.13] - 2021-06-23
 ### Flagging Updates
-- Add flagging functionality for stratified reports (bias_report, performance_report, data_report)
-- Update flagging function s.t. it can be called as an argument in the model_comparison or bias_report functions
+- Add flagging functionality for stratified tables (bias analysis table, performance analysis table, data analysis table)
+- Update flagging function s.t. it can be called as an argument in the model_comparison or bias analysis table functions
 
 ## [0.1.12] - 2021-06-17
-### Stratified Report Updates
-- data_report now accepts y as a data frame, enabling stratified analysis across multiple targets.
+### Stratified Table Updates
+- data analysis table now accepts y as a data frame, enabling stratified analysis across multiple targets.
 - "Overview" column evaluating all features as one unit ("ALL_FEATURES") is now optional via add_overview argument
 
 ## [0.1.11] - 2021-06-17
@@ -47,7 +62,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 ## [0.1.9] - 2021-04-19
 ### Reporting Updates
-- Both standard and stratified reporting functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression reports
+- Both standard and stratified table functions are now contained in a single module, and new APIs have been put in place to facilitate both classification and regression analysis tables
 
 
 ## [0.1.8] - 2021-04-19

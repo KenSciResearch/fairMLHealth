@@ -9,18 +9,47 @@ Contributors:
 # Licensed under the MIT License.
 
 from abc import ABC
+import numpy as np
 import pandas as pd
+from sklearn import metrics as sk_metric
 import warnings
 
-from .utils import is_dictlike
-from .reports import summary_report, flag
-from . import __validation as valid
+from .measure import summary, flag, __regression_performance
+from . import __preprocessing as prep, __validation as valid
 from .__validation import ValidationError
 
 
 """
     Model Comparison Tools
 """
+
+''' Mini Reports '''
+
+def classification_performance(y_true, y_pred, target_labels=None,
+                               sig_fig:int=4):
+    """ Returns a pandas dataframe of the scikit-learn classification report,
+        formatted for use in fairMLHealth tools
+
+    Args:
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with
+            model.predict().
+        target_labels (list of str): Optional labels for target values.
+    """
+    if target_labels is None:
+        target_labels = [f"target = {t}" for t in set(y_true)]
+    # scikit will run validation
+    report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
+                                             target_names=target_labels)
+    report = pd.DataFrame(report).transpose()
+    # Move accuracy to separate row
+    accuracy = report.loc['accuracy', :]
+    if len(accuracy) > 0:
+        report.drop('accuracy', inplace=True)
+        report.loc['accuracy', 'accuracy'] = accuracy[0]
+    #
+    report = report.round(sig_fig)
+    return report
 
 
 def measure_model(test_data, targets, protected_attr, model=None,
@@ -51,7 +80,7 @@ def measure_model(test_data, targets, protected_attr, model=None,
                        predictions, probabilities, pred_type, verboseMode=True)
     model_name = list(comp.models.keys())[0]
     table = comp.measure_model(model_name, flag_oor=flag_oor,
-                               skip_performance=True)
+                               skip_performance=False)
     return table
 
 
@@ -86,6 +115,32 @@ def compare_models(test_data, targets, protected_attr, models=None,
                        predictions, probabilities, pred_type, verboseMode=True)
     table = comp.compare_measures(flag_oor=flag_oor)
     return table
+
+
+def regression_performance(y_true, y_pred, sig_fig:int=4):
+    """ Returns a pandas dataframe of the regression performance metrics,
+        similar to scikit's classification_performance
+
+    Args:
+        y_true (array): Target values. Must be compatible with model.predict().
+        y_pred (array): Prediction values. Must be compatible with
+            model.predict().
+    """
+    valid.validate_array(y_true, "y_true", expected_len=None)
+    valid.validate_array(y_pred, "y_pred", expected_len=len(y_true))
+    y_true = prep.prep_targets(y_true)
+    y_pred = prep.prep_targets(y_pred)
+    if y_true.columns[0] == y_pred.columns[0]:
+        y_pred.columns = ["Prediction"]
+    #
+    rprt_input = pd.concat([y_true, y_pred], axis=1)
+    _y, _yh = rprt_input.columns[0], rprt_input.columns[1]
+    report = __regression_performance(rprt_input, _y, _yh)
+    report = pd.DataFrame().from_dict(report, orient='index'
+                          ).rename(columns={0: 'Score'})
+    report = report.round(sig_fig)
+    return report
+
 
 class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
@@ -157,7 +212,7 @@ class FairCompare(ABC):
             (Out Of Range)
         """
         # Model objects are assumed to be held in a dict
-        if not is_dictlike(self.models):
+        if not valid.is_dictlike(self.models):
             self.__set_dicts()
         #
         if len(self.models) == 0:
@@ -168,7 +223,10 @@ class FairCompare(ABC):
             self.__toggle_validation()
             # Compile measure_model results for each model
             for model_name in self.models.keys():
-                res = self.measure_model(model_name, flag_oor=False)
+                # Keep flag off at this stage to allow column rename (flagger
+                # returns a pandas Styler). Flag applied a few lines below
+                res = self.measure_model(model_name, skip_performance=True,
+                                         flag_oor=False)
                 res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
@@ -200,7 +258,7 @@ class FairCompare(ABC):
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary_report(self.X[model_name],
+            res = summary(self.X[model_name],
                                  self.prtc_attr[model_name],
                                  self.y[model_name],
                                  self.preds[model_name],
@@ -216,7 +274,7 @@ class FairCompare(ABC):
 
         """
         # Model objects are assumed to be held in a dict
-        if not is_dictlike(self.models):
+        if not valid.is_dictlike(self.models):
             self.__set_dicts()
         #
         model_objs = [*self.models.values()]
@@ -303,7 +361,7 @@ class FairCompare(ABC):
 
         # Dictionaries will assume the same keys after validation
         dict_obj = [getattr(self, i)
-                    for i in iterable_obj if is_dictlike(getattr(self, i))]
+                    for i in iterable_obj if valid.is_dictlike(getattr(self, i))]
         if any(dict_obj):
             err = "All dict arguments must have the same keys"
             if not all([k.keys() == dict_obj[0].keys() for k in dict_obj]):
@@ -315,7 +373,7 @@ class FairCompare(ABC):
 
         # All measure-related attributes will be assumed as dicts henceforth
         for name in self.__meas_obj:
-            if not is_dictlike(getattr(self, name)):
+            if not valid.is_dictlike(getattr(self, name)):
                 if not isinstance(getattr(self, name), valid.ITER_TYPES):
                     objL = [getattr(self, name)] * expected_len
                 else:
@@ -339,7 +397,7 @@ class FairCompare(ABC):
                 raise ValidationError(err)
             self.__set_dicts()
             for x in self.X.values():
-                valid.validate_report_input(x)
+                valid.validate_analytical_input(x)
             self.__check_models_predictions()
             for m in self.models.keys():
                 self.__validate(m)
@@ -362,7 +420,7 @@ class FairCompare(ABC):
             return None
         else:
             self.__check_models_predictions(enforce=False)
-            valid.validate_report_input(X=self.X[model_name],
+            valid.validate_analytical_input(X=self.X[model_name],
                                         y_true=self.y[model_name],
                                         y_pred=self.preds[model_name],
                                         y_prob=self.probs[model_name],

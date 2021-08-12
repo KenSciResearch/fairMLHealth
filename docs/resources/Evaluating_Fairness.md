@@ -99,7 +99,7 @@ There are six common metrics for determining whether a model is considered "fair
 ## Example Model
 
 
-For the following explanations of specific measures, we'll use the results of a hypothetical predictive model shown in the table below. Our example shows performance and fairness measures relative to language as a protected attribute (i.e., whether or not a given patient is an English speaker). Also shown are stratified reports that will aid us in better understanding the source of any apparent disparity. Curious readers can walk through the generation of the model and this table of fairness measures in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+For the following explanations of specific measures, we'll use the results of a hypothetical predictive model shown in the table below. Our example shows performance and fairness measures relative to language as a protected attribute (i.e., whether or not a given patient is an English speaker). Also shown are stratified tables that will aid us in better understanding the source of any apparent disparity. Curious readers can walk through the generation of the model and this table of fairness measures in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 
 <a id="fairness_report"></a>
@@ -108,19 +108,19 @@ For the following explanations of specific measures, we'll use the results of a 
      alt="Example FairMLHealth Fairness Report"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Data Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_stratified_data.png"
-     alt="Example FairMLHealth Stratified Data Report"
+     alt="Example FairMLHealth Stratified Data Table"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Performance Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_example_stratified_performance.png"
-     alt="Example FairMLHealth Stratified Performance Report"
+     alt="Example FairMLHealth Stratified Performance Table"
      /></p>
 
-<h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Report </u> </h3>
+<h3 style="text-align: center"><u> Example FairMLHealth Stratified Fairness Table </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_example_stratified_fairness.png"
-     alt="Example FairMLHealth Stratified Fairness Report"
+     alt="Example FairMLHealth Stratified Fairness Table"
      /></p>
 
 
@@ -161,9 +161,9 @@ The *Balanced Accuracy Difference (or Ratio)* compares the Balanced Accuracy bet
 ## Comparing Group Fairness (Statistical) Measures <a id="comparing_group_measures"></a>
 The highlighted rows in our example FairMLHealth Fairness Report [above](#fairness_report) indicates that the Disparate Impact ratio is out of range; but what is that range and how is it determined? In 1978, the United States Equal Employment Opportunity Commission adopted the "Four-Fifths Rule", a guideline stating that, "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) (or eighty percent) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact."[EOC (1978)](#fourfifths_ref) This rubric has since been adopted for measures of fairness in ML. This translates to a "fair" range of selection rate ratios that are between 0.8 and 1.2.
 
-The four-fifths rule works well when comparing prediction performance metrics whose values are above 0.5. However, the rule fails when comparing small values, as is the case in this example and which is as shown in the example stratified report. The ratios between two such small values can easily be well above 1.2, even though the true difference is only a few percentage points. For this reason it's useful to compare both the ratios and the differences when evaluating group measures.
+The four-fifths rule works well when comparing prediction performance metrics whose values are above 0.5. However, the rule fails when comparing small values, as is the case in this example and which is as shown in the example stratified table. The ratios between two such small values can easily be well above 1.2, even though the true difference is only a few percentage points. For this reason it's useful to compare both the ratios and the differences when evaluating group measures.
 
-Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Report (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Report.
+Returning to the example: the Disparate Impact Ratio and Statistical Parity Difference are two related measures that compare the selection rates between the protected and unprotected groups. Although the Disparate Impact Ratio in our example is outside of the "fair" range for ratios (it's above 1.2), the Statistical Parity Difference is well within range for differences. We can see why more clearly by examining the Stratified Performance Table (also above). Here we see that the selection rates (shown as: "POSITIVE PREDICTION RATES") are actually quite close. The same is true for the Equalized Odds Ratio, which also appears outside of the "fair" range. The Equalized Odds Difference is actually quite small, which we can understand more clearly by looking at the True Positive Rates and False Positive Rates (shown as TPR and FPR) in the Stratified Table.
 
 |Group Measure Type |Examples |"Fair" Range |Favored Group |
 |- |- |- |- |
@@ -252,7 +252,7 @@ See Also: [Value Sensitive Design](https://en.wikipedia.org/wiki/Value_sensitive
 
 
 ## Comparing Models
-In this section we will compare the results of multiple models using FairMLHealth's **compare_models** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
+In this section we will compare the results of multiple models using FairMLHealth's **compare_models** tool. For this purpose we trained three new models: an "unaware" version of our baseline model (one that excludes the protected attribute LANGUAGE_ENGL), a fairness-aware Grid Search model constrained by demographic parity (available through [Fairlearn](https://github.com/fairlearn/fairlearn), and a basic Random Forest model using our baseline data. We compare the fairness measures of all four prediction sets to see how the model bias is affected across the spectrum of measures. Again, those who are inclined can walk through the generation of these models and this model comparison table in the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb).
 
 <h3 style="text-align: center"><u> Example FairMLHealth Model Comparison Report </u> </h3>
 <p style="text-align: center"><img src="./img/evaluation_model_comparison.png"
@@ -299,7 +299,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../tutorials_and_examples/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../tutorials_and_examples/ Example-BinaryClassificationTemplate.ipynb) in our tutorials_and_examples section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../examples_and_tutorials/ Example-BinaryClassificationTemplate.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
 
 
 

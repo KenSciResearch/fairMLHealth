@@ -15,7 +15,7 @@ import numpy as np
 import os
 import pandas as pd
 import requests
-from .utils import cb_round
+from .stat_utils import cb_round
 
 
 def load_icd_ccs_xwalk(code_type):
@@ -107,7 +107,7 @@ class mimic_loader():
         df.to_csv(self.output_file, index=False)
         return True
 
-    def __load_mimic_data(self, data_key):
+    def __mimic_data(self, data_key):
         """ Returns transfer data as pd dataframe after removing the ROW_ID
                 column (unnecessary column that causes problems)
 
@@ -136,14 +136,14 @@ class mimic_loader():
 
             Note: drops data for patients with  age>120 y.o. or age<0
         """
-        admissions = self.__load_mimic_data("ax")
+        admissions = self.__mimic_data("ax")
         if admissions['HADM_ID'].duplicated().any():
             raise ValueError(
                 "Error loading admission data: duplicate admission IDs present")
         # Calculate AGE
         adm = admissions.groupby(['SUBJECT_ID', 'HADM_ID'], as_index=False
                                  )['ADMITTIME'].min()
-        dob = self.__load_mimic_data('pt')[['SUBJECT_ID', 'DOB', 'GENDER']]
+        dob = self.__mimic_data('pt')[['SUBJECT_ID', 'DOB', 'GENDER']]
         age_df = dob.merge(adm, on='SUBJECT_ID')
         age_df['DOB'] = pd.to_datetime(age_df['DOB']).dt.date
         age_df['ADMITTIME'] = pd.to_datetime(age_df['ADMITTIME']).dt.date
@@ -208,7 +208,7 @@ class mimic_loader():
         if feature_type not in ftypes:
             raise ValueError(f"Invalid code_type. Must be one of {ftypes}")
         #
-        data = self.__load_mimic_data(feature_type)
+        data = self.__mimic_data(feature_type)
         icd_map = load_icd_ccs_xwalk(code_type=feature_type
                                      )[['ICD9_CODE', f'{feature_type}_CCS']]
         df = data.merge(icd_map

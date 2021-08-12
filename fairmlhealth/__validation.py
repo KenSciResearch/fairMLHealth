@@ -1,6 +1,7 @@
 ''' Manages data validation tasks across modules
 '''
 from collections import OrderedDict
+from importlib.util import find_spec
 import numpy as np
 import pandas as pd
 
@@ -8,44 +9,16 @@ import pandas as pd
 ITER_TYPES = (list, tuple, set, dict, OrderedDict)
 
 
-
-def validate_prtc_attr(arr, expected_len:int=0):
-    if arr is None:
-        raise ValueError("No protected attribute found.")
-    __validate_type(arr)
-    __validate_oneDArray(arr, "protected attribute")
-    __validate_binVal(arr, "protected attribute", fuzzy=False)
-    __validate_length(arr, "protected attribute", expected_len)
+def is_dictlike(obj):
+    dictlike = \
+        bool(callable(getattr(obj, "keys", None)) and not hasattr(obj, "size"))
+    return dictlike
 
 
-def validate_y(arr, name="targets", expected_len:int=0):
-    if arr is None:
-        raise ValueError(f"No {name} found.")
-    __validate_type(arr)
-    __validate_oneDArray(arr, name)
-    __validate_length(arr, name, expected_len)
-
-
-def validate_priv_grp(priv_grp:int=None):
-    if priv_grp is None:
-        raise ValueError("No privileged group found.")
-    if not isinstance(priv_grp, int):
-        raise TypeError("priv_grp must be an integer")
-
-
-def validate_X(data, name="input data", expected_len:int=None):
-    if data is None:
-        raise ValueError("No input data found.")
-    if expected_len is None:
-        expected_len = data.shape[0]
-    __validate_type(data)
-    __validate_length(data, name, expected_len)
-
-
-def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
+def validate_analytical_input(X, y_true=None, y_pred=None, y_prob=None,
                             prtc_attr=None, priv_grp:int=1):
     """ Raises error if data are of incorrect type or size for processing by
-        the fairness or performance reporters
+        the fairness or performance tables
 
     Args:
         X (array-like): Sample features
@@ -55,17 +28,59 @@ def validate_report_input(X, y_true=None, y_pred=None, y_prob=None,
         y_pred (array-like, 1-D): Sample target predictions
         y_prob (array-like, 1-D): Sample target probabilities
     """
-    validate_X(X)
+    validate_data(X, name="input data")
     if y_true is not None:
-        validate_y(y_true, name="targets", expected_len=X.shape[0])
+        validate_array(y_true, name="targets", expected_len=X.shape[0])
     if y_pred is not None:
-        validate_y(y_pred, name="predictions", expected_len=X.shape[0])
+        validate_array(y_pred, name="predictions", expected_len=X.shape[0])
     if y_prob is not None:
-        validate_y(y_prob, name="probabilities", expected_len=X.shape[0])
+        validate_array(y_prob, name="probabilities", expected_len=X.shape[0])
     if prtc_attr is not None:
         validate_prtc_attr(prtc_attr, expected_len=X.shape[0])
     validate_priv_grp(priv_grp)
     return True
+
+
+def validate_array(arr, name="array", expected_len:int=0):
+    if arr is None:
+        raise ValueError(f"No {name} found.")
+    __validate_type(arr)
+    __validate_oneDArray(arr, name)
+    expected_len = arr.shape[0] if expected_len is None else expected_len
+    __validate_length(arr, name, expected_len)
+
+
+def validate_data(data, name="data", expected_len:int=None):
+    if data is None:
+        raise ValueError(f"No {name} found.")
+    __validate_type(data)
+    expected_len = data.shape[0] if expected_len is None else expected_len
+    __validate_length(data, name, expected_len)
+
+
+def validate_notebook_requirements():
+    """ Alerts the user if they're missing packages required to run extended
+        tutorial and example notebooks
+    """
+    if find_spec('fairlearn') is None:
+        err = ("This notebook cannot be re-run witout Fairlearn, available " +
+               "via https://github.com/fairlearn/fairlearn. Please install " +
+               "Fairlearn to run this notebook.")
+        raise ValidationError(err)
+    else:
+        pass
+
+
+def validate_prtc_attr(arr, expected_len:int=0):
+    validate_array(arr, "protected attribute", expected_len)
+    __validate_binVal(arr, "protected attribute", fuzzy=False)
+
+
+def validate_priv_grp(priv_grp:int=None):
+    if priv_grp is None:
+        raise ValueError("No privileged group found.")
+    if not isinstance(priv_grp, int):
+        raise TypeError("priv_grp must be an integer")
 
 
 class ValidationError(Exception):
