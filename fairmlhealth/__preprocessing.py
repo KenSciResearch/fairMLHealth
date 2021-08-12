@@ -1,4 +1,4 @@
-'''
+"""
 
 '''
 import numpy as np
@@ -6,6 +6,23 @@ import pandas as pd
 from . import __validation as valid
 from .__validation import ValidationError
 
+
+def analytical_labels(pred_type: str = "binary"):
+    """ Returns a dictionary of category labels used by analytical functions
+    Args:
+        pred_type (b): number of classes in the prediction problem
+    """
+    valid_pred_types = ["binary", "multiclass", "regression"]
+    if pred_type not in valid_pred_types:
+        raise ValueError(f"pred_type must be one of {valid_pred_types}")
+    c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
+    lbls = {
+        "gf_label": "Group Fairness",
+        "if_label": "Individual Fairness",
+        "mp_label": f"Model Performance{c_note}",
+        "dt_label": "Data Metrics",
+    }
+    return lbls
 
 
 def analytical_labels(pred_type: str = "binary"):
@@ -49,7 +66,7 @@ def prep_data(data):
         X = data.copy(deep=True)
     # Convert columns that do not contain any strings to numeric type
     for col in X.columns:
-        X.loc[:, col] = pd.to_numeric(X[col], errors='ignore')
+        X.loc[:, col] = pd.to_numeric(X[col], errors="ignore")
     return X
 
 
@@ -58,7 +75,7 @@ def prep_prtc_attr(arr):
         if isinstance(arr, pd.Series):
             prtc_attr = pd.DataFrame(arr, columns=[arr.name])
         else:
-            pa_name = 'protected_attribute'
+            pa_name = "protected_attribute"
             prtc_attr = pd.DataFrame(arr, columns=[pa_name])
     else:
         prtc_attr = arr.copy(deep=True)
@@ -137,8 +154,9 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
-                          features:list=None):
+def stratified_preprocess(
+    X, y_true=None, y_pred=None, y_prob=None, features: list = None
+):
     """
     Runs validation and formats data for use in stratified tables
 
@@ -208,8 +226,8 @@ def y_cols(df=None):
             }
     #
     if df is not None:
-        for k in y_names['col_names'].keys():
-            if y_names['col_names'][k] not in df.columns:
-                y_names['col_names'][k] = None
+        for k in y_names["col_names"].keys():
+            if y_names["col_names"][k] not in df.columns:
+                y_names["col_names"][k] = None
     return y_names
 

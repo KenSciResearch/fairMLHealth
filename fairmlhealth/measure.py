@@ -547,6 +547,39 @@ def __classification_summary(*, X, prtc_attr, y_true, y_pred, y_prob=None,
     output = __format_summary(df, summary_type)
     return output
 
+        Args:
+            X (pandas DataFrame): Sample features
+            pa_name (str):
+            y_true (pandas DataFrame): Sample targets
+            y_pred (pandas DataFrame): Sample target predictions
+            y_prob (pandas DataFrame, optional): Sample target probabilities.
+                Defaults to None.
+            priv_grp (int): Specifies which label indicates the privileged
+                    group. Defaults to 1.
+        """
+        name_update = {"Selection Diff":"Statistical Parity Difference",
+                       "Selection Ratio": "Disparate Impact Ratio",
+                       "PPV Diff": "Positive Predictive Parity Difference",
+                       "PPV Ratio": "Positive Predictive Parity Ratio"
+                       }
+        drop_keys = ['TPR Ratio', 'TPR Diff', 'FPR Ratio', 'FPR Diff']
+        for k in name_update.keys():
+            val = summary_dict.pop(k)
+            summary_dict[name_update[k]] = val
+        for k in drop_keys:
+            summary_dict.pop(k)
+        summary_dict['Equalized Odds Difference'] = \
+            fcmtrc.eq_odds_diff(y_true, y_pred, prtc_attr=pa_name)
+        summary_dict['Equalized Odds Ratio'] = \
+            fcmtrc.eq_odds_ratio(y_true, y_pred, prtc_attr=pa_name)
+        if y_prob is not None:
+            try:
+                summary_dict['AUC Difference'] = \
+                    aif.difference(pmtrc.roc_auc_score, y_true, y_prob,
+                                    prot_attr=pa_name, priv_group=priv_grp)
+            except:
+                pass
+        return summary_dict
 
 def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
     """ Returns a dict of measure values
