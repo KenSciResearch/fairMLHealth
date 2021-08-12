@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [0.1.18] - 2021-07-31
+### Regression Measure Flagging
+- Updated flagging feature to enable custom boundaries and flagging for regression measures
+-  Related updates to the __validation module. This includes the addition of class-related validation and a first pass at improved type-hinting throughout the tool.
+- Minor changes to text displays.
+
 ## [0.1.17] - 2021-07-31
 ### Library Reorganization
 
@@ -25,6 +31,7 @@ _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so
 
 - Doctstings on public-facing functions given added detail components of the code.
 - The "feature_table" function was moved into utils.py so that it can be used publicly.
+
 ## [0.1.15] - 2021-06-25
 ### Cohorting Feature
 - Enables regression versions of analytical functions, with basic measures added for the regression version of bias analysis table.

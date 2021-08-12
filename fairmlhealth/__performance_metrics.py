@@ -1,24 +1,37 @@
-'''
-'''
+"""
+"""
 import copy
+from functools import partial
 import logging
-import sklearn.metrics as sk_metric
+from numbers import Number
 import numpy as np
 import pandas as pd
-from functools import partial
+import sklearn.metrics as sk_metric
+from .__utils import epsilon
+from .__validation import ArrayLike
 
 
+__all__ = [
+    "accuracy",
+    "binary_prediction_results",
+    "balanced_accuracy",
+    "false_negative_rate",
+    "false_positive_rate",
+    "f1_score",
+    "negative_predictive_value",
+    "roc_auc_score",
+    "precision",
+    "pr_auc_score",
+    "precision",
+    "true_negative_rate",
+    "true_positive_rate",
+]
 
-__all__ = ["accuracy", "binary_prediction_results", "balanced_accuracy",
-           "false_negative_rate", "false_positive_rate", "f1_score",
-           "negative_predictive_value", "roc_auc_score", "precision",
-           "pr_auc_score", "precision", "true_negative_rate",
-           "true_positive_rate"]
+
+""" Utilities """
 
 
-''' Utilities '''
-
-def binary_prediction_results(y_true, y_pred):
+def binary_prediction_results(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns a dictionary with counts of TP, TN, FP, and FN
 
     Args:
@@ -27,56 +40,60 @@ def binary_prediction_results(y_true, y_pred):
         on which validation has already been run.
     """
     # include labels below to avoid errant results where y_true==y_pred
-    tn, fp, fn, tp = sk_metric.confusion_matrix(y_true, y_pred,
-                                                labels=[0, 1]).ravel()
-    counts = {'TP':tp, 'FP':fp, 'TN':tn, 'FN':fn}
+    tn, fp, fn, tp = sk_metric.confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+    counts = {"TP": tp, "FP": fp, "TN": tn, "FN": fn}
     return counts
 
 
-def check_result(res, metric_name):
+def check_result(
+    res: Number,
+    metric_name: str,
+    custom_lower: Number = None,
+    custom_upper: Number = None,
+):
     """ Verifies that the result is in the expected range for the metric and
-    returns that result if valid
+        returns that result if valid
 
     Args:
         res (int): result to be validated
         metric_name (str): name of metric; to be used in event of error
     """
-    if res > 1 + 100*epsilon() or res < 0 - 100*epsilon():
-        raise ValueError(f"{metric_name} result out of range ({res})")
-    else:
+    if np.isnan(res):
         return res
-
-
-def epsilon():
-    """ error value used to prevent 'division by 0' errors """
-    return np.finfo(np.float64).eps
-
-
-def ratio(numerator, denominator):
-    ''' Returns numerator/denominator avoiding division-by-zero errors
-    '''
-    if denominator == 0:
-        return numerator/epsilon()
     else:
-        return numerator/denominator
+        lower = 0 - 100 * epsilon() if custom_lower is None else custom_lower
+        upper = 1 + 100 * epsilon() if custom_upper is None else custom_upper
+        if not lower < res < upper:
+            raise ValueError(f"{metric_name} result out of range ({res})")
+        else:
+            return res
 
 
-''' Metrics '''
+def ratio(numerator: Number, denominator: Number):
+    """ Returns numerator/denominator avoiding division-by-zero errors
+    """
+    if denominator == 0:
+        return numerator / epsilon()
+    else:
+        return numerator / denominator
 
 
-def accuracy(y_true, y_pred):
+""" Metrics """
+
+
+def accuracy(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the accuracy value for the prediction.
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'] + rprt['TN'], y_true.shape[0])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TP"] + rprt["TN"], y_true.shape[0])
     return check_result(res, "Accuracy")
 
 
-def balanced_accuracy(y_true, y_pred):
+def balanced_accuracy(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the balanced accuracy value for the prediction
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
@@ -89,31 +106,31 @@ def balanced_accuracy(y_true, y_pred):
     return check_result(res, "Balanced Accuracy")
 
 
-def false_negative_rate(y_true, y_pred):
+def false_negative_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the false negative rate (miss rate) value for the prediction
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['FN'], rprt['FN'] + rprt['TP'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["FN"], rprt["FN"] + rprt["TP"])
     return check_result(res, "FNR")
 
 
-def false_positive_rate(y_true, y_pred): 
+def false_positive_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the false positive rate (false alarm rate) value for the prediction
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['FP'], rprt['FP'] + rprt['TN'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["FP"], rprt["FP"] + rprt["TN"])
     return check_result(res, "FPR}")
 
 
-def f1_score(y_true, y_pred):
+def f1_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the F1 Score value for the prediction
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
@@ -122,23 +139,23 @@ def f1_score(y_true, y_pred):
     """
     pre = precision(y_true, y_pred)
     rec = true_positive_rate(y_true, y_pred)
-    res = 2*ratio(pre*rec, pre+rec)
+    res = 2 * ratio(pre * rec, pre + rec)
     return check_result(res, "F1 Score")
 
 
-def negative_predictive_value(y_true, y_pred):
+def negative_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the negative predictive value for the prediction: TN/(TN+FN)
     Args:
         y_true, y_pred (numpy-compatible, 1D array-like): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TN'], rprt['TN'] + rprt['FN'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TN"], rprt["TN"] + rprt["FN"])
     return res
 
 
-def roc_auc_score(y_true, y_pred):
+def roc_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the Receiver Operating Characteristic Area Under the Curve
     value for the prediction
     Args:
@@ -153,7 +170,7 @@ def roc_auc_score(y_true, y_pred):
     return check_result(res, "ROC AUC Score")
 
 
-def pr_auc_score(y_true, y_pred):
+def pr_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the Precision-Recall Area Under the Curve value for the
     prediction
     Args:
@@ -169,7 +186,7 @@ def pr_auc_score(y_true, y_pred):
     return check_result(res, "PR AUC Score")
 
 
-def r_squared(y_true, y_pred):
+def r_squared(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the R-Squared (coefficient of determination) value
     for the prediction:
         1 - (Sum_of_squares_of_residuals/total_sum_of_squares)
@@ -181,10 +198,10 @@ def r_squared(y_true, y_pred):
     res = sk_metric.r2_score(y_true, y_pred)
     if not -1 <= res <= 1:
         res = np.nan
-    return check_result(res, "R Squared Score")
+    return check_result(res, "R Squared Score", custom_lower=-1)
 
 
-def precision(y_true, y_pred):
+def precision(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the precision (Positive Predictive Value, PPV) for the
     prediction: TP/(TP+FP)
     Args:
@@ -192,12 +209,12 @@ def precision(y_true, y_pred):
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'], rprt['TP'] + rprt['FP'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TP"], rprt["TP"] + rprt["FP"])
     return check_result(res, "Precision")
 
 
-def true_negative_rate(y_true, y_pred): # aka.
+def true_negative_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the True Negative Rate (aka. Selectivity, Specificity) for the
     prediction: TN/(TN+FP)
     Args:
@@ -205,12 +222,12 @@ def true_negative_rate(y_true, y_pred): # aka.
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TN'], rprt['FP'] + rprt['TN'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TN"], rprt["FP"] + rprt["TN"])
     return check_result(res, "TNR")
 
 
-def true_positive_rate(y_true, y_pred):
+def true_positive_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the True Positive Rate (aka. Recall, Sensitivity) for the
     prediction: TP/(TP+FN)
     Args:
@@ -218,6 +235,6 @@ def true_positive_rate(y_true, y_pred):
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    rprt =  binary_prediction_results(y_true, y_pred)
-    res = ratio(rprt['TP'], rprt['FN'] + rprt['TP'])
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TP"], rprt["FN"] + rprt["TP"])
     return check_result(res, "TPR")

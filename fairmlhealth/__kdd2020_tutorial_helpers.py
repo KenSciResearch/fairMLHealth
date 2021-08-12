@@ -15,17 +15,14 @@ from . import stat_utils, __mimic_data as mimic_data
 import pandas as pd
 from warnings import warn
 
-"""
+'''
 Global variable for backward compatibility with KDD2020 tutorial. Used to
     reduce verbosity of comparison tables.
 """
 TUTORIAL_ON = False
-DeprecationWarning(
-    "The KDD2020 tutorial notebook is no longer supported."
-    + " Some portions of this tutorial may no longer function,"
-    + " or may have changed since the KDD 2020 design"
-)
-
+DeprecationWarning("The KDD2020 tutorial notebook is no longer supported." +
+                   " Some portions of this tutorial may no longer function," +
+                   " or may have changed since the KDD 2020 design")
 
 def start_tutorial():
     # Don't start the tutorial unless required packages are present
@@ -107,12 +104,10 @@ Loaders and Printers
 def load_mimic3_example(mimic_dirpath):
     return mimic_data.load_mimic3_example(mimic_dirpath)
 
-
 def feature_table(df):
     return stat_utils.feature_table(df)
 
-
-"""
+'''
 Tutorial-Specific Helpers
 """
 
