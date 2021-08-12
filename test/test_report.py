@@ -9,7 +9,7 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 import pandas as pd
-from .__testing_utilities import synth_dataset
+from .__utils import synth_dataset
 
 
 @pytest.fixture(scope="class")

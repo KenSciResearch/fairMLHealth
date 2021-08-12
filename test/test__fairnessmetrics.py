@@ -6,7 +6,7 @@ from fairmlhealth.__fairness_metrics import eq_odds_diff, eq_odds_ratio
 from numpy import isclose
 import pandas as pd
 import pytest
-from .__testing_utilities import synth_dataset
+from .__utils import synth_dataset
 
 
 @pytest.fixture(scope="class")

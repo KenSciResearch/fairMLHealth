@@ -6,7 +6,7 @@ Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
 """
 
-from . import __testing_utilities as utils
+from . import __utils as utils
 import json
 import nbformat
 import os
