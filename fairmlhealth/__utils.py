@@ -1,14 +1,13 @@
-'''
+"""
 Back-end functions used throughout the library, many of which assume that inputs
 have been validated
-'''
+"""
 from numbers import Number
 import numpy as np
 import pandas as pd
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ValidationError
 from warnings import warn
-
 
 
 def epsilon():
@@ -30,17 +29,18 @@ def format_errwarn(func):
     Returns:
         function: the first member of the tuple returned by func
     """
+
     def format_info(dict):
         info_dict = {}
         for colname, err_wrn in dict.items():
             _ew = list(set(err_wrn)) if isinstance(err_wrn, list) else [err_wrn]
             for m in _ew:
-                m = getattr(m, 'message') if 'message' in dir(m) else str(m)
+                m = getattr(m, "message") if "message" in dir(m) else str(m)
                 if m in info_dict.keys():
                     info_dict[m].append(colname)
                 else:
                     info_dict[m] = [colname]
-        info_dict = {ew:list(set(c)) for ew, c in info_dict.items()}
+        info_dict = {ew: list(set(c)) for ew, c in info_dict.items()}
         return info_dict
 
     def wrapper(*args, **kwargs):
@@ -68,18 +68,21 @@ def iterate_cohorts(func):
         cohort-iterated version of the output
 
     """
+
     def prepend_cohort(df, new_ix):
-        idx = df.index.to_frame().rename(columns={0:'__index'})
+        idx = df.index.to_frame().rename(columns={0: "__index"})
         for l, i in enumerate(new_ix):
             idx.insert(l, i[0], i[1])
-        if '__index' in idx.columns:
-            idx.drop('__index', axis=1, inplace=True)
+        if "__index" in idx.columns:
+            idx.drop("__index", axis=1, inplace=True)
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
     def subset(data, idxs):
         if data is not None:
-            return data.loc[idxs,]
+            return data.loc[
+                idxs,
+            ]
         else:
             return None
 
@@ -94,13 +97,14 @@ def iterate_cohorts(func):
             pandas DataFrame
         """
         # Run preprocessing to facilitate subsetting
-        X = kwargs.pop('X', None)
-        y_true = kwargs.get('y_true', None)
-        y_pred = kwargs.get('y_pred', None)
-        y_prob = kwargs.get('y_prob', None)
-        prtc_attr = kwargs.get('prtc_attr', None)
-        X, prtc_attr, y_true, y_pred, y_prob = \
-            prep.standard_preprocess(X, prtc_attr, y_true, y_pred, y_prob)
+        X = kwargs.pop("X", None)
+        y_true = kwargs.get("y_true", None)
+        y_pred = kwargs.get("y_pred", None)
+        y_prob = kwargs.get("y_prob", None)
+        prtc_attr = kwargs.get("prtc_attr", None)
+        X, prtc_attr, y_true, y_pred, y_prob = prep.standard_preprocess(
+            X, prtc_attr, y_true, y_pred, y_prob
+        )
         #
         if cohorts is not None:
             #
@@ -114,15 +118,21 @@ def iterate_cohorts(func):
             #
             results = []
             for k in cgrp.groups.keys():
-                ixs = cix.astype('int64').isin(cgrp.groups[k])
+                ixs = cix.astype("int64").isin(cgrp.groups[k])
                 yt = subset(y_true, ixs)
                 yh = subset(y_pred, ixs)
                 yp = subset(y_prob, ixs)
                 pa = subset(prtc_attr, ixs)
-                new_args = ['prtc_attr', 'y_true', 'y_pred', 'y_prob']
-                sub_args = {k:v for k, v in kwargs.items() if k not in new_args}
-                df = func(X=X.iloc[ixs, :], y_true=yt, y_pred=yh, y_prob=yp,
-                          prtc_attr=pa, **sub_args)
+                new_args = ["prtc_attr", "y_true", "y_pred", "y_prob"]
+                sub_args = {k: v for k, v in kwargs.items() if k not in new_args}
+                df = func(
+                    X=X.iloc[ixs, :],
+                    y_true=yt,
+                    y_pred=yh,
+                    y_prob=yp,
+                    prtc_attr=pa,
+                    **sub_args,
+                )
                 vals = cgrp.get_group(k)[cols].head(1).values[0]
                 ix = [(c, vals[i]) for i, c in enumerate(cols)]
                 df = prepend_cohort(df, ix)
@@ -135,8 +145,12 @@ def iterate_cohorts(func):
     return wrapper
 
 
-def limit_alert(items:list=None, item_name="", limit:int=100,
-                issue:str="This may slow processing time."):
+def limit_alert(
+    items: list = None,
+    item_name="",
+    limit: int = 100,
+    issue: str = "This may slow processing time.",
+):
     """ Warns the user if there are too many items due to potentially slowed
         processing time
     """
@@ -145,16 +159,32 @@ def limit_alert(items:list=None, item_name="", limit:int=100,
             msg = f"More than {limit} {item_name} detected. {issue}"
             warn(msg)
 
-class FairRanges():
-    __diffs = ["auc difference" , "balanced accuracy difference",
-                "equalized odds difference", "fpr diff", "tpr diff", "ppv diff"
-                "positive predictive parity difference",
-                "statistical parity difference", "mean prediction difference",
-                "mae difference", "r2 difference"]
-    __ratios = ["balanced accuracy ratio", "disparate impact ratio ",
-                "equalized odds ratio", "fpr ratio", "tpr ratio", "ppv ratio",
-                "mean prediction ratio", "mae ratio", "r2 ratio"]
-    __stats =  ['consistency score']
+
+class FairRanges:
+    __diffs = [
+        "auc difference",
+        "balanced accuracy difference",
+        "equalized odds difference",
+        "fpr diff",
+        "tpr diff",
+        "ppv diff" "positive predictive parity difference",
+        "statistical parity difference",
+        "mean prediction difference",
+        "mae difference",
+        "r2 difference",
+    ]
+    __ratios = [
+        "balanced accuracy ratio",
+        "disparate impact ratio ",
+        "equalized odds ratio",
+        "fpr ratio",
+        "tpr ratio",
+        "ppv ratio",
+        "mean prediction ratio",
+        "mae ratio",
+        "r2 ratio",
+    ]
+    __stats = ["consistency score"]
 
     def __init__(self):
         pass
@@ -162,8 +192,12 @@ class FairRanges():
     def mad(self, arr):
         return np.median(np.abs(arr - np.median(arr)))
 
-    def load_fair_ranges(self, custom_ranges:"dict[str, tuple[Number, Number]]"=None,
-                         y_true:valid.ArrayLike=None, y_pred:valid.ArrayLike=None):
+    def load_fair_ranges(
+        self,
+        custom_ranges: "dict[str, tuple[Number, Number]]" = None,
+        y_true: valid.ArrayLike = None,
+        y_pred: valid.ArrayLike = None,
+    ):
         """
         Args:
             custom_ranges (dict): a  dict whose keys are present among the measures
@@ -173,7 +207,7 @@ class FairRanges():
             y_true (array-like 1D, optional): Sample targets. Defaults to None.
             y_pred (array-like 1D, optional): Sample target predictions. Defaults to None.
         """
-        #Load generic defaults
+        # Load generic defaults
         bnds = self.default_boundaries()
 
         # Update with specific regression boundaries if possible
@@ -183,31 +217,31 @@ class FairRanges():
             aerr = (y - yh).abs()
             # Use np.concatenate to combine values s.t. ignore column names
             all_vals = y.append(yh)
-            bnds['mean prediction difference'] = self.__calc_diff_range(all_vals)
-            bnds['mae difference'] = self.__calc_diff_range(aerr)
-            #import pdb; pdb.set_trace()
+            bnds["mean prediction difference"] = self.__calc_diff_range(all_vals)
+            bnds["mae difference"] = self.__calc_diff_range(aerr)
+            # import pdb; pdb.set_trace()
         else:
-            bnds.pop('mean prediction difference')
-            bnds.pop('mae difference')
+            bnds.pop("mean prediction difference")
+            bnds.pop("mae difference")
         #
         if custom_ranges is not None:
             if valid.is_dictlike(custom_ranges):
                 for k, v in custom_ranges.items():
                     bnds[str(k).lower()] = v
             else:
-                raise TypeError(
-                    "custom boundaries must be dict-like object if defined")
+                raise TypeError("custom boundaries must be dict-like object if defined")
         #
         available_measures = self.__diffs + self.__ratios + self.__stats
         valid.validate_fair_boundaries(bnds, available_measures)
         return bnds
 
-    def __calc_diff_range(self, ser:pd.Series):
+    def __calc_diff_range(self, ser: pd.Series):
         s_range = np.max(ser) - np.min(ser)
-        s_bnd = 0.1*s_range
+        s_bnd = 0.1 * s_range
         if s_bnd == 0 or np.isnan(s_bnd):
             raise ValidationError(
-                "Error computing fair boundaries. Verify targets and predictions.")
+                "Error computing fair boundaries. Verify targets and predictions."
+            )
         return (-s_bnd, s_bnd)
 
     def default_boundaries(self, diff_bnd=(-0.1, 0.1), rto_bnd=(0.8, 1.2)):
@@ -219,15 +253,18 @@ class FairRanges():
         return default
 
 
-class Flagger():
-    __hex = {'magenta':'#d00095', 'magenta_lt':'#ff05b8',
-             'purple':'#947fed', 'purple_lt':'#c2bae3'}
+class Flagger:
+    __hex = {
+        "magenta": "#d00095",
+        "magenta_lt": "#ff05b8",
+        "purple": "#947fed",
+        "purple_lt": "#c2bae3",
+    }
 
     def __init__(self):
         self.reset()
 
-    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True,
-                   boundaries=None):
+    def apply_flag(self, df, caption="", sig_fig=4, as_styler=True, boundaries=None):
         """ Generates embedded html pandas styler table containing a highlighted
             version of a model comparison dataframe
         Args:
@@ -253,14 +290,12 @@ class Flagger():
         if not isinstance(sig_fig, int) or isinstance(sig_fig, bool):
             raise ValueError(f"Invalid value of significant figure: {sig_fig}")
         if self.label_type == "index":
-            styled = self.df.style.set_caption(caption
-                                 ).apply(self.__colors, axis=1)
+            styled = self.df.style.set_caption(caption).apply(self.__colors, axis=1)
         else:
             # pd.Styler doesn't support non-unique indices
-            if len(self.df.index.unique()) <  len(self.df):
+            if len(self.df.index.unique()) < len(self.df):
                 self.df.reset_index(inplace=True)
-            styled = self.df.style.set_caption(caption
-                                 ).apply(self.__colors, axis=0)
+            styled = self.df.style.set_caption(caption).apply(self.__colors, axis=0)
         # Styler will reset precision to 6 sig figs
         styled = styled.set_precision(sig_fig)
         #
@@ -277,7 +312,7 @@ class Flagger():
         self.boundaries = None
         self.df = None
         self.flag_type = "background-color"
-        self.flag_color = self.__hex['purple_lt']
+        self.flag_color = self.__hex["purple_lt"]
         self.labels = None
         self.label_type = None
 
@@ -285,22 +320,24 @@ class Flagger():
         """ Returns a list containing the color settings for difference
             measures found to be OOR
         """
+
         def is_oor(name, val):
             low = self.boundaries[name.lower()][0]
             high = self.boundaries[name.lower()][1]
             return bool(not low < val < high and not np.isnan(val))
+
         #
-        clr = f'{self.flag_type}:{self.flag_color}'
+        clr = f"{self.flag_type}:{self.flag_color}"
         if self.label_type == "index":
             name = vals.name[1].lower()
         else:
             name = vals.name.lower()
         #
         if name not in self.boundaries.keys():
-            return ['' for v in  vals]
+            return ["" for v in vals]
         else:
-            clr = f'{self.flag_type}:{self.flag_color}'
-            return [clr if is_oor(name, v) else ""  for v in vals]
+            clr = f"{self.flag_type}:{self.flag_color}"
+            return [clr if is_oor(name, v) else "" for v in vals]
 
     def __set_boundaries(self, boundaries):
         lbls = [str(l).lower() for l in self.labels]
@@ -309,7 +346,7 @@ class Flagger():
             # Mismatched keys may lead to errant belief that a measure is within
             # the fair range when actually there was a mistake (eg. key was
             # misspelled)
-            boundaries = {k:v for k,v in bnd.items() if k.lower() in lbls}
+            boundaries = {k: v for k, v in bnd.items() if k.lower() in lbls}
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 
@@ -321,7 +358,8 @@ class Flagger():
             try:
                 if isinstance(df, pd.io.formats.style.Styler):
                     self.df = df.data.copy()
-                else: raise ValidationError(err)
+                else:
+                    raise ValidationError(err)
             except:
                 raise ValidationError(err)
 
