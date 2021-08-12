@@ -22,10 +22,10 @@ from . import __preprocessing as prep, __validation as valid
     Model Comparison Tools
 """
 
-""" Mini Reports """
+''' Mini Reports '''
 
-
-def classification_performance(y_true, y_pred, target_labels=None, sig_fig: int = 4):
+def classification_performance(y_true, y_pred, target_labels=None,
+                               sig_fig:int=4):
     """ Returns a pandas dataframe of the scikit-learn classification report,
         formatted for use in fairMLHealth tools
 
@@ -38,57 +38,22 @@ def classification_performance(y_true, y_pred, target_labels=None, sig_fig: int 
     if target_labels is None:
         target_labels = [f"target = {t}" for t in set(y_true)]
     # scikit will run validation
-    report = sk_metric.classification_report(
-        y_true, y_pred, output_dict=True, target_names=target_labels
-    )
+    report = sk_metric.classification_report(y_true, y_pred, output_dict=True,
+                                             target_names=target_labels)
     report = pd.DataFrame(report).transpose()
     # Move accuracy to separate row
-    accuracy = report.loc["accuracy", :]
+    accuracy = report.loc['accuracy', :]
     if len(accuracy) > 0:
-        report.drop("accuracy", inplace=True)
-        report.loc["accuracy", "accuracy"] = accuracy[0]
+        report.drop('accuracy', inplace=True)
+        report.loc['accuracy', 'accuracy'] = accuracy[0]
     #
     report = report.round(sig_fig)
     return report
 
 
-def classification_performance(y_true, y_pred, target_labels=None, sig_fig: int = 4):
-    """ Returns a pandas dataframe of the scikit-learn classification report,
-        formatted for use in fairMLHealth tools
-
-    Args:
-        y_true (array): Target values. Must be compatible with model.predict().
-        y_pred (array): Prediction values. Must be compatible with
-            model.predict().
-        target_labels (list of str): Optional labels for target values.
-    """
-    if target_labels is None:
-        target_labels = [f"target = {t}" for t in set(y_true)]
-    # scikit will run validation
-    report = sk_metric.classification_report(
-        y_true, y_pred, output_dict=True, target_names=target_labels
-    )
-    report = pd.DataFrame(report).transpose()
-    # Move accuracy to separate row
-    accuracy = report.loc["accuracy", :]
-    if len(accuracy) > 0:
-        report.drop("accuracy", inplace=True)
-        report.loc["accuracy", "accuracy"] = accuracy[0]
-    #
-    report = report.round(sig_fig)
-    return report
-
-
-def measure_model(
-    test_data,
-    targets,
-    protected_attr,
-    model=None,
-    predictions=None,
-    probabilities=None,
-    pred_type="classification",
-    flag_oor=True,
-):
+def measure_model(test_data, targets, protected_attr, model=None,
+                  predictions=None, probabilities=None,
+                  pred_type="classification", flag_oor=True):
     """ Generates a report of fairness measures for the model
 
     Args:
@@ -110,31 +75,17 @@ def measure_model(
     Returns:
         pandas dataframe of fairness measures for the model
     """
-    comp = FairCompare(
-        test_data,
-        targets,
-        protected_attr,
-        model,
-        predictions,
-        probabilities,
-        pred_type,
-        verboseMode=True,
-    )
+    comp = FairCompare(test_data, targets, protected_attr, model,
+                       predictions, probabilities, pred_type, verboseMode=True)
     model_name = list(comp.models.keys())[0]
-    table = comp.measure_model(model_name, flag_oor=flag_oor, skip_performance=False)
+    table = comp.measure_model(model_name, flag_oor=flag_oor,
+                               skip_performance=False)
     return table
 
 
-def compare_models(
-    test_data,
-    targets,
-    protected_attr,
-    models=None,
-    predictions=None,
-    probabilities=None,
-    pred_type="classification",
-    flag_oor=True,
-):
+def compare_models(test_data, targets, protected_attr, models=None,
+                   predictions=None, probabilities=None,
+                   pred_type="classification", flag_oor=True):
     """ Generates a report comparing fairness measures for the models passed.
             Note: This is a wrapper for the FairCompare.compare_measures method
             See FairCompare for more information.
@@ -159,21 +110,13 @@ def compare_models(
     Returns:
         pandas dataframe of fairness and performance measures for each model
     """
-    comp = FairCompare(
-        test_data,
-        targets,
-        protected_attr,
-        models,
-        predictions,
-        probabilities,
-        pred_type,
-        verboseMode=True,
-    )
+    comp = FairCompare(test_data, targets, protected_attr, models,
+                       predictions, probabilities, pred_type, verboseMode=True)
     table = comp.compare_measures(flag_oor=flag_oor)
     return table
 
 
-def regression_performance(y_true, y_pred, sig_fig: int = 4):
+def regression_performance(y_true, y_pred, sig_fig:int=4):
     """ Returns a pandas dataframe of the regression performance metrics,
         similar to scikit's classification_performance
 
@@ -192,9 +135,8 @@ def regression_performance(y_true, y_pred, sig_fig: int = 4):
     rprt_input = pd.concat([y_true, y_pred], axis=1)
     _y, _yh = rprt_input.columns[0], rprt_input.columns[1]
     report = __regression_performance(rprt_input, _y, _yh)
-    report = (
-        pd.DataFrame().from_dict(report, orient="index").rename(columns={0: "Score"})
-    )
+    report = pd.DataFrame().from_dict(report, orient='index'
+                          ).rename(columns={0: 'Score'})
     report = report.round(sig_fig)
     return report
 
@@ -203,18 +145,9 @@ class FairCompare(ABC):
     """ Validates and stores data and models for fairness comparison
     """
 
-    def __init__(
-        self,
-        test_data,
-        target_data,
-        protected_attr=None,
-        models=None,
-        preds=None,
-        probs=None,
-        pred_type="classification",
-        priv_grp=1,
-        **kwargs,
-    ):
+    def __init__(self, test_data, target_data, protected_attr=None,
+                 models=None, preds=None, probs=None,
+                 pred_type="classification", priv_grp=1,  **kwargs):
         """ Generates fairness comparisons
 
         Args:
@@ -258,15 +191,8 @@ class FairCompare(ABC):
         self.probs = None if self.models is not None else probs
 
         #
-        self.__meas_obj = [
-            "X",
-            "y",
-            "prtc_attr",
-            "priv_grp",
-            "models",
-            "preds",
-            "probs",
-        ]
+        self.__meas_obj = ["X", "y", "prtc_attr", "priv_grp", "models",
+                           "preds", "probs"]
         #
         if "verboseMode" in kwargs:
             self.verboseMode = kwargs.get("verboseMode")
@@ -298,10 +224,9 @@ class FairCompare(ABC):
             for model_name in self.models.keys():
                 # Keep flag off at this stage to allow column rename (flagger
                 # returns a pandas Styler). Flag applied a few lines below
-                res = self.measure_model(
-                    model_name, skip_performance=True, flag_oor=False
-                )
-                res.rename(columns={"Value": model_name}, inplace=True)
+                res = self.measure_model(model_name, skip_performance=True,
+                                         flag_oor=False)
+                res.rename(columns={'Value': model_name}, inplace=True)
                 test_results.append(res)
             self.__toggle_validation()  # toggle-on model validation
             if len(test_results) > 0:
@@ -323,27 +248,23 @@ class FairCompare(ABC):
         self.__validate(model_name)
         msg = f"Could not measure fairness for {model_name}"
         if model_name not in self.preds.keys():
-            msg += (
-                " Name not found Available options include "
-                f"{list(self.preds.keys())}"
-            )
+            msg += (" Name not found Available options include "
+                   f"{list(self.preds.keys())}")
             print(msg)
             return pd.DataFrame()
         elif self.preds[model_name] is None:
-            msg += " No predictions present."
+            msg += (" No predictions present.")
             print(msg)
             return pd.DataFrame()
         else:
-            res = summary(
-                self.X[model_name],
-                self.prtc_attr[model_name],
-                self.y[model_name],
-                self.preds[model_name],
-                self.probs[model_name],
-                pred_type=self.pred_type,
-                sig_fig=self.sig_fig,
-                **kwargs,
-            )
+            res = summary(self.X[model_name],
+                                 self.prtc_attr[model_name],
+                                 self.y[model_name],
+                                 self.preds[model_name],
+                                 self.probs[model_name],
+                                 pred_type=self.pred_type,
+                                 sig_fig=self.sig_fig,
+                                 **kwargs)
             return res
 
     def __check_models_predictions(self, enforce=True):
@@ -370,12 +291,10 @@ class FairCompare(ABC):
                     try:
                         y_pred = mdl.predict(self.X[mdl_name])
                     except BaseException as e:
-                        e = getattr(e, "message") if "message" in dir(e) else str(e)
-                        msg = (
-                            f"Failure generating predictions for {mdl_name}"
-                            " model. Verify if data are correctly formatted"
-                            " for this model."
-                        ) + e
+                        e = getattr(e, 'message') if 'message' in dir(e) else str(e)
+                        msg = (f"Failure generating predictions for {mdl_name}"
+                               " model. Verify if data are correctly formatted"
+                               " for this model.") + e
                         raise valid.ValidationError(msg)
                     self.preds[mdl_name] = y_pred
                     # Since most fairness measures do not require probabilities,
@@ -390,27 +309,22 @@ class FairCompare(ABC):
             elif not all(m is None for m in model_objs):
                 raise valid.ValidationError(
                     "Incomplete set of models detected. Can't process a mix of"
-                    + " models and predictions"
-                )
+                    + " models and predictions")
             else:
                 if any(p is None for p in pred_objs):
                     raise valid.ValidationError(
-                        "Cannot measure without either models or predictions"
-                    )
+                        "Cannot measure without either models or predictions")
                 missing_probs = [p for p in prob_objs if p is None]
         else:
             if any(p is None for p in pred_objs):
                 raise valid.ValidationError(
-                    "Cannot measure without either models or predictions"
-                )
+                        "Cannot measure without either models or predictions")
             missing_probs = [p for p in prob_objs if p is None]
 
         if any(missing_probs):
-            warnings.warn(
-                "Please note that probabilities could not be "
-                + f"generated for the following models: {missing_probs}. "
-                + "Dependent metrics will be skipped."
-            )
+            warnings.warn("Please note that probabilities could not be " +
+                f"generated for the following models: {missing_probs}. " +
+                "Dependent metrics will be skipped.")
 
         return None
 
@@ -429,14 +343,13 @@ class FairCompare(ABC):
         """
         # Until otherwise updated, expect all objects to be non-iterable and
         # assume no keys
-        expected_len = 1  # expected len of iterable objects
+        expected_len = 1 # expected len of iterable objects
         expected_keys = []
 
         # Iterable attributes must be of same length so that keys can be
         # properly matched when they're converted to dictionaries.
-        iterable_obj = [
-            m for m in self.__meas_obj if isinstance(getattr(self, m), valid.ITER_TYPES)
-        ]
+        iterable_obj = [m for m in self.__meas_obj
+                        if isinstance(getattr(self, m), valid.ITER_TYPES)]
         if any(iterable_obj):
             lengths = [len(getattr(self, i)) for i in iterable_obj]
             err = "All iterable arguments must be of same length"
@@ -446,11 +359,8 @@ class FairCompare(ABC):
                 expected_len = lengths[0]
 
         # Dictionaries will assume the same keys after validation
-        dict_obj = [
-            getattr(self, i)
-            for i in iterable_obj
-            if valid.is_dictlike(getattr(self, i))
-        ]
+        dict_obj = [getattr(self, i)
+                    for i in iterable_obj if valid.is_dictlike(getattr(self, i))]
         if any(dict_obj):
             err = "All dict arguments must have the same keys"
             if not all([k.keys() == dict_obj[0].keys() for k in dict_obj]):
@@ -458,7 +368,7 @@ class FairCompare(ABC):
             elif not any(expected_keys):
                 expected_keys = list(dict_obj[0].keys())
         else:
-            expected_keys = [f"model {n+1}" for n in range(0, expected_len)]
+            expected_keys = [f'model {n+1}' for n in range(0, expected_len)]
 
         # All measure-related attributes will be assumed as dicts henceforth
         for name in self.__meas_obj:
@@ -474,16 +384,15 @@ class FairCompare(ABC):
         return None
 
     def __setup(self):
-        """ Validates models and data necessary to generate predictions. Then,
+        ''' Validates models and data necessary to generate predictions. Then,
             generates predictions using those models as needed. To be run on
             initialization only, or whenever model objects are updated, so that
             predictions are not updated
-        """
+        '''
         try:
             if not (self.models is None or self.preds is None):
-                err = (
-                    "FairCompare accepts either models or predictions, but" + "not both"
-                )
+                err = ("FairCompare accepts either models or predictions, but" +
+                       "not both")
                 raise valid.ValidationError(err)
             self.__set_dicts()
             for x in self.X.values():
@@ -493,6 +402,7 @@ class FairCompare(ABC):
                 self.__validate(m)
         except valid.ValidationError as ve:
             raise valid.ValidationError(f"Error loading FairCompare. {ve}")
+
 
     def __toggle_validation(self):
         self.__pause_validation = not self.__pause_validation
@@ -509,12 +419,11 @@ class FairCompare(ABC):
             return None
         else:
             self.__check_models_predictions(enforce=False)
-            valid.validate_analytical_input(
-                X=self.X[model_name],
-                y_true=self.y[model_name],
-                y_pred=self.preds[model_name],
-                y_prob=self.probs[model_name],
-                prtc_attr=self.prtc_attr[model_name],
-                priv_grp=self.priv_grp[model_name],
-            )
+            valid.validate_analytical_input(X=self.X[model_name],
+                                        y_true=self.y[model_name],
+                                        y_pred=self.preds[model_name],
+                                        y_prob=self.probs[model_name],
+                                        prtc_attr=self.prtc_attr[model_name],
+                                        priv_grp=self.priv_grp[model_name]
+                                        )
             return None
