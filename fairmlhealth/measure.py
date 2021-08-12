@@ -677,7 +677,7 @@ def __format_summary(df: pd.DataFrame, summary_type: str = "binary"):
     return df
 
 
-def __format_table(strat_tbl, sig_fig: int = 6):
+def __format_table(strat_tbl, sig_fig: int = 4):
     """ Formatting for stratified tables not including the summary tables. Use
         __format_summary to format summary tables.
     """
@@ -755,7 +755,7 @@ def __strat_class_performance(
 
 
 def __strat_reg_performance(
-    X, y_true, y_pred, features: list = None, add_overview=True, sig_fig: int = 9
+    X, y_true, y_pred, features: list = None, add_overview=True, sig_fig: int = 4
 ):
     """
     Generates a table of stratified performance metrics for each specified
