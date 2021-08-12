@@ -1,11 +1,10 @@
-'''
+"""
 
-'''
+"""
 import numpy as np
 import pandas as pd
 from . import __validation as valid
 from .__validation import ValidationError
-
 
 
 def analytical_labels(pred_type: str = "binary"):
@@ -17,11 +16,30 @@ def analytical_labels(pred_type: str = "binary"):
     if pred_type not in valid_pred_types:
         raise ValueError(f"pred_type must be one of {valid_pred_types}")
     c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
-    lbls = {'gf_label': "Group Fairness",
-            'if_label': "Individual Fairness",
-            'mp_label': f"Model Performance{c_note}",
-            'dt_label': "Data Metrics"
-            }
+    lbls = {
+        "gf_label": "Group Fairness",
+        "if_label": "Individual Fairness",
+        "mp_label": f"Model Performance{c_note}",
+        "dt_label": "Data Metrics",
+    }
+    return lbls
+
+
+def analytical_labels(pred_type: str = "binary"):
+    """ Returns a dictionary of category labels used by analytical functions
+    Args:
+        pred_type (b): number of classes in the prediction problem
+    """
+    valid_pred_types = ["binary", "multiclass", "regression"]
+    if pred_type not in valid_pred_types:
+        raise ValueError(f"pred_type must be one of {valid_pred_types}")
+    c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
+    lbls = {
+        "gf_label": "Group Fairness",
+        "if_label": "Individual Fairness",
+        "mp_label": f"Model Performance{c_note}",
+        "dt_label": "Data Metrics",
+    }
     return lbls
 
 
@@ -49,7 +67,7 @@ def prep_data(data):
         X = data.copy(deep=True)
     # Convert columns that do not contain any strings to numeric type
     for col in X.columns:
-        X.loc[:, col] = pd.to_numeric(X[col], errors='ignore')
+        X.loc[:, col] = pd.to_numeric(X[col], errors="ignore")
     return X
 
 
@@ -58,7 +76,7 @@ def prep_prtc_attr(arr):
         if isinstance(arr, pd.Series):
             prtc_attr = pd.DataFrame(arr, columns=[arr.name])
         else:
-            pa_name = 'protected_attribute'
+            pa_name = "protected_attribute"
             prtc_attr = pd.DataFrame(arr, columns=[pa_name])
     else:
         prtc_attr = arr.copy(deep=True)
@@ -90,15 +108,15 @@ def prep_preds(arr, y_col=None, prtc_attr=None, name="predictions"):
     else:
         preds.reset_index(drop=True, inplace=True)
     if y_col is None:
-        raise ValidationError(
-            f"Cannot evaluate {name} without ground truth")
+        raise ValidationError(f"Cannot evaluate {name} without ground truth")
     else:
         preds.columns = [y_col]
     return preds
 
 
-def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
-                        y_prob=None, priv_grp=1):
+def standard_preprocess(
+    X, prtc_attr=None, y_true=None, y_pred=None, y_prob=None, priv_grp=1
+):
     """ Formats data for use by fairness analytical functions.
     Args:
         X (array-like): Sample features
@@ -125,7 +143,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     if y_true is not None:
         y_true = prep_targets(y_true, prtc_attr)
         if not any(y_true.columns) or y_true.columns[0] == 0:
-            _y = y_cols()['col_names']['yt']
+            _y = y_cols()["col_names"]["yt"]
             y_true.columns = [_y]
         else:
             _y = y_true.columns[0]
@@ -137,8 +155,9 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
-                          features:list=None):
+def stratified_preprocess(
+    X, y_true=None, y_pred=None, y_prob=None, features: list = None
+):
     """
     Runs validation and formats data for use in stratified tables
 
@@ -158,11 +177,11 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
         quantiles
     """
     #
-    X, _, y_true, y_pred, y_prob = \
-        standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
-                            y_prob=y_prob)
+    X, _, y_true, y_pred, y_prob = standard_preprocess(
+        X, prtc_attr=None, y_true=y_true, y_pred=y_pred, y_prob=y_prob
+    )
     # Attach y variables and subset to expected columns
-    _y, _yh, _yp = y_cols()['col_names'].values()
+    _y, _yh, _yp = y_cols()["col_names"].values()
     df = X.copy()
     pred_cols = []
     if y_true is not None:
@@ -185,7 +204,7 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
 
 
 def y_cols(df=None):
-    ''' Returns a dict of hidden column names for each
+    """ Returns a dict of hidden column names for each
         of the y values used in stratified table functions, the keys for
         which are as follows: "yt"="y true"; "yh"="y predicted";
         "yp"="y probabilities". This allows for consistent references that are
@@ -198,18 +217,15 @@ def y_cols(df=None):
             df (pandas DataFrame, optional): dataframe to check for the presence
                 of known names; names that are not found will be dropped from
                 the results. Defaults to None.
-    '''
-    y_names = {'col_names': {'yt': '__y_true',
-                            'yh': '__y_pred',
-                            'yp': '__y_prob'},
-              'disp_names': {'yt': 'Target',
-                             'yh': 'Pred.',
-                             'yp': 'Prob.'}
-            }
+    """
+    y_names = {
+        "col_names": {"yt": "__y_true", "yh": "__y_pred", "yp": "__y_prob"},
+        "disp_names": {"yt": "Target", "yh": "Pred.", "yp": "Prob."},
+    }
     #
     if df is not None:
-        for k in y_names['col_names'].keys():
-            if y_names['col_names'][k] not in df.columns:
-                y_names['col_names'][k] = None
+        for k in y_names["col_names"].keys():
+            if y_names["col_names"][k] not in df.columns:
+                y_names["col_names"][k] = None
     return y_names
 

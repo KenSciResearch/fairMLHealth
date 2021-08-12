@@ -3,7 +3,8 @@
 # ToDo: Add more robust testing throughout
 
 
-from fairmlhealth import measure
+from logging import warning
+from fairmlhealth import measure, report
 import numpy as np
 import pytest
 import pandas as pd
@@ -13,14 +14,16 @@ np.random.seed(506)
 
 
 @pytest.fixture(scope="class")
-def load_classification_data(request):
+def load_data(request):
     N = 32
     df = synth_dataset(N)
     X = df[["A", "B", "C", "D", "prtc_attr", "other"]]
-    y = df["binary_target"].rename("y")
-    avg_fair = df["avg_binary_pred"].rename("avg")
+    y_b = df["binary_target"].rename("classification")
+    avg_fair_b = df["avg_binary_pred"].rename("avg_classification")
+    y_r = df["continuous_target"].rename("regression")
+    avg_fair_r = df["avg_cont_pred"].rename("avg_regression")
     #
-    data = pd.concat([X, y, avg_fair], axis=1)
+    data = pd.concat([X, y_b, avg_fair_b, y_r, avg_fair_r], axis=1)
     cohorts = pd.DataFrame(
         {0: np.random.randint(0, 2, N), 1: np.random.randint(0, 2, N)}
     )
@@ -30,7 +33,7 @@ def load_classification_data(request):
     yield
 
 
-@pytest.mark.usefixtures("load_classification_data")
+@pytest.mark.usefixtures("load_data")
 class TestCohorts:
     """ Validates that standard inputs are processed without error
     """
@@ -39,8 +42,8 @@ class TestCohorts:
         _ = measure.summary(
             self.df,
             self.df["prtc_attr"],
-            self.df["y"],
-            self.df["avg"],
+            self.df["classification"],
+            self.df["avg_classification"],
             pred_type="classification",
         )
 
@@ -48,8 +51,8 @@ class TestCohorts:
         _ = measure.summary(
             self.df,
             self.df["prtc_attr"],
-            self.df["y"],
-            self.df["avg"],
+            self.df["classification"],
+            self.df["avg_classification"],
             pred_type="classification",
             cohorts=self.cohorts[0],
         )
@@ -58,33 +61,19 @@ class TestCohorts:
         _ = measure.summary(
             self.df,
             self.df["prtc_attr"],
-            self.df["y"],
-            self.df["avg"],
+            self.df["classification"],
+            self.df["avg_classification"],
             pred_type="classification",
             cohorts=self.cohorts,
         )
 
-    def test_cohort_bias(self):
+    def test_cohort_stratified(self):
         _ = measure.bias(
             self.df,
             self.df["prtc_attr"],
             self.df["classification"],
             pred_type="classification",
             cohorts=self.cohorts,
-        )
-
-    def test_cohort_data(self):
-        _ = measure.data(
-            self.df, self.df["avg_classification"], cohorts=self.cohorts[0]
-        )
-
-    def test_cohort_performance(self):
-        _ = measure.performance(
-            self.df,
-            self.df["classification"],
-            self.df["avg_classification"],
-            pred_type="classification",
-            cohorts=self.cohorts[0],
         )
 
 
