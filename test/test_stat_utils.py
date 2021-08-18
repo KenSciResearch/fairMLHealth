@@ -9,8 +9,6 @@ import pytest
 import pandas as pd
 from .__testing_utilities import synth_dataset
 
-np.random.seed(506)
-
 
 @pytest.fixture(scope="class")
 def load_classification_data(request):
@@ -21,9 +19,8 @@ def load_classification_data(request):
     avg_fair = df["avg_binary_pred"].rename("avg")
     #
     data = pd.concat([X, y, avg_fair], axis=1)
-    cohorts = pd.DataFrame(
-        {0: np.random.randint(0, 2, N), 1: np.random.randint(0, 2, N)}
-    )
+    rng = np.random.RandomState(506)
+    cohorts = pd.DataFrame({0: rng.randint(0, 2, N), 1: rng.randint(0, 2, N)})
     #
     request.cls.df = data
     request.cls.cohorts = cohorts
