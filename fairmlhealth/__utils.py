@@ -310,7 +310,7 @@ class FairRanges:
         diff_bnd: Tuple[Number, Number] = (-0.1, 0.1),
         rto_bnd: Tuple[Number, Number] = (0.8, 1.2),
     ):
-        default = {"consistency score": (0.8, 1)}
+        default = {}
         for d in self.__diffs:
             default[d] = diff_bnd
         for r in self.__ratios:
