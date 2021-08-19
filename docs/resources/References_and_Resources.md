@@ -8,8 +8,12 @@ Agniel D, Kohane IS, & Weber GM (2018). Biases in electronic health record data 
 <a id="Agarwal2018"></a>
 Agarwal, A., Beygelzimer, A., Dudík, M., Langford, J., & Wallach, H. (2018). A reductions approach to fair classification. In International Conference on Machine Learning (pp. 60-69). PMLR. Available through [arXiv preprint:1803.02453](https://arxiv.org/pdf/1803.02453.pdf).
 
+Agarwal, A., Beygelzimer, A., Dudík, M., Langford, J., & Wallach, H. (2018). A Reductions Approach to Fair Classification. Retrieved from [https://arxiv.org/pdf/1803.02453](https://arxiv.org/pdf/1803.02453 )
+
 <a id="Agarwal2019"></a>
 Agarwal, A., Dudik, M., & Wu, Z. S. (2019, May). Fair regression: Quantitative definitions and reduction-based algorithms. In International Conference on Machine Learning (pp. 120-129). PMLR. Available through https://arxiv.org/pdf/1905.12843.pdf
+
+Anders, C. J., Pasliev, P., Dombrowski, A.-K., Müller, K.-R., & Kessel, P. (2020). Fairwashing Explanations with Off-Manifold Detergent. Retrieved from [http://arxiv.org/abs/2007.09969](http://arxiv.org/abs/2007.09969)
 
 <a id="bantilan2018_ref"></a>
 Bantilan N (2018). Themis-ml: A fairness-aware machine learning interface for end-to-end discrimination discovery and mitigation. Journal of Technology in Human Services, 36(1), 15-30. Retrieved from [https://www.tandfonline.com/doi/abs/10.1080/15228835.2017.1416512](https://www.tandfonline.com/doi/abs/10.1080/15228835.2017.1416512)
@@ -19,7 +23,13 @@ Barocas S, & Selbst AD (2016). Big data's disparate impact. California Law Revie
 
 Bellamy RK, Dey K, Hind M, Hoffman SC, Houde S, Kannan K, ... & Nagar S (2018). AI Fairness 360: An extensible toolkit for detecting, understanding, and mitigating unwanted algorithmic bias. arXiv Preprint. [arXiv:1810.01943.](https://arxiv.org/abs/1810.01943). See Also [AIF360 Documentation](http://aif360.mybluemix.net/)
 
+Berk, R., Heidari, H., Jabbari, S., Joseph, M., Kearns, M., Morgenstern, J., Neel, S. and Roth, A., 2017. A convex framework for fair regression. arXiv preprint retrieved from [https://arxiv.org/pdf/1706.02409](https://arxiv.org/pdf/1706.02409)
+
+de Bie, K., Lucic, A. and Haned, H., 2021. To Trust or Not to Trust a Regressor: Estimating and Explaining Trustworthiness of Regression Predictions. arXiv preprint arXiv:2104.06982. arXiv preprint retrieved from [https://arxiv.org/pdf/2104.06982](https://arxiv.org/pdf/2104.06982)
+
 Bird S, Dudík M,  Wallach H,  & Walker K (2020). Fairlearn: A toolkit for assessing and improving fairness in AI. Microsoft Research. Retrieved from [https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf](https://www.microsoft.com/en-us/research/uploads/prod/2020/05/Fairlearn_whitepaper.pdf). See Also [FairLearn Reference](https://fairlearn.github.io/).
+
+Corbett-Davies, S., & Goel, S. (2018). The Measure and Mismeasure of Fairness: A Critical Review of Fair Machine Learning. Retrieved from [http://arxiv.org/abs/1808.00023](http://arxiv.org/abs/1808.00023)
 
 <a id="dwork2012_ref"></a>
 Dwork C, Hardt M, Pitassi T, Reingold O, & Zemel R (2012, January). Fairness through awareness. In Proceedings of the 3rd innovations in theoretical computer science conference (pp. 214-226). Retrieved from [https://arxiv.org/pdf/1104.3913.pdf](https://arxiv.org/pdf/1104.3913.pdf)
@@ -56,13 +66,21 @@ Shorrocks AF (1980). The class of additively decomposable inequality measures. E
 <a id="speicher2018_ref"></a>
 Speicher T, Heidari H, Grgic-Hlaca N, Gummadi KP, Singla A, Weller A, & Zafar M B (2018, July). A unified approach to quantifying algorithmic unfairness: Measuring individual &group unfairness via inequality indices. In Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining (pp. 2239-2248). Retrieved from [https://arxiv.org/pdf/1807.00787.pdf](https://arxiv.org/pdf/1807.00787.pdf)
 
+Steinberg, D., Reid, A., & O'Callaghan, S. (2020). Fairness Measures for Regression via Probabilistic Classification. arXiv preprint retrieved from [https://arxiv.org/pdf/2001.06089](https://arxiv.org/pdf/2001.06089])
+
 Sylvester, J., & Raff, E. (2018). What about applied fairness?. [arXiv preprint arXiv:1806.05250](https://arxiv.org/abs/1806.05250).
+
+Verma, S. and Rubin, J., 2018, May. Fairness definitions explained. In 2018 ieee/acm international workshop on software fairness (fairware) (pp. 1-7). IEEE. doi: [10.1145/3194770.3194776](https://dl.acm.org/doi/10.1145/3194770.3194776)
+
+Xu, D., Yuan, S., & Wu, X. (2019, May). Achieving differential privacy and fairness in logistic regression. In Companion Proceedings of The 2019 World Wide Web Conference (pp. 594-599). Retrieved from [https://dl.acm.org/doi/abs/10.1145/3308560.3317584](https://dl.acm.org/doi/abs/10.1145/3308560.3317584)
+
+Zafar, M. B., Valera, I., Rogriguez, M. G., & Gummadi, K. P. (2017, April). Fairness constraints: Mechanisms for fair classification. In Artificial Intelligence and Statistics (pp. 962-970). PMLR. Available at [http://proceedings.mlr.press/v54/zafar17a.html](http://proceedings.mlr.press/v54/zafar17a.html)
+
+<a id="zafar2017_ref"></a>
+Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).   Retrieved from [https://arxiv.org/pdf/1610.08452.pdf](https://arxiv.org/pdf/1610.08452.pdf)
 
 <a id="zemel2013_ref"></a>
 Zemel R, Wu Y, Swersky K, Pitassi T, & Dwork C (2013, February). Learning fair representations. International Conference on Machine Learning (pp. 325-333). Retrieved from [http://proceedings.mlr.press/v28/zemel13.pdf](http://proceedings.mlr.press/v28/zemel13.pdf)
-
-<a id="zafar2017_ref"></a>
-Zafar MB, Valera I, Gomez Rodriguez, M, & Gummadi KP (2017, April). Fairness beyond disparate treatment & disparate impact: Learning classification without disparate mistreatment. In Proceedings of the 26th international conference on world wide web (pp. 1171-1180).  https://arxiv.org/pdf/1610.08452.pdf
 
 ## Recorded References
 Crawford, K. (2017, December). [The Trouble with Bias](https://youtu.be/fMym_BKWQzk) \[Conference presentation\]. NeurIPS 2017, Long Beach, CA. https://youtu.be/fMym_BKWQzk
