@@ -13,15 +13,38 @@ from . import __preprocessing as prep, __validation as valid
 
 
 def chisquare_pval(
-    group: valid.ArrayLike, values: valid.ArrayLike, n_samples: Number = 50
+    group: valid.ArrayLike,
+    values: valid.ArrayLike,
+    n_sample: Number = 50,
+    random_seed: int = None,
 ):
-    def smpl(ser: pd.Series, n_samp: int = n_samples):
-        return ser.sample(n=n_samp, replace=True).reset_index(drop=True)
+    """[summary]
+
+    Args:
+        group (valid.ArrayLike): [description]
+        values (valid.ArrayLike): [description]
+        n_sample (Number, optional): size of random sample to be tested. If None,
+            or if fewer than n_sample observations are present in the data,
+            sample size will be the smaller size between a and b. Defaults to 50.
+        random_seed (int, optional): Random seed to be used for sampling. Defaults to None.
+    """
+
+    def smpl(ser: pd.Series, n_samp: int = n_sample):
+        return ser.sample(n=n_samp, replace=True, random_state=random_seed).reset_index(
+            drop=True
+        )
 
     #
+    if not isinstance(random_seed, int) and random_seed is not None:
+        raise TypeError("random_seed must be int or None")
     g = prep.prep_arraylike(group, "group", expected_len=None)
     v = prep.prep_arraylike(values, "values", expected_len=len(g))
-    n = n_samples if n_samples <= g.shape[0] else g.shape[0]
+    #
+    if n_sample is None or n_sample <= g.shape[0]:
+        n = g.shape[0]
+    else:
+        n = n_sample
+
     data = pd.concat([smpl(g, n), smpl(v, n)], axis=1, ignore_index=True)
     data.columns = ["group", "values"]
     # Using groupby and unstack to avoid bugs in some versions of crosstab
@@ -30,26 +53,38 @@ def chisquare_pval(
     return pval
 
 
-def kruskal_pval(a: valid.ArrayLike, b: valid.ArrayLike, n_samples: Number = 50):
+def kruskal_pval(
+    a: valid.ArrayLike,
+    b: valid.ArrayLike,
+    n_sample: Number = 50,
+    random_seed: int = None,
+):
     """ Returns the p-value for a Kruskal-Wallis test of a and b using random
-        samples of size n_samples.
+        samples of size n_sample.
 
     Args:
         a (valid.ArrayLike): test distribution
         b (valid.ArrayLike): expected distribution
-        n_samples (Number, optional): size of random sample to be tested. if
-            fewer than n_samples are present in the data, will set sample size
-            to the smaller size between a and b. Defaults to 50.
+        n_sample (Number, optional): size of random sample to be tested. If None,
+            or if fewer than n_sample observations are present in the data,
+            sample size will be the smaller size between a and b. Defaults to 50.
+        random_seed (int, optional): Random seed to be used for sampling. Defaults to None.
     """
 
     def smpl(arr, n_samp):
-        return np.random.choice(arr, size=n_samp, replace=True)
+        rng = np.random.RandomState(random_seed)
+        return rng.choice(arr, size=n_samp, replace=True)
 
     #
+    if not isinstance(random_seed, int) and random_seed is not None:
+        raise TypeError("random_seed must be int or None")
     valid.validate_array(a, expected_len=None)
     valid.validate_array(b, expected_len=None)
     min_sample = min(a.shape[0], b.shape[0])
-    n = n_samples if n_samples <= min_sample else min_sample
+    if n_sample is None or n_sample <= min_sample:
+        n = min_sample
+    else:
+        n = n_sample
     pval = stats.kruskal(smpl(a, n), smpl(b, n))[1]
     return pval
 
@@ -94,8 +129,12 @@ def bootstrap_significance(
     Returns:
         bool: whether difference is statistically significant
     """
+    if not isinstance(alpha, Number) or not (0 <= alpha <= 1):
+        raise TypeError("alpha must be a number between 0 and 1")
     if threshold is None:
         threshold = 1 - alpha
+    elif not isinstance(threshold, Number) or not (0 <= threshold <= 1):
+        raise TypeError("threshold must be a number between 0 and 1 if defined")
     # Create a list of p-values for each of n_trials
     pvals = []
     for i in range(0, n_trials):
