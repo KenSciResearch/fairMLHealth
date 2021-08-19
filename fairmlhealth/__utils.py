@@ -3,12 +3,13 @@ Back-end functions used throughout the library, many of which assume that inputs
 have been validated
 """
 from numbers import Number
-from typing import Callable, Dict, Tuple
 import numpy as np
 import pandas as pd
-from . import __preprocessing as prep, __validation as valid
-from .__validation import ValidationError
+from typing import Any, Callable, Dict, Tuple
 from warnings import warn, catch_warnings, filterwarnings
+
+from . import __preprocessing as prep, __validation as valid
+from .__validation import ArrayLike, MatrixLike, ValidationError
 
 
 def epsilon():
@@ -16,7 +17,7 @@ def epsilon():
     return np.finfo(np.float64).eps
 
 
-def format_errwarn(func):
+def format_errwarn(func: Callable[[], Tuple[Any, Dict, Dict]]):
     """ Wraps a function returning some result with dictionaries for errors and
         warnings, then formats those errors and warnings as grouped warnings.
         Used for analytical functions to skip errors (and warnings) while
@@ -28,7 +29,7 @@ def format_errwarn(func):
             dictionaries should be of form {<column or id>:<message>}
 
     Returns:
-        function: the first member of the tuple returned by func
+        Any (result): the first member of the tuple returned by func
     """
 
     def format_info(dict):
@@ -59,21 +60,24 @@ def format_errwarn(func):
     return wrapper
 
 
-def iterate_cohorts(func: Callable):
+def iterate_cohorts(func: Callable[[], pd.DataFrame]):
     """ Runs the function for each cohort subset
 
     Args:
         func (function): the function to iterate
 
     Returns:
-        cohort-iterated version of the output
+        pd.DataFrame: cohort-iterated version of the output
 
     """
 
-    def prepend_cohort(df: valid.MatrixLike, new_ix: valid.ArrayLike):
+    def prepend_cohort(df: pd.DataFrame, new_ix: ArrayLike):
         """ Attaches cohort information to the far left of the dataframe, adjusting
             by type. Cohorts are added to the index to enable flagging for
             cohorted summary tables (pd.Styler fails with non-unique indices)
+
+        Returns:
+            pd.DataFrame
         """
         idx = df.index.to_frame().rename(columns={0: "__index"})
         # add padding to shift start location if prepending a summary table
@@ -91,7 +95,7 @@ def iterate_cohorts(func: Callable):
         df.index = pd.MultiIndex.from_frame(idx)
         return df
 
-    def subset(data: valid.MatrixLike, idxs: valid.ArrayLike):
+    def subset(data: pd.DataFrame, idxs: ArrayLike):
         if data is not None:
             return data.loc[
                 idxs,
@@ -108,7 +112,7 @@ def iterate_cohorts(func: Callable):
         errant_list.append(grpname)
         return None
 
-    def wrapper(cohorts: valid.MatrixLike = None, **kwargs):
+    def wrapper(cohorts: MatrixLike = None, **kwargs):
         """ Iterates for each cohort subset
 
         Args:
@@ -247,14 +251,14 @@ class FairRanges:
     def __init__(self):
         pass
 
-    def mad(self, arr):
+    def mad(self, arr: ArrayLike):
         return np.median(np.abs(arr - np.median(arr)))
 
     def load_fair_ranges(
         self,
         custom_ranges: Dict[str, Tuple[Number, Number]] = None,
-        y_true: valid.ArrayLike = None,
-        y_pred: valid.ArrayLike = None,
+        y_true: ArrayLike = None,
+        y_pred: ArrayLike = None,
     ):
         """
         Args:
@@ -301,7 +305,11 @@ class FairRanges:
             )
         return (-s_bnd, s_bnd)
 
-    def default_boundaries(self, diff_bnd=(-0.1, 0.1), rto_bnd=(0.8, 1.2)):
+    def default_boundaries(
+        self,
+        diff_bnd: Tuple[Number, Number] = (-0.1, 0.1),
+        rto_bnd: Tuple[Number, Number] = (0.8, 1.2),
+    ):
         default = {"consistency score": (0.8, 1)}
         for d in self.__diffs:
             default[d] = diff_bnd
@@ -382,7 +390,7 @@ class Flagger:
         self.labels = None
         self.label_type = None
 
-    def __colors(self, vals):
+    def __colors(self, vals: pd.Series):
         """ Returns a list containing the color settings for difference
             measures found to be OOR
         """
@@ -405,7 +413,9 @@ class Flagger:
             clr = f"{self.flag_type}:{self.flag_color}"
             return [clr if is_oor(name, v) else "" for v in vals]
 
-    def __set_boundaries(self, custom_boundaries):
+    def __set_boundaries(
+        self, custom_boundaries: Dict[str, Tuple[Number, Number]] = None
+    ):
         lbls = [str(l).lower() for l in self.labels]
         if custom_boundaries is None:
             custom_boundaries = {}
@@ -418,7 +428,7 @@ class Flagger:
         valid.validate_fair_boundaries(boundaries, lbls)
         self.boundaries = boundaries
 
-    def __set_df(self, df):
+    def __set_df(self, df: pd.DataFrame):
         if isinstance(df, pd.DataFrame):
             self.df = df.copy()
         else:

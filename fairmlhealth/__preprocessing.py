@@ -1,40 +1,53 @@
-'''
+"""
 
-'''
+"""
+from abc import ABC
 import numpy as np
 import pandas as pd
 from . import __validation as valid
-from .__validation import ValidationError
+from .__validation import ArrayLike, IterableStrings, MatrixLike, ValidationError
 
 
+class AnalyticalLabels(ABC):
+    @classmethod
+    def get_dict(cls, pred_type: str = "binary"):
+        """ Returns a dictionary of category labels used by analytical functions
+        Args:
+            pred_type (b): number of classes in the prediction problem
+        """
+        valid_types = cls.get_valid_types()
+        if pred_type not in valid_types:
+            raise ValueError(f"pred_type must be one of {valid_types}")
+        c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
+        lbls = {
+            "gf_label": "Group Fairness",
+            "if_label": "Individual Fairness",
+            "mp_label": f"Model Performance{c_note}",
+            "dt_label": "Data Metrics",
+        }
+        return lbls
 
-def analytical_labels(pred_type: str = "binary"):
-    """ Returns a dictionary of category labels used by analytical functions
-    Args:
-        pred_type (b): number of classes in the prediction problem
-    """
-    valid_pred_types = ["binary", "multiclass", "regression"]
-    if pred_type not in valid_pred_types:
-        raise ValueError(f"pred_type must be one of {valid_pred_types}")
-    c_note = " (Weighted Avg)" if pred_type == "multiclass" else ""
-    lbls = {'gf_label': "Group Fairness",
-            'if_label': "Individual Fairness",
-            'mp_label': f"Model Performance{c_note}",
-            'dt_label': "Data Metrics"
-            }
-    return lbls
+    @classmethod
+    def get_labels(cls, pred_type: str = "binary"):
+        label_dict = cls.get_dict(pred_type)
+        return label_dict.values()
+
+    @staticmethod
+    def get_valid_types():
+        return ["binary", "multiclass", "regression"]
 
 
-def prep_arraylike(arr:valid.ArrayLike, name:str=None, expected_len:int=None):
+def prep_arraylike(arr: ArrayLike, name: str = None, expected_len: int = None):
     valid.validate_array(arr, name, expected_len)
     if isinstance(arr, pd.DataFrame):
         raise ValidationError(
-            "This function accepts only 1D numpy arrays or pandas Series objects.")
+            "This function accepts only 1D numpy arrays or pandas Series objects."
+        )
     series = pd.Series(arr, name=name).reset_index(drop=True)
     return series
 
 
-def prep_data(data):
+def prep_data(data: MatrixLike):
     """ Ensures that data are in the correct format
 
     Returns:
@@ -52,16 +65,16 @@ def prep_data(data):
         X = data.copy(deep=True)
     # Convert columns that do not contain any strings to numeric type
     for col in X.columns:
-        X.loc[:, col] = pd.to_numeric(X[col], errors='ignore')
+        X.loc[:, col] = pd.to_numeric(X[col], errors="ignore")
     return X
 
 
-def prep_prtc_attr(arr):
+def prep_prtc_attr(arr: ArrayLike):
     if not isinstance(arr, pd.DataFrame):
         if isinstance(arr, pd.Series):
             prtc_attr = pd.DataFrame(arr, columns=[arr.name])
         else:
-            pa_name = 'protected_attribute'
+            pa_name = "protected_attribute"
             prtc_attr = pd.DataFrame(arr, columns=[pa_name])
     else:
         prtc_attr = arr.copy(deep=True)
@@ -69,7 +82,7 @@ def prep_prtc_attr(arr):
     return prtc_attr
 
 
-def prep_targets(arr, prtc_attr=None):
+def prep_targets(arr: ArrayLike, prtc_attr: ArrayLike = None):
     if isinstance(arr, (np.ndarray, pd.Series)):
         targets = pd.DataFrame(arr)
     else:
@@ -82,7 +95,12 @@ def prep_targets(arr, prtc_attr=None):
     return targets
 
 
-def prep_preds(arr, y_col=None, prtc_attr=None, name="predictions"):
+def prep_preds(
+    arr: ArrayLike,
+    y_col: str = None,
+    prtc_attr: ArrayLike = None,
+    name: str = "predictions",
+):
     if isinstance(arr, np.ndarray):
         preds = pd.DataFrame(arr)
     else:
@@ -93,15 +111,20 @@ def prep_preds(arr, y_col=None, prtc_attr=None, name="predictions"):
     else:
         preds.reset_index(drop=True, inplace=True)
     if y_col is None:
-        raise ValidationError(
-            f"Cannot evaluate {name} without ground truth")
+        raise ValidationError(f"Cannot evaluate {name} without ground truth")
     else:
         preds.columns = [y_col]
     return preds
 
 
-def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
-                        y_prob=None, priv_grp=1):
+def standard_preprocess(
+    X: MatrixLike,
+    prtc_attr: ArrayLike = None,
+    y_true: ArrayLike = None,
+    y_pred: ArrayLike = None,
+    y_prob: ArrayLike = None,
+    priv_grp: int = 1,
+):
     """ Formats data for use by fairness analytical functions.
     Args:
         X (array-like): Sample features
@@ -128,7 +151,7 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     if y_true is not None:
         y_true = prep_targets(y_true, prtc_attr)
         if not any(y_true.columns) or y_true.columns[0] == 0:
-            _y = y_cols()['priv_names']['yt']
+            _y = y_cols()["priv_names"]["yt"]
             y_true.columns = [_y]
         else:
             _y = y_true.columns[0]
@@ -140,8 +163,13 @@ def standard_preprocess(X, prtc_attr=None, y_true=None, y_pred=None,
     return (X, prtc_attr, y_true, y_pred, y_prob)
 
 
-def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
-                          features:list=None):
+def stratified_preprocess(
+    X: MatrixLike,
+    y_true: ArrayLike = None,
+    y_pred: ArrayLike = None,
+    y_prob: ArrayLike = None,
+    features: IterableStrings = None,
+):
     """
     Runs validation and formats data for use in stratified tables
 
@@ -161,11 +189,11 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
         quantiles
     """
     #
-    X, _, y_true, y_pred, y_prob = \
-        standard_preprocess(X, prtc_attr=None, y_true=y_true, y_pred=y_pred,
-                            y_prob=y_prob)
+    X, _, y_true, y_pred, y_prob = standard_preprocess(
+        X, prtc_attr=None, y_true=y_true, y_pred=y_pred, y_prob=y_prob
+    )
     # Attach y variables and subset to expected columns
-    _y, _yh, _yp = y_cols()['priv_names'].values()
+    _y, _yh, _yp = y_cols()["priv_names"].values()
     df = X.copy()
     pred_cols = []
     if y_true is not None:
@@ -187,8 +215,8 @@ def stratified_preprocess(X, y_true=None, y_pred=None, y_prob=None,
     return df
 
 
-def y_cols(df=None):
-    ''' Returns a dict of hidden column names for each
+def y_cols(df: pd.DataFrame = None):
+    """ Returns a dict of hidden column names for each
         of the y values used in stratified table functions, the keys for
         which are as follows: "yt"="y true"; "yh"="y predicted";
         "yp"="y probabilities". This allows for consistent references that are
@@ -201,21 +229,17 @@ def y_cols(df=None):
             df (pandas DataFrame, optional): dataframe to check for the presence
                 of known names; names that are not found will be dropped from
                 the results. Defaults to None.
-    '''
+    """
     y_names = {
-                # Private names used in processing
-                'priv_names': {'yt': '___y_true',
-                                'yh': '___y_pred',
-                                'yp': '___y_prob'},
-                # Display names
-                'disp_names': {'yt': 'Target',
-                                'yh': 'Prediction',
-                                'yp': 'Probability'}
-            }
+        # Private names used in processing
+        "priv_names": {"yt": "___y_true", "yh": "___y_pred", "yp": "___y_prob"},
+        # Display names
+        "disp_names": {"yt": "Target", "yh": "Prediction", "yp": "Probability"},
+    }
     #
     if df is not None:
-        for k in y_names['priv_names'].keys():
-            if y_names['priv_names'][k] not in df.columns:
-                y_names['priv_names'][k] = None
+        for k in y_names["priv_names"].keys():
+            if y_names["priv_names"][k] not in df.columns:
+                y_names["priv_names"][k] = None
     return y_names
 

@@ -45,7 +45,7 @@ def feature_table(df: pd.DataFrame):
     return count_df
 
 
-def load_icd_ccs_xwalk(code_type):
+def load_icd_ccs_xwalk(code_type: str):
     """ Returns a pandas dataframe containing an ICD-9 to CCS crosswalk
 
     Args:
@@ -71,7 +71,7 @@ def load_icd_ccs_xwalk(code_type):
     return df
 
 
-def load_mimic3_example(mimic_dirpath):
+def load_mimic3_example(mimic_dirpath: str):
     """ Returns a formatted MIMIC-III data subset for use in KDD Tutorial
 
         If formatted data file exists, loads that file. Else, generates
@@ -108,7 +108,7 @@ class mimic_loader:
             Tutorial
     """
 
-    def __init__(self, data_file=""):
+    def __init__(self, data_file: str = ""):
         self.output_file = os.path.expanduser(data_file)
         mimic_dir = os.path.dirname(self.output_file)
         if mimic_dir != "":
@@ -144,7 +144,7 @@ class mimic_loader:
         df.to_csv(self.output_file, index=False)
         return True
 
-    def __mimic_data(self, data_key):
+    def __mimic_data(self, data_key: str):
         """ Returns transfer data as pd dataframe after removing the ROW_ID
                 column (unnecessary column that causes problems)
 
@@ -247,7 +247,7 @@ class mimic_loader:
             raise ValueError("Duplicate hospital admission information in output")
         return output
 
-    def load_dxpx_data(self, feature_type):
+    def load_dxpx_data(self, feature_type: str):
         """ Returns a pandas dataframe with formatted diagnosis or procedure
                 data, categorized in single-level CCS codes and one-hot encoded
 

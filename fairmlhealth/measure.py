@@ -7,12 +7,11 @@ Contributors:
 
 
 import aif360.sklearn.metrics as aif
-from functools import reduce
 import logging
 from numbers import Number
 import numpy as np
 import pandas as pd
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple, Union
 
 from sklearn.metrics import (
     mean_absolute_error,
@@ -24,30 +23,30 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 
 # Tutorial Libraries
 from . import (
-    __performance_metrics as pmtrc,
+    performance_metrics as pmtrc,
     __fairness_metrics as fcmtrc,
     __validation as valid,
     __utils as utils,
 )
 from .__preprocessing import (
+    AnalyticalLabels,
     standard_preprocess,
     stratified_preprocess,
-    analytical_labels,
     y_cols,
 )
-from .__validation import ValidationError
+from .__validation import ArrayLike, IterableStrings, MatrixLike, ValidationError
 from .__utils import format_errwarn, iterate_cohorts
 
 
 def bias(
-    X,
-    y_true,
-    y_pred,
-    features: list = None,
-    pred_type="classification",
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    features: IterableStrings = None,
+    pred_type: str = "classification",
     sig_fig: int = 4,
-    flag_oor=False,
-    cohorts: valid.MatrixLike = None,
+    flag_oor: bool = False,
+    cohorts: MatrixLike = None,
     custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     **kwargs,
 ):
@@ -113,13 +112,13 @@ def bias(
 
 
 def data(
-    X,
-    Y,
-    features: list = None,
-    targets: list = None,
-    add_overview=True,
+    X: MatrixLike,
+    Y: MatrixLike,
+    features: IterableStrings = None,
+    targets: IterableStrings = None,
+    add_overview: bool = True,
     sig_fig: int = 4,
-    cohorts: valid.MatrixLike = None,
+    cohorts: MatrixLike = None,
 ):
     """ Generates a table of stratified data metrics
 
@@ -158,10 +157,10 @@ def data(
 
 
 def fair_ranges(
-    custom_ranges: "dict[str, tuple[Number, Number]]" = None,
-    y_true: valid.ArrayLike = None,
-    y_pred: valid.ArrayLike = None,
-    available_measures: "list[str]" = None,
+    custom_ranges: Dict[str, Tuple[Number, Number]] = None,
+    y_true: ArrayLike = None,
+    y_pred: ArrayLike = None,
+    available_measures: IterableStrings = None,
 ):
     cbounds = custom_ranges
     result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
@@ -173,7 +172,7 @@ def fair_ranges(
 
 
 def flag(
-    df: valid.MatrixLike,
+    df: MatrixLike,
     caption: str = "",
     sig_fig: int = 4,
     as_styler: bool = True,
@@ -202,15 +201,15 @@ def flag(
 
 
 def performance(
-    X,
-    y_true,
-    y_pred,
-    y_prob=None,
-    features: list = None,
-    pred_type="classification",
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    y_prob: ArrayLike = None,
+    features: IterableStrings = None,
+    pred_type: str = "classification",
     sig_fig: int = 4,
-    add_overview=True,
-    cohorts: valid.MatrixLike = None,
+    add_overview: bool = True,
+    cohorts: MatrixLike = None,
     **kwargs,
 ):
     """ Generates a table of stratified performance metrics
@@ -266,16 +265,16 @@ def performance(
 
 
 def summary(
-    X,
-    y_true,
-    y_pred,
-    y_prob=None,
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    y_prob: ArrayLike = None,
     prtc_attr: str = None,
-    flag_oor=False,
-    pred_type="classification",
-    priv_grp=1,
+    flag_oor: bool = False,
+    pred_type: str = "classification",
+    priv_grp: int = 1,
     sig_fig: int = 4,
-    cohorts: valid.MatrixLike = None,
+    cohorts: MatrixLike = None,
     custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     **kwargs,
 ):
@@ -351,11 +350,11 @@ def summary(
 @iterate_cohorts
 def __analyze_data(
     *,
-    X,
-    Y,
-    features: list = None,
-    targets: list = None,
-    add_overview=True,
+    X: MatrixLike,
+    Y: MatrixLike,
+    features: IterableStrings = None,
+    targets: IterableStrings = None,
+    add_overview: bool = True,
     sig_fig: int = 4,
     **kwargs,
 ):
@@ -475,7 +474,9 @@ def __analyze_data(
 
 
 @format_errwarn
-def __apply_featureGroups(features, df, func, *args):
+def __apply_featureGroups(
+    features: IterableStrings, df: pd.DataFrame, func: Callable, *args
+):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
 
@@ -514,7 +515,9 @@ def __apply_featureGroups(features, df, func, *args):
 
 
 @format_errwarn
-def __apply_biasGroups(features, df, func, yt, yh):
+def __apply_biasGroups(
+    features: IterableStrings, df: pd.DataFrame, func: Callable, yt: str, yh: str
+):
     """ Iteratively applies a function across groups of each stratified feature,
         collecting errors and warnings to be displayed succinctly after processing.
 
@@ -574,7 +577,14 @@ def __apply_biasGroups(features, df, func, yt, yh):
 
 
 @iterate_cohorts
-def __classification_bias(*, X, y_true, y_pred, features: list = None, **kwargs):
+def __classification_bias(
+    *,
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    features: IterableStrings = None,
+    **kwargs,
+):
     """ Generates a table of stratified fairness metrics metrics for each specified
         feature
 
@@ -636,7 +646,14 @@ def __classification_performance(x: pd.DataFrame, y: str, yh: str, yp: str = Non
 
 @iterate_cohorts
 def __classification_summary(
-    *, X, prtc_attr, y_true, y_pred, y_prob=None, priv_grp=1, **kwargs
+    *,
+    X: MatrixLike,
+    prtc_attr: ArrayLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    y_prob: ArrayLike = None,
+    priv_grp: int = 1,
+    **kwargs,
 ):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
@@ -654,7 +671,14 @@ def __classification_summary(
             group. Defaults to 1.
     """
     #
-    def update_summary(summary_dict, pa_name, y_true, y_pred, y_prob, priv_grp):
+    def update_summary(
+        summary_dict: Dict[str, Number],
+        pa_name: str,
+        y_true: ArrayLike,
+        y_pred: ArrayLike,
+        y_prob: ArrayLike,
+        priv_grp: int,
+    ):
         """ Adds replaces measure keys with the names found in the literature
 
         Args:
@@ -680,10 +704,10 @@ def __classification_summary(
         for k in drop_keys:
             summary_dict.pop(k)
         summary_dict["Equal Odds Difference"] = fcmtrc.eq_odds_diff(
-            y_true, y_pred, prtc_attr=pa_name
+            y_true, y_pred, pa_name=pa_name
         )
         summary_dict["Equal Odds Ratio"] = fcmtrc.eq_odds_ratio(
-            y_true, y_pred, prtc_attr=pa_name
+            y_true, y_pred, pa_name=pa_name
         )
         if y_prob is not None:
             try:
@@ -723,7 +747,7 @@ def __classification_summary(
         )
 
     # Generate a dictionary of measure values to be converted t a dataframe
-    labels = analytical_labels(summary_type)
+    labels = AnalyticalLabels.get_dict(summary_type)
     summary = __fair_classification_measures(y_true, y_pred, pa_name, priv_grp)
     measures = {
         labels["gf_label"]: update_summary(
@@ -742,7 +766,9 @@ def __classification_summary(
     return output
 
 
-def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
+def __fair_classification_measures(
+    y_true: ArrayLike, y_pred: ArrayLike, pa_name: str, priv_grp: int = 1
+):
     """ Returns a dict of measure values
     """
 
@@ -773,7 +799,9 @@ def __fair_classification_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
+def __fair_regression_measures(
+    y_true: ArrayLike, y_pred: ArrayLike, pa_name: str, priv_grp: int = 1
+):
     """ Returns dict of regression-specific fairness measures
     """
 
@@ -802,11 +830,10 @@ def __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=1):
     return measures
 
 
-def __format_summary(measures: dict, summary_type: str = "binary"):
+def __format_summary(measures: Dict[str, Number], summary_type: str = "binary"):
     """ Formatting specific to the summary tables
     """
-
-    metrics = (analytical_labels(summary_type)).values()
+    metrics = AnalyticalLabels.get_labels(summary_type)
     if not all(m in metrics for m in measures.keys()):
         raise ValidationError("errant metrics found in summary dict")
     # Convert to a dataframe.
@@ -834,7 +861,7 @@ def __format_summary(measures: dict, summary_type: str = "binary"):
     df.index = pd.MultiIndex.from_frame(idx)
     df.columns = new_cols
     # Fix the order in which the metrics appear
-    gfl, ifl, mpl, dtl = analytical_labels(summary_type).values()
+    gfl, ifl, mpl, dtl = AnalyticalLabels.get_labels(summary_type)
     metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
     df.reset_index(inplace=True)
     df["sortorder"] = df["Metric"].map(metric_order)
@@ -846,7 +873,7 @@ def __format_summary(measures: dict, summary_type: str = "binary"):
     return df
 
 
-def __format_table(strat_tbl, sig_fig: int = 6):
+def __format_table(strat_tbl: pd.DataFrame, sig_fig: int = 6):
     """ Formatting for stratified tables not including the summary tables. Use
         __format_summary to format summary tables.
     """
@@ -883,12 +910,12 @@ def __regression_performance(x: pd.DataFrame, y: str, yh: str):
 
 @iterate_cohorts
 def __strat_class_performance(
-    X,
-    y_true,
-    y_pred,
-    y_prob=None,
-    features: list = None,
-    add_overview=True,
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    y_prob: ArrayLike = None,
+    features: IterableStrings = None,
+    add_overview: bool = True,
     sig_fig: int = 9,
     **kwargs,
 ):
@@ -943,11 +970,11 @@ def __strat_class_performance(
 
 @iterate_cohorts
 def __strat_reg_performance(
-    X,
-    y_true,
-    y_pred,
-    features: list = None,
-    add_overview=True,
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    features: IterableStrings = None,
+    add_overview: bool = True,
     sig_fig: int = 9,
     **kwargs,
 ):
@@ -995,7 +1022,14 @@ def __strat_reg_performance(
 
 
 @iterate_cohorts
-def __regression_bias(*, X, y_true, y_pred, features: list = None, **kwargs):
+def __regression_bias(
+    *,
+    X: MatrixLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    features: IterableStrings = None,
+    **kwargs,
+):
     """
     Generates a table of stratified fairness metrics metrics for each specified
     feature
@@ -1028,7 +1062,15 @@ def __regression_bias(*, X, y_true, y_pred, features: list = None, **kwargs):
 
 
 @iterate_cohorts
-def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
+def __regression_summary(
+    *,
+    X: MatrixLike,
+    prtc_attr: ArrayLike,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    priv_grp: int = 1,
+    **kwargs,
+):
     """ Returns a pandas dataframe containing fairness measures for the model
         results
 
@@ -1073,7 +1115,7 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
         for row in strat_tbl.iterrows():
             mp_vals[row[0]] = row[1]["Score"]
     # Store measures in dict for formatting
-    labels = analytical_labels("regression")
+    labels = AnalyticalLabels.get_dict("regression")
     measures = {
         labels["gf_label"]: grp_vals,
         labels["if_label"]: if_vals,
@@ -1085,7 +1127,9 @@ def __regression_summary(*, X, prtc_attr, y_true, y_pred, priv_grp=1, **kwargs):
     return output
 
 
-def __similarity_measures(X, pa_name: str, y_true: pd.Series, y_pred: pd.Series):
+def __similarity_measures(
+    X: MatrixLike, pa_name: str, y_true: pd.Series, y_pred: pd.Series
+):
     """ Returns dict of similarity-based fairness measures
     """
     if_vals = {}
@@ -1102,7 +1146,7 @@ def __similarity_measures(X, pa_name: str, y_true: pd.Series, y_pred: pd.Series)
     return if_vals
 
 
-def __sort_table(strat_tbl):
+def __sort_table(strat_tbl: pd.DataFrame):
     """ Sorts columns in standardized order
 
     Args:
@@ -1120,7 +1164,7 @@ def __sort_table(strat_tbl):
     return strat_tbl[head_cols + tail_cols]
 
 
-def __value_prevalence(y_true, priv_grp):
+def __value_prevalence(y_true: pd.Series, priv_grp: Union[str, Number]):
     """ Returns a dictionary of data metrics applicable to evaluation of
         fairness
 
