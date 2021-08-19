@@ -1,12 +1,12 @@
-'''
+"""
 Method Adapted from:
 http://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
 
 Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
-'''
+"""
 
-from . import __testing_utilities as utils
+from . import __utils as utils
 import json
 import nbformat
 import os
@@ -15,37 +15,36 @@ import tempfile
 import warnings
 
 
-
 def check_results(nb, err):
-    ''' '''
+    """ """
     if any(err):
         for e in err:
             if isinstance(e, str):
                 print(e)
             else:
-                for t in e['traceback']:
+                for t in e["traceback"]:
                     print(t)
         raise AssertionError("Notebook Broken")
 
     warns = list_warnings(nb)
     if any(warns):
         for t in warns:
-            if isinstance(t['text'], list):
-                wrn = t['text'][0]
+            if isinstance(t["text"], list):
+                wrn = t["text"][0]
             else:
-                wrn = t['text']
+                wrn = t["text"]
             warnings.warn(wrn)
 
 
 def find_broken_urls(nb):
-    ''' Validates most urls with some exceptions (see documentation for
+    """ Validates most urls with some exceptions (see documentation for
     utils.is_url_valid)
-    '''
+    """
     url_list = list_urls(nb)
     broken_urls = []
     for url in url_list:
         is_valid = utils.is_url_valid(url)
-        if type(is_valid)==bool and not is_valid:
+        if type(is_valid) == bool and not is_valid:
             code = utils.get_url_status(url, tryonce=True)
             err = f"{repr(url)} ({code} Error)"
             broken_urls.append(err)
@@ -66,8 +65,8 @@ def find_kernel(nb_file=None):
     if nb_file is not None:
         with open(nb_file) as json_file:
             contents = json.load(json_file)
-            if 'kernelspec' in contents['metadata'].keys():
-                kname = contents['metadata']['kernelspec']['name']
+            if "kernelspec" in contents["metadata"].keys():
+                kname = contents["metadata"]["kernelspec"]["name"]
             else:
                 kname = None
 
@@ -93,17 +92,21 @@ def list_errors(nb):
     Args:
         nb (parsed nbformat.NotebookNode)
     """
-    errs = [output for cell in nb.cells if "outputs" in cell
-                for output in cell["outputs"]
-                if output.output_type == "error"]
+    errs = [
+        output
+        for cell in nb.cells
+        if "outputs" in cell
+        for output in cell["outputs"]
+        if output.output_type == "error"
+    ]
     return errs
 
 
 def list_urls(nb):
     urls = []
     for cell in nb.cells:
-        if "http" in cell['source']:
-            search_text = cell['source']
+        if "http" in cell["source"]:
+            search_text = cell["source"]
             urls += utils.get_urls(search_text)
     return urls
 
@@ -118,9 +121,11 @@ def list_warnings(nb):
     for cell in nb.cells:
         if "outputs" in cell:
             for output in cell["outputs"]:
-                if (output.output_type == "stream"
+                if (
+                    output.output_type == "stream"
                     and output.name == "stderr"
-                    and "warning" in output.text.lower()):
+                    and "warning" in output.text.lower()
+                ):
                     wrns.append(output)
     return wrns
 
@@ -144,11 +149,19 @@ def validate_notebook(nb_path, timeout=60):
 
     # Set delete=False as workaround for Windows OS
     with tempfile.NamedTemporaryFile(suffix=".ipynb", delete=False) as tf:
-        args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-        f"--ExecutePreprocessor.timeout={timeout}",
-        f"--ExecutePreprocessor.kernel_name={kname}",
-        "--ExecutePreprocessor.allow_errors=True",
-        "--output", tf.name, nb_path]
+        args = [
+            "jupyter",
+            "nbconvert",
+            "--to",
+            "notebook",
+            "--execute",
+            f"--ExecutePreprocessor.timeout={timeout}",
+            f"--ExecutePreprocessor.kernel_name={kname}",
+            "--ExecutePreprocessor.allow_errors=True",
+            "--output",
+            tf.name,
+            nb_path,
+        ]
 
         subprocess.check_call(args)
 

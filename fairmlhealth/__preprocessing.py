@@ -5,7 +5,7 @@ from abc import ABC
 import numpy as np
 import pandas as pd
 from . import __validation as valid
-from .__validation import ArrayLike, IterableStrings, MatrixLike, ValidationError
+from .__validation import ArrayLike, IterableOfStrings, MatrixLike, ValidationError
 
 
 class AnalyticalLabels(ABC):
@@ -127,12 +127,12 @@ def standard_preprocess(
 ):
     """ Formats data for use by fairness analytical functions.
     Args:
-        X (array-like): Sample features
-        prtc_attr (named array-like): values for the protected attribute
+        X (ArrayLike): Sample features
+        prtc_attr (ArrayLike, named): values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (1D array-like): Sample targets
-        y_pred (1D array-like): Sample target predictions
-        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        y_prob (ArrayLike, optional): Sample target probabilities. Defaults
             to None.
         priv_grp (int, optional): label of the privileged group. Defaults
             to 1.
@@ -168,16 +168,16 @@ def stratified_preprocess(
     y_true: ArrayLike = None,
     y_pred: ArrayLike = None,
     y_prob: ArrayLike = None,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
 ):
     """
     Runs validation and formats data for use in stratified tables
 
     Args:
         df (pandas dataframe or compatible object): sample data to be assessed
-        y_true (1D array-like): Sample targets
-        y_pred (1D array-like): Sample target predictions
-        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        y_prob (ArrayLike, optional): Sample target probabilities. Defaults
             to None.
         features (list): columns in df to be assessed if not all columns.
             Defaults to None.

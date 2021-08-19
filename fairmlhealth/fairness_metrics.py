@@ -4,13 +4,13 @@
     sklearn.metrics module. As of the V 0.4.0 release, these are calculated as
     [unprivileged/privileged] and [unprivileged - privileged], respectively
 """
+from typing import Callable
 from aif360.sklearn.metrics import difference, ratio
 import numpy as np
 import pandas as pd
 from warnings import catch_warnings, filterwarnings
 
 from .performance_metrics import (
-    epsilon,
     false_positive_rate,
     true_positive_rate,
     true_negative_rate,
@@ -19,14 +19,7 @@ from .performance_metrics import (
 )
 
 
-def ratio_wrapper(
-    funcname, *args,
-):
-    """ Text used to filter warnings """
-    return
-
-
-def format_undefined(func):
+def __format_undefined(func: Callable):
     """ Wraps ratio functions to return NaN values instead of 0.0 in cases
         where the ratio is undefined
     """
@@ -48,62 +41,182 @@ def format_undefined(func):
     return wrapper
 
 
-@format_undefined
+@__format_undefined
 def ppv_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group ratio of Postive Predictive Values
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return ratio(precision, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp)
 
 
-@format_undefined
+@__format_undefined
 def tpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group ratio of True Positive Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return ratio(
         true_positive_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
-@format_undefined
+@__format_undefined
 def fpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group ratio of False Positive Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return ratio(
         false_positive_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
-@format_undefined
+@__format_undefined
 def tnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group ratio of True Negative Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return ratio(
         true_negative_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
-@format_undefined
+@__format_undefined
 def fnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group ratio of False Negative Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return ratio(
         false_negative_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
 def ppv_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of Positive Predictive Values
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return difference(precision, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp)
 
 
 def tpr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of True Positive Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return difference(
         true_positive_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
 def fpr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Positive Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return difference(
         false_positive_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
 def tnr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of True Negative Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return difference(
         true_negative_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
 def fnr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Negative Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
     return difference(
         false_negative_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
@@ -117,10 +230,14 @@ def eq_odds_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: i
         difference and the between-group TPR difference
 
     Args:
-        y_true (1D array-like):
-        y_pred (1D array-like):
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
         prtc_attr (str): name of the protected attribute
         priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
     """
     fprD = fpr_diff(y_true, y_pred, pa_name=pa_name, priv_grp=priv_grp)
     tprD = tpr_diff(y_true, y_pred, pa_name=pa_name, priv_grp=priv_grp)
@@ -137,8 +254,8 @@ def eq_odds_ratio(
         ratio and the between-group TPR ratio
 
     Args:
-        y_true (1D array-like):
-        y_pred (1D array-like):
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
         priv_grp (int, optional):  . Defaults to 1.
     """
     fprR = fpr_ratio(y_true, y_pred, pa_name=pa_name, priv_grp=priv_grp)
@@ -149,3 +266,4 @@ def eq_odds_ratio(
         return fprR
     else:
         return tprR
+

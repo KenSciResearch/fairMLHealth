@@ -24,7 +24,7 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 # Tutorial Libraries
 from . import (
     performance_metrics as pmtrc,
-    __fairness_metrics as fcmtrc,
+    fairness_metrics as fcmtrc,
     __validation as valid,
     __utils as utils,
 )
@@ -34,7 +34,7 @@ from .__preprocessing import (
     stratified_preprocess,
     y_cols,
 )
-from .__validation import ArrayLike, IterableStrings, MatrixLike, ValidationError
+from .__validation import ArrayLike, IterableOfStrings, MatrixLike, ValidationError
 from .__utils import format_errwarn, iterate_cohorts
 
 
@@ -42,7 +42,7 @@ def bias(
     X: MatrixLike,
     y_true: ArrayLike,
     y_pred: ArrayLike,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     pred_type: str = "classification",
     sig_fig: int = 4,
     flag_oor: bool = False,
@@ -54,12 +54,13 @@ def bias(
 
     Args:
         X (matrix-like): Sample features
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        features (list): columns in X to be assessed if not all columns.
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        features (list of strings): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
             Defaults to "classification".
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
@@ -114,8 +115,8 @@ def bias(
 def data(
     X: MatrixLike,
     Y: MatrixLike,
-    features: IterableStrings = None,
-    targets: IterableStrings = None,
+    features: IterableOfStrings = None,
+    targets: IterableOfStrings = None,
     add_overview: bool = True,
     sig_fig: int = 4,
     cohorts: MatrixLike = None,
@@ -123,16 +124,17 @@ def data(
     """ Generates a table of stratified data metrics
 
     Args:
-        X (pandas dataframe or compatible object): sample data to be assessed
-        Y (pandas dataframe or compatible object): sample targets to be
+        X (MatrixLike): sample data to be assessed
+        Y (MatrixLike): sample targets to be
             assessed. Note that any observations with missing targets will be
             ignored.
-        features (list): columns in X to be assessed if not all columns.
+        features (list of strings): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
-        targets (list): columns in Y to be assessed if not all columns.
+        targets (list of strings): columns in Y to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         add_overview (bool): whether to add a summary row with metrics for
             "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
 
@@ -160,8 +162,22 @@ def fair_ranges(
     custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     y_true: ArrayLike = None,
     y_pred: ArrayLike = None,
-    available_measures: IterableStrings = None,
+    available_measures: IterableOfStrings = None,
 ):
+    """ Returns a formatted dictionary of fair ranges
+    Args:
+        custom_ranges (Dict[str, Tuple[Number, Number]], optional): a dict whose
+                keys are present among the measures in df and whose values are tuples
+                containing the (lower, upper) bounds to the "fair" range. If None,
+                uses default boundaries and will skip difference measures for
+                regressions models. Default is None.
+        y_true (ArrayLike, optional): True target values. Defaults to None.
+        y_pred (ArrayLike, optional): Predicted target values. Defaults to None.
+        available_measures (IterableOfStrings, optional): [description]. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
     cbounds = custom_ranges
     result = utils.FairRanges().load_fair_ranges(cbounds, y_true, y_pred)
     if available_measures is not None:
@@ -182,8 +198,9 @@ def flag(
         version of a model comparison dataframe
 
     Args:
-        df (pandas dataframe): Model comparison dataframe (see)
+        df (MatrixLike): Model comparison dataframe (see)
         caption (str, optional): Optional caption for table. Defaults to "".
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
         as_styler (bool, optional): If True, returns a pandas Styler of the
             highlighted table (to which other styles/highlights can be added).
             Otherwise, returns the table as an embedded HTML object. Defaults
@@ -193,7 +210,8 @@ def flag(
             (case-insensitive).
 
     Returns:
-        Embedded html or pandas.io.formats.style.Styler
+         pandas.io.formats.style.Styler | Embedded HTML
+
     """
     return utils.Flagger().apply_flag(
         df, caption, sig_fig, as_styler, boundaries=custom_ranges
@@ -205,7 +223,7 @@ def performance(
     y_true: ArrayLike,
     y_pred: ArrayLike,
     y_prob: ArrayLike = None,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     pred_type: str = "classification",
     sig_fig: int = 4,
     add_overview: bool = True,
@@ -215,14 +233,15 @@ def performance(
     """ Generates a table of stratified performance metrics
 
     Args:
-        X (pandas dataframe or compatible object): sample data to be assessed
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
-        features (list): columns in X to be assessed if not all columns.
+        X (MatrixLike): sample data to be assessed
+        y_true (ArrayLike): True target values
+        y_pred (ArrayLike): Predicted target values
+        y_prob (ArrayLike): Predicted target probabilities. Defaults to None.
+        features (list of strings): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         pred_type (str, optional): One of "classification" or "regression".
             Defaults to "classification".
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
         add_overview (bool): whether to add a summary row with metrics for
             "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
         cohorts (matrix-like): additional labels for each observation by which
@@ -282,12 +301,12 @@ def summary(
     relative to their input data
 
     Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): Values for the protected attribute
+        X (ArrayLike): Sample features
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        y_prob (ArrayLike): Sample target probabilities. Defaults to None.
+        prtc_attr (ArrayLike, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities. Defaults to None.
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
@@ -295,6 +314,8 @@ def summary(
             Defaults to "classification".
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
+        sig_fig (int): number of significant digits to which decimals will be
+            rounded. Defaults to 4.
         cohorts (matrix-like): additional labels for each observation by which
             analysis should be grouped
         custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
@@ -352,27 +373,26 @@ def __analyze_data(
     *,
     X: MatrixLike,
     Y: MatrixLike,
-    features: IterableStrings = None,
-    targets: IterableStrings = None,
+    features: IterableOfStrings = None,
+    targets: IterableOfStrings = None,
     add_overview: bool = True,
     sig_fig: int = 4,
     **kwargs,
 ):
-    """ Generates a table of stratified data metrics
-
-    Note: named arguments are enforced
+    """ Generates a table of stratified data metrics. Note: named arguments are enforced
 
     Args:
-        X (pandas dataframe or compatible object): sample data to be assessed
-        Y (pandas dataframe or compatible object): sample targets to be
+        X (MatrixLike): sample data to be assessed
+        Y (MatrixLike): sample targets to be
             assessed. Note that any observations with missing targets will be
             ignored.
-        features (list): columns in X to be assessed if not all columns.
+        features (list of strings): columns in X to be assessed if not all columns.
             Defaults to None (i.e. all columns).
-        targets (list): columns in Y to be assessed if not all columns.
+        targets (list of strings): columns in Y to be assessed if not all columns.
             Defaults to None (i.e. all columns).
         add_overview (bool): whether to add a summary row with metrics for
             "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -475,18 +495,19 @@ def __analyze_data(
 
 @format_errwarn
 def __apply_featureGroups(
-    features: IterableStrings, df: pd.DataFrame, func: Callable, *args
+    features: IterableOfStrings, df: pd.DataFrame, func: Callable, *args
 ):
     """ Iteratively applies a function across groups of each stratified feature,
     collecting errors and warnings to be displayed succinctly after processing
 
     Args:
-        features (list): columns of df to be iteratively measured
+        features (list of strings): columns of df to be iteratively measured
         df (pd.DataFrame): data to be measured
         func (function): a function accepting *args and returning a dictionary
 
     Returns:
         pandas DataFrame: set of results for each feature-value
+
     """
     #
     errs = {}
@@ -516,13 +537,13 @@ def __apply_featureGroups(
 
 @format_errwarn
 def __apply_biasGroups(
-    features: IterableStrings, df: pd.DataFrame, func: Callable, yt: str, yh: str
+    features: IterableOfStrings, df: pd.DataFrame, func: Callable, yt: str, yh: str
 ):
     """ Iteratively applies a function across groups of each stratified feature,
         collecting errors and warnings to be displayed succinctly after processing.
 
     Args:
-        features (list): columns of df to be iteratively measured
+        features (list of strings): columns of df to be iteratively measured
         df (pd.DataFrame): data to be measured
         func (function): a function accepting two array arguments for comparison
             (selected from df as yt and yh), as well as a pa_name (str) and
@@ -582,7 +603,7 @@ def __classification_bias(
     X: MatrixLike,
     y_true: ArrayLike,
     y_pred: ArrayLike,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     **kwargs,
 ):
     """ Generates a table of stratified fairness metrics metrics for each specified
@@ -591,16 +612,17 @@ def __classification_bias(
         Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values; must be binary values
-        y_pred (1D array-like): Sample target predictions; must be binary values
-        features (list): columns in df to be assessed if not all columns.
+        X (MatrixLike): data to be assessed
+        y_true (ArrayLike): Sample target true values; must be binary values
+        y_pred (ArrayLike): Sample target predictions; must be binary values
+        features (list of strings): columns in df to be assessed if not all columns.
             Defaults to None.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
         are not discrete and there are more than 11 values, the tool will
-        reformat those data into quantiles
+        reformat those data into quantiles.
+
     """
     #
     if y_true is None or y_pred is None:
@@ -661,12 +683,12 @@ def __classification_summary(
         Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): Values for the protected attribute
+        X (MatrixLike): Sample features
+        prtc_attr (ArrayLike, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        y_prob (ArrayLike): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
     """
@@ -769,7 +791,7 @@ def __classification_summary(
 def __fair_classification_measures(
     y_true: ArrayLike, y_pred: ArrayLike, pa_name: str, priv_grp: int = 1
 ):
-    """ Returns a dict of measure values
+    """ Returns a dict of classification-specific fairness measures
     """
 
     def predmean(_, y_pred, *args):
@@ -873,9 +895,17 @@ def __format_summary(measures: Dict[str, Number], summary_type: str = "binary"):
     return df
 
 
-def __format_table(strat_tbl: pd.DataFrame, sig_fig: int = 6):
+def __format_table(strat_tbl: pd.DataFrame, sig_fig: int = 4):
     """ Formatting for stratified tables not including the summary tables. Use
         __format_summary to format summary tables.
+
+    Args:
+        strat_tbl (pd.DataFrame): output of a stratified measure table function
+        sig_fig (int): number of significant digits to which decimals will be
+            rounded. Defaults to 4.
+
+    Returns:
+        [type]: [description]
     """
     #
     tbl = __sort_table(strat_tbl)
@@ -914,22 +944,25 @@ def __strat_class_performance(
     y_true: ArrayLike,
     y_pred: ArrayLike,
     y_prob: ArrayLike = None,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     add_overview: bool = True,
-    sig_fig: int = 9,
+    sig_fig: int = 4,
     **kwargs,
 ):
     """Generates a table of stratified performance metrics for each specified
         feature
 
     Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values; must be binary values
-        y_pred (1D array-like): Sample target predictions; must be binary values
-        y_prob (1D array-like, optional): Sample target probabilities. Defaults
+        df (MatrixLike): data to be assessed
+        y_true (ArrayLike): Sample target true values; must be binary values
+        y_pred (ArrayLike): Sample target predictions; must be binary values
+        y_prob (ArrayLike, optional): Sample target probabilities. Defaults
             to None.
-        features (list): columns in df to be assessed if not all columns.
+        features (list of strings): columns in df to be assessed if not all columns.
             Defaults to None.
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
 
     Returns:
         pandas DataFrame
@@ -973,9 +1006,9 @@ def __strat_reg_performance(
     X: MatrixLike,
     y_true: ArrayLike,
     y_pred: ArrayLike,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     add_overview: bool = True,
-    sig_fig: int = 9,
+    sig_fig: int = 4,
     **kwargs,
 ):
     """
@@ -983,11 +1016,15 @@ def __strat_reg_performance(
     feature
 
     Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values
-        y_pred (1D array-like): Sample target predictions
-        features (list): columns in df to be assessed if not all columns.
+        df (MatrixLike): data to be assessed
+        y_true (ArrayLike): Sample target true values
+        y_pred (ArrayLike): Sample target predictions
+        features (list of strings): columns in df to be assessed if not all columns.
             Defaults to None.
+        add_overview (bool): whether to add a summary row with metrics for
+            "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
+        sig_fig (int): number of significant digits to which decimals will be
+            rounded. Defaults to 4.
 
     Requirements:
         Each feature must be discrete to run stratified analysis. If any data
@@ -1027,7 +1064,7 @@ def __regression_bias(
     X: MatrixLike,
     y_true: ArrayLike,
     y_pred: ArrayLike,
-    features: IterableStrings = None,
+    features: IterableOfStrings = None,
     **kwargs,
 ):
     """
@@ -1037,10 +1074,10 @@ def __regression_bias(
     Note: named arguments are enforced to enable use of iterate_cohorts
 
     Args:
-        df (pandas dataframe or compatible object): data to be assessed
-        y_true (1D array-like): Sample target true values
-        y_pred (1D array-like): Sample target predictions
-        features (list): columns in df to be assessed if not all columns.
+        df (MatrixLike): data to be assessed
+        y_true (ArrayLike): Sample target true values
+        y_pred (ArrayLike): Sample target predictions
+        features (list of strings): columns in df to be assessed if not all columns.
             Defaults to None.
 
     """
@@ -1077,13 +1114,14 @@ def __regression_summary(
         Note: named arguments are enforced to enable @iterate_cohorts
 
     Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): Values for the protected attribute
+        X (ArrayLike): Sample features
+        prtc_attr (ArrayLike, named): Values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target probabilities
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target probabilities
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
+
     """
     #
     # Validate and Format Arguments

@@ -266,8 +266,8 @@ class FairRanges:
                 in df and whose values are tuples containing the (lower, upper)
                 bounds to the "fair" range. If None, uses default boundaries and
                 will skip difference measures for regressions models. Default is None.
-            y_true (array-like 1D, optional): Sample targets. Defaults to None.
-            y_pred (array-like 1D, optional): Sample target predictions. Defaults to None.
+            y_true (ArrayLike, optional): Sample targets. Defaults to None.
+            y_pred (ArrayLike, optional): Sample target predictions. Defaults to None.
         """
         # Load generic defaults
         bnds = self.default_boundaries()

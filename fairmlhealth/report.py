@@ -18,13 +18,13 @@ import warnings
 
 from .measure import summary, flag, __regression_performance
 from . import __preprocessing as prep, __validation as valid
-from .__validation import ArrayLike, IterableStrings, MatrixLike
+from .__validation import ArrayLike, IterableOfStrings, MatrixLike
 
 
 def classification_performance(
     y_true: ArrayLike,
     y_pred: ArrayLike,
-    target_labels: IterableStrings = None,
+    target_labels: IterableOfStrings = None,
     sig_fig: int = 4,
 ):
     """ Returns a pandas dataframe of the scikit-learn classification report,
@@ -35,6 +35,10 @@ def classification_performance(
         y_pred (array): Prediction values. Must be compatible with
             model.predict().
         target_labels (list of str): Optional labels for target values.
+
+    Returns:
+        pd.DataFrame: a table of performance measure values
+
     """
     if target_labels is None:
         target_labels = [f"target = {t}" for t in set(y_true)]
@@ -72,15 +76,15 @@ def compare(
 
     Args:
         test_data (pandas DataFrame or compatible type):
-        targets (1D array-like):
-        protected_attr (1D array-like):
+        targets (ArrayLike):
+        protected_attr (ArrayLike):
         model (scikit models or other model objects with a *.predict() function
             that accept test_data and return an array of predictions).
             Defaults to None. If None, must pass predictions.
-        predictions (1D array-likes): Set of predictions
+        predictions (ArrayLikes): Set of predictions
             corresponding to targets. Defaults to None. Ignored
             if model argument is passed.
-        probabilities (1D array-like): Set of probabilities
+        probabilities (ArrayLike): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
         flag_oor (bool): if True, will apply flagging function to highlight
@@ -100,6 +104,7 @@ def compare(
     Returns:
         pandas.Styler | pandas.DataFrame | HTML
         type determined by output_type and flag_oor arguments
+
     """
     comp = FairCompare(
         test_data,
@@ -128,6 +133,10 @@ def regression_performance(y_true: ArrayLike, y_pred: ArrayLike, sig_fig: int = 
         y_true (array): Target values. Must be compatible with model.predict().
         y_pred (array): Prediction values. Must be compatible with
             model.predict().
+
+    Returns:
+        pd.DataFrame: a table of performance measure values
+
     """
     valid.validate_array(y_true, "y_true", expected_len=None)
     valid.validate_array(y_pred, "y_pred", expected_len=len(y_true))
@@ -182,10 +191,10 @@ class FairCompare(ABC):
                 predict() method. Dict keys assumed as model names. If a
                 list-like object is passed, will set model names relative to
                 their index
-            preds (1D array-like): Set of predictions
+            preds (ArrayLike): Set of predictions
                 corresponding to targets. Defaults to None. Ignored
                 if model argument is passed.
-            probs (1D array-like): Set of probabilities
+            probs (ArrayLike): Set of probabilities
                 corresponding to predictions. Defaults to None. Ignored
                 if models argument is passed.
 
@@ -258,6 +267,7 @@ class FairCompare(ABC):
         Returns:
             pandas.Styler | pandas.DataFrame | HTML
             type determined by output_type and flag_oor arguments
+
         """
         # Model objects are assumed to be held in a dict
         if not valid.is_dictlike(self.models):
@@ -319,7 +329,8 @@ class FairCompare(ABC):
                 (case-insensitive).
 
         Returns:
-            pandas.DataFrame
+            pd.DataFrame: a table of fairness and performance measure values
+
         """
         self.__validate(model_name)
         msg = f"Could not measure fairness for {model_name}"
@@ -351,6 +362,19 @@ class FairCompare(ABC):
     def __validate_output_type(
         self, output_type: str = None, flag_request: bool = None
     ):
+        """ Verifies that the output_type requested is compatible with the
+            class configuration
+
+        Args:
+            output_type (str, optional): See compare_measures method for description.
+                Defaults to None.
+            flag_request (bool, optional): See compare_measures method for description.
+                Defaults to None.
+
+        Raises:
+            TypeError | ValueError
+
+        """
         valid_outputs = ["styler", "html", "dataframe", None]
         if not isinstance(output_type, str) and output_type is not None:
             raise TypeError(f"output_type must be string, one of {valid_outputs}")
@@ -367,7 +391,9 @@ class FairCompare(ABC):
             return None
 
     def __check_models_predictions(self, enforce: bool = True):
-        """ If any predictions are missing, generates predictions for each model.
+        """ Ensures presence of predictions for each model; to be run prior to
+            generating fairness comparison summary. If any predictions are missing,
+            generates predictions for each model.
             Assumes that models and data have been validated.
 
         """
@@ -456,6 +482,7 @@ class FairCompare(ABC):
                 model_names as keys.
                 - ensures that each dictionary entry is of a type that can
                 be measured by this tool
+
         """
         # Until otherwise updated, expect all objects to be non-iterable and
         # assume no keys
@@ -504,10 +531,10 @@ class FairCompare(ABC):
         return None
 
     def __setup(self):
-        """ Validates models and data necessary to generate predictions. Then,
-            generates predictions using those models as needed. To be run on
-            initialization only, or whenever model objects are updated, so that
-            predictions are not updated
+        """ Manages validation at instantiation. Validates models and data necessary
+            to generate predictions. Then, generates predictions using those models
+            as needed. To be run on initialization only, or whenever model objects
+            are updated, so that predictions are not updated
         """
         try:
             if not (self.models is None or self.preds is None):

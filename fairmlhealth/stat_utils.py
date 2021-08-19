@@ -7,7 +7,7 @@ import pandas as pd
 from scipy import stats
 from typing import Callable, Type
 from . import __preprocessing as prep, __validation as valid
-from .__validation import ArrayLike, IterableStrings, MatrixLike
+from .__validation import ArrayLike, IterableOfStrings, MatrixLike
 
 
 def binary_result_labels(y_true: ArrayLike, y_pred: ArrayLike):
@@ -20,6 +20,7 @@ def binary_result_labels(y_true: ArrayLike, y_pred: ArrayLike):
 
     Returns:
         pd.Series: TP, FP, TN, and FN labels
+
     """
     y = prep.prep_arraylike(y_true, "y_true", expected_len=None)
     yh = prep.prep_arraylike(y_pred, "y_prob", expected_len=len(y))
@@ -85,6 +86,10 @@ def cb_round(series: pd.Series, base: Number = 5, sig_dec: int = 0):
             decimal)
         sig_dec (int): number of significant decimals for the
             custom-rounded value
+
+    Returns:
+        pd.Series
+
     """
     valid.validate_array(series, "series", expected_len=None)
     if not base >= 0.01:
@@ -97,15 +102,19 @@ def cb_round(series: pd.Series, base: Number = 5, sig_dec: int = 0):
 def chisquare_pval(
     group: ArrayLike, values: ArrayLike, n_sample: Number = 50, random_seed: int = None,
 ):
-    """[summary]
+    """ Evaluates the Chi-Square statistic
 
     Args:
-        group (ArrayLike): [description]
-        values (ArrayLike): [description]
+        group (ArrayLike): Group labels for each observation.
+        values (ArrayLike): Values for each observation. Must be same length as group.
         n_sample (Number, optional): size of random sample to be tested. If None,
             or if fewer than n_sample observations are present in the data,
             sample size will be the smaller size between a and b. Defaults to 50.
         random_seed (int, optional): Random seed to be used for sampling. Defaults to None.
+
+    Returns:
+        Number
+
     """
 
     def smpl(ser: pd.Series, n_samp: int = n_sample):
@@ -145,6 +154,10 @@ def kruskal_pval(
             or if fewer than n_sample observations are present in the data,
             sample size will be the smaller size between a and b. Defaults to 50.
         random_seed (int, optional): Random seed to be used for sampling. Defaults to None.
+
+    Returns:
+        Number
+
     """
 
     def smpl(arr, n_samp):

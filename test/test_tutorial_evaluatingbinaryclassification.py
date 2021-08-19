@@ -1,13 +1,13 @@
-'''
+"""
 Method Adapted from:
 http://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
 
 Upon recommendation from the AIF360 development team
 (http://aif360.mybluemix.net/)
-'''
+"""
 
 from .notebook_tester import validate_notebook, check_results
-from .__testing_utilities import is_test_environment
+from .__utils import is_test_environment
 import os
 
 
@@ -23,8 +23,7 @@ def test_tutorial_evaluatingbinaryclassification():
     else:
         this_dir = os.path.dirname(os.path.abspath(__file__))
         nb_name = "Tutorial-EvaluatingFairnessInBinaryClassification.ipynb"
-        nb_path = os.path.join(this_dir, "..",
-                               "examples_and_tutorials", nb_name)
+        nb_path = os.path.join(this_dir, "..", "examples_and_tutorials", nb_name)
         nb, err = validate_notebook(nb_path, timeout=1800)
 
         check_results(nb, err)

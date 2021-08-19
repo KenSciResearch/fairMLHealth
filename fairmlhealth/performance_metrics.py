@@ -35,7 +35,7 @@ def binary_prediction_results(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns a dictionary with counts of TP, TN, FP, and FN
 
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -84,7 +84,7 @@ def ratio(numerator: Number, denominator: Number):
 def accuracy(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the accuracy value for the prediction.
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -96,7 +96,7 @@ def accuracy(y_true: ArrayLike, y_pred: ArrayLike):
 def balanced_accuracy(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the balanced accuracy value for the prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -109,7 +109,7 @@ def balanced_accuracy(y_true: ArrayLike, y_pred: ArrayLike):
 def false_negative_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the false negative rate (miss rate) value for the prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -121,7 +121,7 @@ def false_negative_rate(y_true: ArrayLike, y_pred: ArrayLike):
 def false_positive_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the false positive rate (false alarm rate) value for the prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -133,7 +133,7 @@ def false_positive_rate(y_true: ArrayLike, y_pred: ArrayLike):
 def f1_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the F1 Score value for the prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -146,7 +146,7 @@ def f1_score(y_true: ArrayLike, y_pred: ArrayLike):
 def negative_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the negative predictive value for the prediction: TN/(TN+FN)
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -159,7 +159,7 @@ def roc_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the Receiver Operating Characteristic Area Under the Curve
     value for the prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -174,7 +174,7 @@ def pr_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the Precision-Recall Area Under the Curve value for the
     prediction
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -191,7 +191,7 @@ def r_squared(y_true: ArrayLike, y_pred: ArrayLike):
     for the prediction:
         1 - (Sum_of_squares_of_residuals/total_sum_of_squares)
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -205,7 +205,7 @@ def precision(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the precision (Positive Predictive Value, PPV) for the
     prediction: TP/(TP+FP)
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -218,7 +218,7 @@ def true_negative_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the True Negative Rate (aka. Selectivity, Specificity) for the
     prediction: TN/(TN+FP)
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
@@ -231,7 +231,7 @@ def true_positive_rate(y_true: ArrayLike, y_pred: ArrayLike):
     """ Returns the True Positive Rate (aka. Recall, Sensitivity) for the
     prediction: TP/(TP+FN)
     Args:
-        y_true, y_pred (numpy-compatible, 1D array-like): binary valued
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """

@@ -13,7 +13,7 @@ LIST_TYPES = (list, tuple, set)
 ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
 ArrayLike = Union[List, Tuple, np.ndarray, pd.Series, pd.DataFrame]
 MatrixLike = Union[np.ndarray, pd.DataFrame]
-IterableStrings = Union[List[str], Tuple[str], Set[str]]
+IterableOfStrings = Union[List[str], Tuple[str], Set[str]]
 
 MIN_OBS = 5  # The minimum number of observations required for measuring and reporting functions
 
@@ -55,12 +55,12 @@ def validate_analytical_input(
         the fairness or performance tables
 
     Args:
-        X (array-like): Sample features
-        prtc_attr (array-like, named): values for the protected attribute
+        X (ArrayLike): Sample features
+        prtc_attr (ArrayLike, named): values for the protected attribute
             (note: protected attribute may also be present in X)
-        y_true (array-like, 1-D): Sample targets
-        y_pred (array-like, 1-D): Sample target predictions
-        y_prob (array-like, 1-D): Sample target probabilities
+        y_true (ArrayLike): Sample targets
+        y_pred (ArrayLike): Sample target predictions
+        y_prob (ArrayLike): Sample target probabilities
     """
     validate_data(X, name="input data")
     if y_true is not None:
@@ -177,7 +177,7 @@ def __validate_binVal(arr, name: str = "array", fuzzy: bool = True):
     """ Verifies that the array is binary valued.
 
     Args:
-        arr (array-like): numpy-compatible array
+        arr (ArrayLike): numpy-compatible array
         name (str, optional): Name of array to be displayed in feedback.
             Defaults to "array".
         fuzzy (bool, optional): If False, both values 0 and 1 must be present in
@@ -205,7 +205,7 @@ def __validate_oneDArray(arr, name: str = "array"):
     """ Validates that the array is one-dimensional
 
     Args:
-        arr (array-like): numpy-compatible array
+        arr (ArrayLike): numpy-compatible array
         name (str, optional): Name of array to be displayed in feedback.
             Defaults to "array".
 
