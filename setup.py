@@ -15,8 +15,7 @@ def _get_version():
 
 
 long_description = (
-    "A library facilitating fairness measurement"
-    + " and deployment of fairness-aware ML algorithms"
+    "A healthcare-focused library for variation analysis and fairness measurement"
 )
 
 
