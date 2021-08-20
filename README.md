@@ -66,11 +66,11 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 # First we'll create a semi-randomized dataframe with specific columns for our attributes of interest
-np.random.seed(506)
+rng = np.random.RandomState(506)
 N = 240
-X = pd.DataFrame({'col1': np.random.randint(1, 4, N),
-                  'col2': np.random.randint(1, 75, N),
-                  'col3': np.random.randint(0, 2, N),
+X = pd.DataFrame({'col1': rng.randint(1, 4, N),
+                  'col2': rng.randint(1, 75, N),
+                  'col3': rng.randint(0, 2, N),
                   'gender': [0, 1]*int(N/2),
                   'ethnicity': [1, 1, 0, 0]*int(N/4),
                   'other': [1, 0, 1, 0, 1, 1, 0, 1]*int(N/8)
@@ -88,7 +88,7 @@ A flagging protocol is applied by default to highlight any cells with values tha
 ``` python
 
 # Ceate a randomized target variable
-y = pd.Series(X['col3'].values + np.random.randint(0, 2, N), name='Example_Target').clip(upper=1)
+y = pd.Series(X['col3'].values + rng.randint(0, 2, N), name='Example_Target').clip(upper=1)
 
 # Third, we'll split the data and use it to train two generic models
 splits = train_test_split(X, y, stratify=y, test_size=0.5, random_state=60)
@@ -140,7 +140,7 @@ Here is an example applying the same function for a regression model. Note that 
 
 ``` python
 # Create a randomized target variable. In this case we'll add some correlation with existing variables
-y = pd.Series((X['col3']+X['gender']).values + np.random.uniform(0, 6, N), name='Example_Continuous_Target')
+y = pd.Series((X['col3']+X['gender']).values + rng.uniform(0, 6, N), name='Example_Continuous_Target')
 
 # Split the data and use it to train a regression model
 splits = train_test_split(X, y, test_size=0.5, random_state=42)
