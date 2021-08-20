@@ -323,7 +323,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can drift over time, so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once you can ensure that it continues to meet the expectations of the stakeholders.
 
-For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb), [ Example-BinaryClassificationTemplate Notebook](../examples_and_tutorials/ Example-BinaryClassificationTemplate.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see the [Evaluating Fairness in Binary Classification Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Evaluating Fairness in Regression Tutorial Notebook](../examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](README.md).
 
 
 
