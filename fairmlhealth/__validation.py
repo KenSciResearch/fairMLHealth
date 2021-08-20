@@ -242,7 +242,7 @@ def __validate_length(data, name: str = "array", expected_len: int = 0):
     N = data.shape[0]
     if not N == expected_len:
         raise ValidationError(
-            "All data arguments must be of same length." + f" Only {N} found in {name}"
+            f"All data arguments must be of same length. Only {N} found in {name}"
         )
 
 
@@ -275,11 +275,15 @@ def __validate_values(data: ArrayLike, name: str = "Series"):
             pass
     elif isinstance(data, pd.DataFrame):
         if data.isnull().all().any():
-            raise ValidationError(f"Some columns are contain all missing values")
+            cols = data.loc[:, data.isnull().all()].columns.tolist()
+            raise ValidationError(
+                f"Some {name} columns contain only missing values."
+                + f"If this is expected, please convert to string type: {cols}."
+            )
         else:
             pass
     elif isinstance(data, np.ndarray):
         if np.array_equal(np.unique(data), np.array([np.nan])):
-            raise ValidationError(f"All values are missing.")
+            raise ValidationError(f"All values are missing from {name}.")
     else:
         pass
