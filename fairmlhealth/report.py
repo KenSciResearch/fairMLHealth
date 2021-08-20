@@ -9,14 +9,14 @@ Contributors:
 # Licensed under the MIT License.
 
 from abc import ABC
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 from numbers import Number
 import numpy as np
 import pandas as pd
 from sklearn import metrics as sk_metric
 import warnings
 
-from .measure import summary, flag, __regression_performance
+from .measure import fair_ranges, flag, summary, __regression_performance
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ArrayLike, IterableOfStrings, MatrixLike
 
@@ -61,13 +61,14 @@ def compare(
     test_data: MatrixLike,
     targets: ArrayLike,
     protected_attr: ArrayLike,
-    models: Dict[str, Callable] = None,
+    models: Callable = None,
     predictions: ArrayLike = None,
     probabilities: ArrayLike = None,
+    privileged_group: int = 1,
     pred_type: str = "classification",
     flag_oor: bool = True,
     skip_performance: bool = False,
-    custom_boundaries: Dict[str, Tuple[Number, Number]] = None,
+    custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     output_type: str = None,
 ):
     """ Generates a report comparing fairness measures for the models passed.
@@ -75,24 +76,28 @@ def compare(
             See FairCompare for more information.
 
     Args:
-        test_data (pandas DataFrame or compatible type):
-        targets (ArrayLike):
-        protected_attr (ArrayLike):
-        model (scikit models or other model objects with a *.predict() function
-            that accept test_data and return an array of predictions).
-            Defaults to None. If None, must pass predictions.
-        predictions (ArrayLikes): Set of predictions
+        test_data (MatrixLike or iterable of MatrixLike objects):
+        targets (ArrayLike or iterable of ArrayLike objects):
+        protected_attr (ArrayLike or iterable of ArrayLike objects):
+        model (model object or dict of model objects): each object must have a
+            predict() function that accepts test_data and returns an array of
+            predictions. Defaults to None. If None, user must pass predictions.
+        predictions (ArrayLike or iterable of ArrayLike objects): Set of predictions
             corresponding to targets. Defaults to None. Ignored
             if model argument is passed.
-        probabilities (ArrayLike): Set of probabilities
+        probabilities (ArrayLike or iterable of ArrayLike objects): Set of probabilities
             corresponding to predictions. Defaults to None. Ignored
             if models argument is passed.
+        privileged_group (int): Specifies which label indicates the privileged
+            group. Defaults to 1.
+        pred_type (str, optional):  One of "classification" or "regression" to
+            specify the prediction type. Defaults to "classification".
         flag_oor (bool): if True, will apply flagging function to highlight
             fairness metrics which are considered to be outside the "fair" range
             (Out Of Range). Defaults to False.
         skip_performance (bool): If true, removes performance measures from the
             output. Defaults to False.
-        custom_boundaries (dictionary{str:tuple}, optional): custom boundaries to be
+        custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
             used by the flag function if requested. Keys should be measure names
             (case-insensitive).
         output_type (str): One of ["styler", "dataframe", "html", None]. Updates
@@ -114,13 +119,14 @@ def compare(
         predictions,
         probabilities,
         pred_type,
+        priv_grp=privileged_group,
         verboseMode=True,
     )
     table = comp.compare_measures(
         flag_oor=flag_oor,
         skip_performance=skip_performance,
         output_type=output_type,
-        custom_boundaries=custom_boundaries,
+        custom_ranges=custom_ranges,
     )
     return table
 
@@ -243,7 +249,7 @@ class FairCompare(ABC):
         self,
         flag_oor: bool = True,
         skip_performance: bool = False,
-        custom_boundaries: Dict[str, Tuple[Number, Number]] = None,
+        custom_ranges: Dict[str, Tuple[Number, Number]] = None,
         output_type: str = None,
     ):
         """ Returns a pandas dataframe containing fairness and performance
@@ -255,7 +261,7 @@ class FairCompare(ABC):
                 range
             skip_performance (bool): If true, removes performance measures from the
                 output. Defaults to False.
-            custom_boundaries (dictionary{str:tuple}, optional): custom boundaries to be
+            custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
                 used by the flag function if requested. Keys should be measure names
                 (case-insensitive).
             output_type (str): One of ["styler", "dataframe", "html", None].
@@ -292,7 +298,7 @@ class FairCompare(ABC):
                     model_name,
                     skip_performance=skip_performance,
                     flag_oor=False,
-                    custom_boundaries=custom_boundaries,
+                    custom_ranges=custom_ranges,
                 )
                 res.rename(columns={"Value": model_name}, inplace=True)
                 test_results.append(res)
@@ -301,7 +307,17 @@ class FairCompare(ABC):
                 output = pd.concat(test_results, axis=1)
                 if flag_oor:
                     as_styler = True if output_type != "html" else False
-                    output = flag(output, sig_fig=4, as_styler=as_styler)
+                    if self.pred_type == "regression":
+                        # Update boundaries relative to regression values
+                        bnds = fair_ranges(
+                            custom_ranges, self.y[model_name], self.preds[model_name]
+                        )
+                    else:
+                        bnds = custom_ranges
+                    #
+                    output = flag(
+                        output, sig_fig=4, as_styler=as_styler, custom_ranges=bnds,
+                    )
                 else:
                     if output_type.lower() == "styler":
                         output = output.style
@@ -314,19 +330,13 @@ class FairCompare(ABC):
             return output
 
     def measure_model(
-        self,
-        model_name: str,
-        custom_boundaries: Dict[str, Tuple[Number, Number]] = None,
-        **kwargs,
+        self, model_name: str, **kwargs,
     ):
         """ Creates a table of fairness-related measures for the model_name specified
 
         Args:
             model_name (str): a key corresponding to the model of interest,
                 as found in the object's "models" dictionary
-            custom_boundaries (dictionary{str:tuple}, optional): custom boundaries to be
-                used by the flag function if requested. Keys should be measure names
-                (case-insensitive).
 
         Returns:
             pd.DataFrame: a table of fairness and performance measure values
@@ -353,8 +363,8 @@ class FairCompare(ABC):
                 y_prob=self.probs[model_name],
                 prtc_attr=self.prtc_attr[model_name],
                 pred_type=self.pred_type,
+                priv_grp=self.priv_grp[model_name],
                 sig_fig=self.sig_fig,
-                custom_ranges=custom_boundaries,
                 **kwargs,
             )
             return res

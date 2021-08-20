@@ -15,6 +15,7 @@ ArrayLike = Union[List, Tuple, np.ndarray, pd.Series, pd.DataFrame]
 MatrixLike = Union[np.ndarray, pd.DataFrame]
 IterableOfStrings = Union[List[str], Tuple[str], Set[str]]
 
+
 MIN_OBS = 5  # The minimum number of observations required for measuring and reporting functions
 
 
