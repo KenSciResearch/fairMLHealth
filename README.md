@@ -2,10 +2,10 @@
 Tools and tutorials for evaluating bias in healthcare machine learning.
 
 ## New in Version 1.0.0!
-We've reorganized library to make things more intuitive and added some useful new features:
+We reorganized the library to make things more intuitive and added some useful new features:
 * Evaluate measures for regression analysis
 * Stack stratified tables by cohort groups
-* Use a single **compare** function to compare any number of models
+* Single **compare** function to compare any number of models
 
 ## Tool Contents
 - ### [Documentation and References](docs/README.md)
