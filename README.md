@@ -346,7 +346,7 @@ This is a work in progress. By making this information as accessible as possible
 
 ## Citations
 ### Repository
-Allen,  C.,  Ahmad,  C.,  Muhammad  Eckert,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models._ https://github.com/KenSciResearch/fairMLHealth.
+Allen,  C.,  Ahmad,  MA., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models._ https://github.com/KenSciResearch/fairMLHealth.
 ```
 @misc{fairMLHealth,
     title={{fairMLHealth: Tools and tutorials for evaluation of fairness and bias in healthcare applications of machine learning models.}},
