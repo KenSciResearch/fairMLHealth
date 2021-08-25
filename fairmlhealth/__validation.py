@@ -5,15 +5,15 @@ from importlib.util import find_spec
 from numbers import Number
 import numpy as np
 import pandas as pd
-from typing import List, Set, Tuple, Union
+from typing import List, Set, Tuple, Type, Union
 from warnings import warn
 
 
 LIST_TYPES = (list, tuple, set)
 ITER_TYPES = LIST_TYPES + (dict, OrderedDict)
-ArrayLike = Union[List, Tuple, np.ndarray, pd.Series, pd.DataFrame]
-MatrixLike = Union[np.ndarray, pd.DataFrame]
-IterableOfStrings = Union[List[str], Tuple[str], Set[str]]
+ArrayLike = Type[Union[List, Tuple, np.ndarray, pd.Series, pd.DataFrame]]
+MatrixLike = Type[Union[np.ndarray, pd.DataFrame]]
+IterableOfStrings = Type[Union[List[str], Tuple[str], Set[str]]]
 
 
 MIN_OBS = 5  # The minimum number of observations required for measuring and reporting functions

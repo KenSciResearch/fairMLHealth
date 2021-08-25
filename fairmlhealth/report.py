@@ -5,7 +5,7 @@ Tools for measuring and comparing fairness across models
 Contributors:
     camagallan <ca.magallen@gmail.com>
 """
-# Copyright (c) KenSci and contributors.
+#
 # Licensed under the MIT License.
 
 from abc import ABC
@@ -58,13 +58,13 @@ def classification_performance(
 
 
 def compare(
-    test_data: MatrixLike,
-    targets: ArrayLike,
-    protected_attr: ArrayLike,
-    models: Callable = None,
-    predictions: ArrayLike = None,
-    probabilities: ArrayLike = None,
-    privileged_group: int = 1,
+    test_data: Union[MatrixLike, List[MatrixLike], Dict[str, MatrixLike]],
+    targets: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]],
+    protected_attr: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]],
+    models: Union[Callable, List[Callable], Dict[str, Callable]] = None,
+    predictions: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]] = None,
+    probabilities: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]] = None,
+    privileged_group: Union[int, List[int], Dict[str, int]] = 1,
     pred_type: str = "classification",
     flag_oor: bool = True,
     skip_performance: bool = False,
@@ -107,7 +107,7 @@ def compare(
             pandas DataFrame.
 
     Returns:
-        pandas.Styler | pandas.DataFrame | HTML
+        pd.io.formats.style.Styler | pd.DataFrame | HTML
         type determined by output_type and flag_oor arguments
 
     """
@@ -118,8 +118,8 @@ def compare(
         models,
         predictions,
         probabilities,
-        pred_type,
         priv_grp=privileged_group,
+        pred_type=pred_type,
         verboseMode=True,
     )
     table = comp.compare_measures(
@@ -148,8 +148,7 @@ def regression_performance(y_true: ArrayLike, y_pred: ArrayLike, sig_fig: int = 
     valid.validate_array(y_pred, "y_pred", expected_len=len(y_true))
     y_true = prep.prep_targets(y_true)
     y_pred = prep.prep_targets(y_pred)
-    if y_true.columns[0] == y_pred.columns[0]:
-        y_pred.columns = ["Prediction"]
+    y_pred.columns = ["Prediction"]
     #
     rprt_input = pd.concat([y_true, y_pred], axis=1)
     _y, _yh = rprt_input.columns[0], rprt_input.columns[1]
@@ -167,14 +166,14 @@ class FairCompare(ABC):
 
     def __init__(
         self,
-        test_data: MatrixLike,
-        target_data: ArrayLike,
-        protected_attr: ArrayLike = None,
-        models: Dict = None,
-        preds: ArrayLike = None,
-        probs: ArrayLike = None,
+        test_data: Union[MatrixLike, List[MatrixLike], Dict[str, MatrixLike]],
+        target_data: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]],
+        protected_attr: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]] = None,
+        models: Union[Callable, List[Callable], Dict[str, Callable]] = None,
+        preds: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]] = None,
+        probs: Union[ArrayLike, List[ArrayLike], Dict[str, ArrayLike]] = None,
+        priv_grp: Union[int, List[int], Dict[str, int]] = 1,
         pred_type: str = "classification",
-        priv_grp: int = 1,
         **kwargs,
     ):
         """ Generates fairness comparisons

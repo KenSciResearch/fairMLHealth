@@ -2,11 +2,9 @@
 by Christine Allen
 
 ## About
-All machine learning (ML) models can be assumed to hold biases, just as all humans hold biases. Building models that will work for all patients starts with understanding that bias through measurement and evaluation.
+This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](publications/KDD2020-FairnessInHealthcareML-Slides.pptx).
 
-This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](publications/KDD2020-FairnessInHealthcareML-Slides.pptx), the notebook for which can be found here: [docs/publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb](publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb).
-
-There are abundant other publications covering the theoretical basis for fairness metrics, and many resources both online and academic covering the details of specific fairness measures. See [References](#references) and [Additional Resources](#additional_resources) below, or [Our References and Resources Page](References_and_Resources.md) for just a few. Many of these otherwise excellent references stop short of discussing the practical and philosophical considerations raised when evaluating real models for real customers. Here we attempt to bridge that gap.
+There are abundant other publications covering the theoretical basis for fairness metrics, with many online and academic resources covering the details of specific fairness measures (See [References (bottom)](#references) and [Additional Resources (bottom)](#additional_resources), or [Our Resources Page](../docs/resources/Measures_QuickReference.md)). Many of these excellent references fall short of discussing edge cases as well as the practical and philosophical considerations when evaluating real models for real customers. Here we attempt to bridge this gap.
 
 
 ## Contents
@@ -32,7 +30,8 @@ There are abundant other publications covering the theoretical basis for fairnes
 # Framing the Problem <a class = "anchor" id = "part1"></a>
 
 ## Context
-In issues of social justice, *"discrimination"* refers to the unjustified, differential treatment of individuals based on their sociodemographic status [[Romei and Ruggieri 2014]](#romei2014_ref). The "socially salient" sociodemographic groups [[Speicher 2018]](#speicher2018_ref) about which discrimination is measured are known as ***protected attributes***, *sensitive attributes*, or *protected features*. So, a "fair" model could be considered one that does not discriminate relative to any protected attributes.
+In issues of social justice, *"discrimination"* refers to the unjustified, differential treatment of individuals based on their sociodemographic status [[Romei and Ruggieri 2014]](#romei2014_ref). The "socially salient" sociodemographic groups [[Speicher 2018]](#speicher2018_ref) about which discrimination is measured are known as ***protected attributes***, *sensitive attributes*, or *protected features*.  Therefore, the goal of our work is to evaluate (a) whether our model makes similar predictions for all socially salient groups, or (b) whether any differences arise that are ethically justified.
+
 
 ## Disparity  <a id="disparity_def"></a>
 
@@ -161,22 +160,22 @@ The *Balanced Accuracy Difference (or Ratio)* compares the Balanced Accuracy bet
 
 ### <a name="regression_ranges"></a>Regression
 
-Currently available literature has significantly more information, more measures, and more examples for binary classification problems than for regression problems. This is likely for several reasons. For one, binary classifcation problems are simpler. It is often easier to assign "good" verses "bad" outcomes, and thus to define fair predictions. Moreover, in many cases, regression problems can be converted to binary classification problems by using some inherent threshold for decisionmaking. For example, in a hypothetical scenerio where palliative care is offered to patients for whom their pain score is predicted to be above the 30th percentile, there is a clear demarcation in the distribution of services. However, not all regression problems lead to outcomes with such clear boundaries. The human evaluation of such scores may depend upon other factors that may ambiguously alter a given threshold, factors whose evaluation could be beyond the scope of the regression problem. Furthermore, depending upon how scores are used, there may be multiple, if not overlapping, ranges for "good" verses "bad" regression predictions. Lastly, the normalization process for target distributions requires statistical judgement, which impedes the definition of a single metric or set of boundaries applicable to all regressions.
+Currently available literature has significantly more information, more measures, and more examples for binary classification problems than for regression problems. This is likely for several reasons. For one, binary classification problems are popular. It is often easier to assign "good" verses "bad" outcomes, and thus to define fair predictions. In many cases, regression problems can be converted to binary classification problems by using some inherent threshold for decision making. For example, in a hypothetical scenario where palliative care is offered to patients for whom their pain score is predicted to be above the 30th percentile, there is a clear demarcation in the distribution of services. However, not all regression problems lead to outcomes with such clear boundaries. The human evaluation of such scores may depend upon other factors that may ambiguously alter a given threshold, factors whose evaluation could be beyond the scope of the regression problem. Furthermore, depending upon how scores are used, there may be multiple, if not overlapping, ranges for "good" verses "bad" regression predictions. Lastly, the normalization process for target distributions requires statistical judgement, which impedes the definition of a single metric or set of boundaries applicable to all regressions.
 
-For these reasons, only a few measures are included in the fairmlhealth tool. These were chosen for their likeness to well-known measures of fair classification. The "fair" range to be used for these metrics requires judgement on the part of the analyst. Default ranges in fairMLHealth have been set to [0.8, 1.2] for ratios, 10% of the total prediction range for *Mean Prediction Difference*, and 10% of the MAE range for *MAE Difference*.
+For these reasons, only a few measures are included in the fairMLHealth tool. These were chosen for their likeness to well-known measures of fair classification. The "fair" range to be used for these metrics requires judgement on the part of the analyst. Default ranges in fairMLHealth have been set to [0.8, 1.2] for ratios, 10% of the total prediction range for *Mean Prediction Difference*, and 10% of the MAE range for *MAE Difference*.
 
 #### Relative Mean Prediction
-The *Mean Prediction Ratio* compares the mean prediction between groups as the ratio of the unprivileged group over the privileged group.
+The *Mean Prediction Ratio* is the ratio of mean of predicted values for the unprivileged group over the mean of predicted values for privileged group..
 > <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_ratio = \mu(\hat{y}_{unprivileged}) / \mu(\hat{y}_{privileged})">
 
-The *Mean Prediction Difference* compares the mean prediction between groups as the difference between the unprivileged group and the privileged group.
+The *Mean Prediction Difference* is the difference between the mean prediction of the unprivileged group and the mean prediction of the privileged group.
 > <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_difference = \mu(\hat{y}_{unprivileged}) - \mu(\hat{y}_{privileged})">
 
 #### Relative Mean Absolute Error (MAE)
-The *MAE Ratio* compares the error between groups as the ratio of the MAE for the unprivileged group over that of the privileged group.
+The *MAE Ratio* is the ratio of the ratio of the MAE for the unprivileged group over the MAE of the privileged group.
 > <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert)">
 
-The *MAE Difference* compares the error between groups as the difference of the MAE for the unprivileged group and that of the privileged group.
+The *MAE Difference* is the difference of the MAE for the unprivileged group and the MAE of the privileged group.
 > <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert))">
 
 

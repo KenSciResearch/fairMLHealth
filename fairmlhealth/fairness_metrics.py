@@ -19,7 +19,7 @@ from .performance_metrics import (
 )
 
 
-def __format_undefined(func: Callable):
+def __manage_undefined_ratios(func: Callable):
     """ Wraps ratio functions to return NaN values instead of 0.0 in cases
         where the ratio is undefined
     """
@@ -41,7 +41,7 @@ def __format_undefined(func: Callable):
     return wrapper
 
 
-@__format_undefined
+@__manage_undefined_ratios
 def ppv_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group ratio of Postive Predictive Values
 
@@ -58,7 +58,7 @@ def ppv_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int 
     return ratio(precision, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp)
 
 
-@__format_undefined
+@__manage_undefined_ratios
 def tpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group ratio of True Positive Rates
 
@@ -77,7 +77,7 @@ def tpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int 
     )
 
 
-@__format_undefined
+@__manage_undefined_ratios
 def fpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group ratio of False Positive Rates
 
@@ -96,7 +96,7 @@ def fpr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int 
     )
 
 
-@__format_undefined
+@__manage_undefined_ratios
 def tnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group ratio of True Negative Rates
 
@@ -115,7 +115,7 @@ def tnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int 
     )
 
 
-@__format_undefined
+@__manage_undefined_ratios
 def fnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group ratio of False Negative Rates
 

@@ -2,10 +2,10 @@
 Tools and tutorials for evaluating bias in healthcare machine learning.
 
 ## New in Version 1.0.0!
-We reorganized the library to make things more intuitive and added some useful new features:
+We reorganized the library to make things more intuitive and added some useful capabilities:
 * Evaluate measures for regression analysis
 * Stack stratified tables by cohort groups
-* Single **compare** function to compare any number of models
+* Apply a single **compare** function to evaluate one or multiple models
 
 ## Tool Contents
 - ### [Documentation and References](docs/README.md)
@@ -20,13 +20,11 @@ We reorganized the library to make things more intuitive and added some useful n
 
 - ### [FairMLHealth](fairmlhealth/README.md)
     - **Measure**:
-        - Stratified tables useful in data and model validation
-        - Tools for detailed analysis across multiple indicators (e.g. when location of bias is undetermined)
-    - **Report**:
-        - Tools stylized for inclusion in publications and analytical reports
-        - Tools for reporting on operationalized models
-    - **Statistical Utilities**:
-        - Generalized tools that can be used in bias analysis as well as in other applications
+        - Measure healthcare-specific fairness metrics for classification and regression models.
+    - **Compare**:
+        - Compare protected attributes and other features of a model or several models for potential biases in outcomes.
+    - **Visualize**:
+        - Visualize biases across multiple models through helpful reports & customizable highlights.
 
 - ### [Templates](templates/README.md)
     - Quickstart notebooks that serve as skeletons for your model analysis

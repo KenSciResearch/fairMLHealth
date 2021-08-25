@@ -7,7 +7,7 @@ To be called by Tutorial Notebook.
 Contributors:
     camagallen <ca.magallen@gmail.com>
 """
-# Copyright (c) KenSci and contributors.
+#
 # Licensed under the MIT License.
 
 import io
