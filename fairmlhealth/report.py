@@ -16,7 +16,13 @@ import pandas as pd
 from sklearn import metrics as sk_metric
 import warnings
 
-from .measure import fair_ranges, flag, summary, __regression_performance
+from .measure import (
+    fair_ranges,
+    flag,
+    sort_summary,
+    summary,
+    __regression_performance,
+)
 from . import __preprocessing as prep, __validation as valid
 from .__validation import ArrayLike, IterableOfStrings, MatrixLike
 
@@ -304,6 +310,17 @@ class FairCompare(ABC):
             self.__toggle_validation()  # toggle-on model validation
             if len(test_results) > 0:
                 output = pd.concat(test_results, axis=1)
+                #
+                if self.pred_type == "classification" and all(
+                    np.unique(self.preds[model_name]) == [0, 1]
+                ):
+                    summary_type = "binary"
+                elif self.pred_type == "classification":
+                    self.pred_type = "multiclass"
+                else:
+                    summary_type = "regression"
+                output = sort_summary(output, summary_type)
+                #
                 if flag_oor:
                     as_styler = True if output_type != "html" else False
                     if self.pred_type == "regression":

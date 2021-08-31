@@ -112,7 +112,7 @@ def iterate_cohorts(func: Callable[[], pd.DataFrame]):
         errant_list.append(grpname)
         return None
 
-    def wrapper(cohorts: MatrixLike = None, **kwargs):
+    def wrapper(cohort_labels: MatrixLike = None, **kwargs):
         """ Iterates for each cohort subset
 
         Args:
@@ -133,10 +133,12 @@ def iterate_cohorts(func: Callable[[], pd.DataFrame]):
             X, prtc_attr, y_true, y_pred, y_prob
         )
         #
-        if cohorts is not None:
+        if cohort_labels is not None:
             #
-            valid.validate_data(cohorts, name="cohorts", expected_len=X.shape[0])
-            cohorts = prep.prep_data(cohorts)
+            valid.validate_data(
+                cohort_labels, name="cohort_labels", expected_len=X.shape[0]
+            )
+            cohorts = prep.prep_data(cohort_labels)
             #
             cix = cohorts.index
             grp_cols = cohorts.columns.tolist()

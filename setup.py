@@ -15,7 +15,7 @@ def _get_version():
 
 
 long_description = (
-    "A healthcare-focused library for variation analysis and fairness measurement"
+    "Tools and tutorials fairness evaluation in healthcare machine learning."
 )
 
 

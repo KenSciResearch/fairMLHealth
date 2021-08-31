@@ -46,7 +46,7 @@ def bias(
     pred_type: str = "classification",
     sig_fig: int = 4,
     flag_oor: bool = False,
-    cohorts: MatrixLike = None,
+    cohort_labels: MatrixLike = None,
     custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     **kwargs,
 ):
@@ -66,7 +66,7 @@ def bias(
             (Out Of Range). Defaults to False.
         priv_grp (int): Specifies which label indicates the privileged
             group. Defaults to 1.
-        cohorts (matrix-like): additional labels for each observation by which
+        cohort_labels (matrix-like): additional labels for each observation by which
             analysis should be grouped
         custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
             used by the flag function if requested. Keys should be measure names
@@ -88,7 +88,7 @@ def bias(
             y_true=y_true,
             y_pred=y_pred,
             features=features,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             **kwargs,
         )
     elif pred_type == "regression":
@@ -96,7 +96,7 @@ def bias(
             X=X,
             y_true=y_true,
             y_pred=y_pred,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             features=features,
             **kwargs,
         )
@@ -119,7 +119,7 @@ def data(
     targets: IterableOfStrings = None,
     add_overview: bool = True,
     sig_fig: int = 4,
-    cohorts: MatrixLike = None,
+    cohort_labels: MatrixLike = None,
 ):
     """ Generates a table of stratified data metrics
 
@@ -135,7 +135,7 @@ def data(
         add_overview (bool): whether to add a summary row with metrics for
             "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
         sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
-        cohorts (matrix-like): additional labels for each observation by which
+        cohort_labels (matrix-like): additional labels for each observation by which
             analysis should be grouped
 
     Requirements:
@@ -154,7 +154,7 @@ def data(
         targets=targets,
         add_overview=add_overview,
         sig_fig=sig_fig,
-        cohorts=cohorts,
+        cohort_labels=cohort_labels,
     )
 
 
@@ -227,7 +227,7 @@ def performance(
     pred_type: str = "classification",
     sig_fig: int = 4,
     add_overview: bool = True,
-    cohorts: MatrixLike = None,
+    cohort_labels: MatrixLike = None,
     **kwargs,
 ):
     """ Generates a table of stratified performance metrics
@@ -244,7 +244,7 @@ def performance(
         sig_fig (int): number of significant digits to which decimals will be rounded. Defaults to 4.
         add_overview (bool): whether to add a summary row with metrics for
             "ALL FEATURES" and "ALL VALUES" as a single group. Defaults to True.
-        cohorts (matrix-like): additional labels for each observation by which
+        cohort_labels (matrix-like): additional labels for each observation by which
             analysis should be grouped
 
     Raises:
@@ -264,7 +264,7 @@ def performance(
             y_prob=y_prob,
             features=features,
             add_overview=add_overview,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             sig_fig=sig_fig,
             **kwargs,
         )
@@ -275,7 +275,7 @@ def performance(
             y_pred=y_pred,
             features=features,
             add_overview=add_overview,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             sig_fig=sig_fig,
             **kwargs,
         )
@@ -293,7 +293,7 @@ def summary(
     pred_type: str = "classification",
     priv_grp: int = 1,
     sig_fig: int = 4,
-    cohorts: MatrixLike = None,
+    cohort_labels: MatrixLike = None,
     custom_ranges: Dict[str, Tuple[Number, Number]] = None,
     **kwargs,
 ):
@@ -316,7 +316,7 @@ def summary(
             group. Defaults to 1.
         sig_fig (int): number of significant digits to which decimals will be
             rounded. Defaults to 4.
-        cohorts (matrix-like): additional labels for each observation by which
+        cohort_labels (matrix-like): additional labels for each observation by which
             analysis should be grouped
         custom_ranges (dictionary{str:tuple}, optional): custom boundaries to be
             used by the flag function if requested. Keys should be measure names
@@ -339,7 +339,7 @@ def summary(
             y_pred=y_pred,
             y_prob=y_prob,
             priv_grp=priv_grp,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             **kwargs,
         )
     elif pred_type == "regression":
@@ -349,7 +349,7 @@ def summary(
             y_true=y_true,
             y_pred=y_pred,
             priv_grp=priv_grp,
-            cohorts=cohorts,
+            cohort_labels=cohort_labels,
             **kwargs,
         )
     # Significant figures must be handled by the flag funcion (if called) since
@@ -775,7 +775,7 @@ def __classification_summary(
         labels["gf_label"]: update_summary(
             summary, pa_name, y_true, y_pred, y_prob, priv_grp
         ),
-        labels["dt_label"]: __value_prevalence(y_true, priv_grp),
+        labels["dt_label"]: __value_prevalence(prtc_attr, priv_grp),
     }
     if not kwargs.pop("skip_if", False):
         measures[labels["if_label"]] = __similarity_measures(X, pa_name, y_true, y_pred)
@@ -882,6 +882,15 @@ def __format_summary(measures: Dict[str, Number], summary_type: str = "binary"):
         new_cols = [c.replace(priv, disp) for c in new_cols]
     df.index = pd.MultiIndex.from_frame(idx)
     df.columns = new_cols
+    df = sort_summary(df, summary_type)
+    # Alert user of any dropped measures
+    if any(undefined):
+        warn(f"The following measures are undefined and have been dropped: {undefined}")
+    return df
+
+
+def sort_summary(df: pd.DataFrame, summary_type: str = "binary"):
+
     # Fix the order in which the metrics appear
     gfl, ifl, mpl, dtl = AnalyticalLabels.get_labels(summary_type)
     metric_order = {gfl: 0, ifl: 1, mpl: 2, dtl: 3}
@@ -889,9 +898,6 @@ def __format_summary(measures: Dict[str, Number], summary_type: str = "binary"):
     df["sortorder"] = df["Metric"].map(metric_order)
     df = df.sort_values(["sortorder", "Measure"]).drop("sortorder", axis=1)
     df.set_index(["Metric", "Measure"], inplace=True)
-    # Alert user of any dropped measures
-    if any(undefined):
-        warn(f"The following measures are undefined and have been dropped: {undefined}")
     return df
 
 
@@ -1134,7 +1140,7 @@ def __regression_summary(
     #
     grp_vals = __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=priv_grp)
     #
-    dt_vals = __value_prevalence(y_true, priv_grp)
+    dt_vals = __value_prevalence(prtc_attr, priv_grp)
     if not kwargs.pop("skip_if", False):
         if_vals = __similarity_measures(X, pa_name, y_true, y_pred)
 
@@ -1202,17 +1208,18 @@ def __sort_table(strat_tbl: pd.DataFrame):
     return strat_tbl[head_cols + tail_cols]
 
 
-def __value_prevalence(y_true: pd.Series, priv_grp: Union[str, Number]):
+def __value_prevalence(series: pd.Series, val: Union[str, Number]):
     """ Returns a dictionary of data metrics applicable to evaluation of
         fairness
 
     Args:
-        y_true (pandas DataFrame): Sample targets
+        series (ArrayLike, named): Values for the protected attribute
+            (note: protected attribute may also be present in X)
         priv_grp (int): Specifies which label indicates the privileged
                 group. Defaults to 1.
     """
     dt_vals = {}
-    prev = round(100 * y_true[y_true.eq(priv_grp)].sum() / y_true.shape[0])
+    prev = round(100 * (series.eq(val).sum() / series.shape[0]))
     if not isinstance(prev, float):
         prev = prev[0]
     dt_vals["Prevalence of Privileged Class (%)"] = prev

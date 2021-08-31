@@ -48,7 +48,7 @@ class TestCohorts:
             y_true=self.df["classification"],
             y_pred=self.df["avg_classification"],
             prtc_attr=self.df["prtc_attr"],
-            cohorts=self.cohorts[0],
+            cohort_labels=self.cohorts[0],
         )
 
     def test_multi_cohort_cols(self):
@@ -57,7 +57,7 @@ class TestCohorts:
             y_true=self.df["classification"],
             y_pred=self.df["avg_classification"],
             prtc_attr=self.df["prtc_attr"],
-            cohorts=self.cohorts,
+            cohort_labels=self.cohorts,
         )
 
     def test_toomany_cohorts(self):
@@ -68,7 +68,7 @@ class TestCohorts:
                 y_true=self.df["classification"],
                 y_pred=self.df["avg_classification"],
                 prtc_attr=self.df["prtc_attr"],
-                cohorts=tmc["index"],
+                cohort_labels=tmc["index"],
             )
 
     def test_cohort_bias(self):
@@ -77,12 +77,12 @@ class TestCohorts:
             y_true=self.df["classification"],
             y_pred=self.df["avg_classification"],
             pred_type="classification",
-            cohorts=self.cohorts,
+            cohort_labels=self.cohorts,
         )
 
     def test_cohort_data(self):
         _ = measure.data(
-            self.df, self.df["avg_classification"], cohorts=self.cohorts[0]
+            self.df, self.df["avg_classification"], cohort_labels=self.cohorts[0]
         )
 
     def test_cohort_performance(self):
@@ -91,7 +91,7 @@ class TestCohorts:
             self.df["classification"],
             self.df["avg_classification"],
             pred_type="classification",
-            cohorts=self.cohorts[0],
+            cohort_labels=self.cohorts[0],
         )
 
     def test_cohort_summary(self):
@@ -100,7 +100,7 @@ class TestCohorts:
             y_true=self.df["classification"],
             y_pred=self.df["avg_classification"],
             prtc_attr=self.df["prtc_attr"],
-            cohorts=self.cohorts[0],
+            cohort_labels=self.cohorts[0],
             pred_type="classification",
         )
 
@@ -161,7 +161,7 @@ class TestFlag:
             y_true=self.df["classification"],
             y_pred=self.df["avg_classification"],
             prtc_attr=self.df["prtc_attr"],
-            cohorts=self.cohorts[0],
+            cohort_labels=self.cohorts[0],
             pred_type="classification",
             flag_oor=True,
         )
