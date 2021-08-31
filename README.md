@@ -139,6 +139,7 @@ report.compare(X_test, y_test,
 Here is an example applying the same function for a regression model. Note that the "fair" range to be used for evaluation of regression metrics does requires judgement on the part of the user. Default ranges have been set to [0.8, 1.2] for ratios, 10% of the available target range for *Mean Prediction Difference*, and 10% of the available MAE range for *MAE Difference*. If the default flags do not meet your needs, they can be turned off by passing ***flag_oor = False*** to report.compare(). More information is available in our [Evaluating Fairness Documentation](./docs/resources/Evaluating_Fairness.md#regression_ranges).
 
 ``` python
+from sklearn.linear_model import LinearRegression
 
 # Create a randomized target variable. In this case we'll add some correlation with existing variables
 y = pd.Series((X['col3']+X['gender']).values + rng.uniform(0, 6, N), name='Example_Continuous_Target')
