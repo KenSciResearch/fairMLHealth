@@ -349,11 +349,11 @@ This is a work in progress. By making this information as accessible as possible
 
 ## Citations
 ### Repository
-Allen,  C.,  Ahmad,  MA., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for fairness evaluation in healthcare machine learning._ https://github.com/KenSciResearch/fairMLHealth.
+Allen,  C.,  Ahmad,  M.A., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for fairness evaluation in healthcare machine learning._ https://github.com/KenSciResearch/fairMLHealth.
 ```
 @misc{fairMLHealth,
     title={{fairMLHealth: Tools and tutorials for fairness evaluation in healthcare machine learning.}},
-    author={Allen, Christine and Ahmad, Muhammad Eckert, Carly and Hu, Juhua and Kumar, Vikas},
+    author={Allen, C. and Ahmad, M.A. and Eckert, C. and Hu, J. and Kumar, V. and Teredesai, A.},
     year={2020},
     publisher = {GitHub},
     journal = {GitHub repository},
@@ -362,14 +362,14 @@ Allen,  C.,  Ahmad,  MA., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (
 ```
 
 ### KDD Tutorial Presentation
-Ahmad, M. A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
+Ahmad, M.A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
 
 See also: [Publications](./docs/publications)
 
 ```
 @incollection{APEKT_KDD2020,
     title = {Fairness in Machine Learning for Healthcare},
-    author = {Ahmad, MA. and Eckert, C. and Kumar, V. and Patel, A. and Teredesai, A.},
+    author = {Ahmad, M.A. and Eckert, C. and Kumar, V. and Patel, A. and Teredesai, A.},
     year = 2020,
     month = {August},
     booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining},
