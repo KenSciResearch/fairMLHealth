@@ -6,7 +6,6 @@ import fairmlhealth.__fairness_metrics as fm
 from numpy import isnan
 import pandas as pd
 import pytest
-from fairmlhealth import stat_utils
 from .__utils import synth_dataset
 
 
