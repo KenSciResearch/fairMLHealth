@@ -30,8 +30,19 @@ Fork with [GitHub Codespaces](https://github.com/features/codespaces):
 
 ### Make your update:
 Make your changes to the file(s) you'd like to update.
-  - Are you making changes to the application code? You'll need **pytest** to test the repo locally before submitting your changes.
+  - Are you making changes to the application code? You'll need to install **pytest** and among other required pacages tom test the repo locally before submitting your changes. See the [Test your update](#testinfo) section for more informaion.
   - Are you contributing to markdown? We use [GitHub Markdown](https://guides.github.com/features/mastering-markdown).
+
+### Test your update: <a id="testinfo"></a>
+Remember to test your update before opening a pull request. You'll need to install the testing packages first, which you can do from the command line using
+```bash
+# Install test packages
+python3 -m pip install .[testing]
+
+# Run tests
+cd <path-to-fairmlhealth-repository>
+python3 -m pytest
+```
 
 ### Open a pull request
 When you're done making changes and you'd like to propose them for review, use the [pull request template](PULL_REQUEST_TEMPLATE.md) to open your PR (pull request).
