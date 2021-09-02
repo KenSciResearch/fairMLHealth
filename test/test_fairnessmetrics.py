@@ -2,7 +2,7 @@
 Validation tests for fairmlhealth
 """
 
-import fairmlhealth.fairness_metrics as fm
+import fairmlhealth.__fairness_metrics as fm
 from numpy import isnan
 import pandas as pd
 import pytest

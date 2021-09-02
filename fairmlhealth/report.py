@@ -316,7 +316,7 @@ class FairCompare(ABC):
                 ):
                     summary_type = "binary"
                 elif self.pred_type == "classification":
-                    self.pred_type = "multiclass"
+                    summary_type = "multiclass"
                 else:
                     summary_type = "regression"
                 output = sort_summary(output, summary_type)
