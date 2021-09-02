@@ -162,7 +162,7 @@ def validate_tutorial_requirements():
     # Load current list of required tutorial packages
     config = configparser.ConfigParser()
     config.read("../setup.cfg")
-    reqs = config["options.extras_require"]["tutorial"]
+    reqs = config["options.extras_require"]["tutorials"]
     reqs = reqs.lstrip("\n").rstrip("\n").split("\n")
     for r in reqs:
         if find_spec(r) is None:
