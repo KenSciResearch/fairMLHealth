@@ -37,7 +37,7 @@ Make your changes to the file(s) you'd like to update.
 Remember to test your update before opening a pull request. You'll need to install the testing packages first, which you can do from the command line using
 ```bash
 # Install test packages
-python3 -m pip install .[testing]
+python3 -m pip install .[dev]
 
 # Run tests
 cd <path-to-fairmlhealth-repository>

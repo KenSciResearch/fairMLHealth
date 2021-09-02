@@ -10,7 +10,7 @@ Contributors:
 #
 # Licensed under the MIT License.
 
-from .__validation import validate_notebook_requirements
+from .__validation import validate_tutorial_requirements
 from . import stat_utils, __mimic_data as mimic_data
 import pandas as pd
 from warnings import warn
@@ -29,7 +29,7 @@ DeprecationWarning(
 
 def start_tutorial():
     # Don't start the tutorial unless required packages are present
-    validate_notebook_requirements()
+    validate_tutorial_requirements()
     global TUTORIAL_ON
     TUTORIAL_ON = True
 
