@@ -20,7 +20,7 @@ Resolves: issue # or AB#
 ## Checklist
 - [ ] I have read the [Contributing](https://github.com/KenSciResearch/docs/code_contributions/CONTRIBUTING.md) guidelines
 - [ ] I performed a self-review of my own code
-- [ ] The CHANGELOG and version.json have been updated
+- [ ] The CHANGELOG and version number (setup.cfg) have been updated
 - [ ] Documentation has been updated to reflect the changes
     - [ ] The code has clear and helpful comments, particularly in hard-to-understand areas
     - [ ] READMEs, Tutorials/Examples, and links have been updated as appropriate
