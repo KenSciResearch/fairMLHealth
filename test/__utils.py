@@ -26,7 +26,7 @@ def get_urls(text_string):
         list: list of urls detected
     """
     # Regex is proved to be the most robust option assuming "http" or "https"
-    url_pattern = r'(https?://[^\s]+)'
+    url_pattern = r"(https?://[^\s]+)"
     raw_urls = re.findall(url_pattern, text_string)
     output = []
     while any(raw_urls):
@@ -66,8 +66,7 @@ def get_url_status(url, tryonce=False):
             warnings.simplefilter("ignore", category=InsecureRequestWarning)
             # Use stream=True to download only until reaching Response.content.
             #   Could use requests.head, but some sites don't support it.
-            status = requests.get(url, stream=True, verify=False,
-                                  timeout=5).status_code
+            status = requests.get(url, stream=True, verify=False, timeout=5).status_code
     # Repeat attempt in case of server error or timeout
     if not tryonce and status in range(500, 505):
         sleep(5)
@@ -85,7 +84,7 @@ def is_test_environment():
     Returns:
         bool: True if running in the test environment
     """
-    return os.environ.get('IS_CICD', False)
+    return os.environ.get("IS_CICD", False)
 
 
 def is_url_valid(url):
@@ -108,7 +107,7 @@ def is_url_valid(url):
     return is_valid
 
 
-def synth_dataset(N:int=16):
+def synth_dataset(N: int = 16):
     """ Synthesizes a set of random data with multiple "predictions"
 
     Args:
@@ -118,56 +117,62 @@ def synth_dataset(N:int=16):
         pandas DataFrame
 
     """
-    np.random.seed(506)
+    rng = np.random.RandomState(506)
     # If N is not divisible by 8 this will break
     N = int(N)
-    if not N%8 == 0:
-        N += 8 - N%8
+    if not N % 8 == 0:
+        N += 8 - N % 8
     # Generate dataframe with ranodm information
-    df = pd.DataFrame({'A': np.random.randint(1, 4, N),
-                       'B': np.random.randint(1, int(N/2), N),
-                       'C': np.random.randint(1, N, N),
-                       'D': np.random.randint(1, int(2*N), N),
-                       'E': np.random.uniform(-10, 10, N),
-                       'prtc_attr': [0, 1]*int(N/2),
-                       'prtc_attr2': [1, 1, 1, 1, 0, 0, 0, 0]*int(N/8),
-                       'other': [1, 0, 0, 1]*int(N/4),
-                       'continuous_target': np.random.uniform(0, 8, N),
-                       'binary_target': np.random.randint(0, 2, N),
-                       })
+    df = pd.DataFrame(
+        {
+            "A": rng.randint(1, 4, N),
+            "B": rng.randint(1, int(N / 2), N),
+            "C": rng.randint(1, N, N),
+            "D": rng.randint(1, int(2 * N), N),
+            "E": rng.uniform(-10, 10, N),
+            "F": rng.randint(1, 2, N),
+            "prtc_attr": [0, 1] * int(N / 2),
+            "other": [1, 0, 0, 1] * int(N / 4),
+            "continuous_target": rng.uniform(0, 8, N),
+            "binary_target": rng.randint(0, 2, N),
+        }
+    )
 
     # add predictions that are fair half of the time
-    half_correct = pd.Series([1, 1, 0, 0]*int(N/4))
-    df['avg_binary_pred'] = df['binary_target']
-    df.loc[half_correct.eq(0), 'avg_binary_pred'] = \
-        df['binary_target'].apply(lambda x: int(not x))
-    df['avg_cont_pred'] = df['continuous_target']
-    df.loc[half_correct.eq(0), 'avg_cont_pred'] = \
-        df['continuous_target'].apply(lambda x: x + np.random.uniform(-6, 6))
+    half_correct = pd.Series([1, 1, 0, 0] * int(N / 4))
+    df["avg_binary_pred"] = df["binary_target"]
+    df.loc[half_correct.eq(0), "avg_binary_pred"] = df["binary_target"].apply(
+        lambda x: int(not x)
+    )
+    df["avg_cont_pred"] = df["continuous_target"]
+    df.loc[half_correct.eq(0), "avg_cont_pred"] = df["continuous_target"].apply(
+        lambda x: x + rng.uniform(-6, 6)
+    )
 
-    # add predictions that are biased in one direction or the other
-    against_0 = pd.Series([1, 1, 0, 1]*int(N/4))
-    df['binary_bias_against0'] = df['binary_target']
-    df.loc[against_0.eq(0), 'binary_bias_against0'] = \
-        df['binary_target'].apply(lambda x: int(not x))
+    # Add predictions with known biases in one direction or the other.
+    df["binary_bias_against0"] = df["binary_target"]
+    df.loc[df["prtc_attr"].eq(0) & (df.index > 4), "binary_bias_against0"] = df[
+        "binary_target"
+    ].apply(lambda x: int(not x))
 
-    toward_0 = pd.Series([1, 1, 1, 0]*int(N/4))
-    df['binary_bias_toward0'] = df['binary_target']
-    df.loc[toward_0.eq(0), 'binary_bias_toward0'] = \
-        df['binary_target'].apply(lambda x: int(not x))
+    df["binary_bias_toward0"] = df["binary_target"]
+    df.loc[df["prtc_attr"].eq(1) & (df.index > 4), "binary_bias_toward0"] = df[
+        "binary_target"
+    ].apply(lambda x: int(not x))
 
     return df
+
 
 class URLError(requests.exceptions.BaseHTTPError):
     pass
 
 
 def __invalid_url_delimiter(char):
-    ''' Some characters will be incorrectly evaluated by get_urls as part of
+    """ Some characters will be incorrectly evaluated by get_urls as part of
     the address when they are actually part of the document text. Its possible
     that some addresses may end with some of these characters, but more likely
     that they're get_urls errors
-    '''
+    """
     invalid_chars = ["(", ")", ".", ",", "[", "]", "}"]
     is_invalid = True
     if char not in invalid_chars:
