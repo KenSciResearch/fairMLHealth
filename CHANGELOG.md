@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+## [1.0.1] - 2021-09-02
+### Supplemental Example Bug Fixes
+- Bug fixed in supplemental example notebook
 
 ## [1.0.0] - 2021-09-02
 ### Version 1.0
