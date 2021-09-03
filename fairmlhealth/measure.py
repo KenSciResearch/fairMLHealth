@@ -24,7 +24,7 @@ from warnings import catch_warnings, simplefilter, warn, filterwarnings
 # Tutorial Libraries
 from . import (
     performance_metrics as pmtrc,
-    fairness_metrics as fcmtrc,
+    __fairness_metrics as fcmtrc,
     __validation as valid,
     __utils as utils,
 )

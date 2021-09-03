@@ -1,6 +1,7 @@
 """ Manages data validation tasks across modules
 """
 from collections import OrderedDict
+import configparser
 from importlib.util import find_spec
 from numbers import Number
 import numpy as np
@@ -132,21 +133,6 @@ def validate_fair_boundaries(boundaries: dict = None, measures: list = None):
         pass
 
 
-def validate_notebook_requirements():
-    """ Alerts the user if they're missing packages required to run extended
-        tutorial and example notebooks
-    """
-    if find_spec("fairlearn") is None:
-        err = (
-            "This notebook cannot be re-run witout Fairlearn, available "
-            + "via https://github.com/fairlearn/fairlearn. Please install "
-            + "Fairlearn to run this notebook."
-        )
-        raise ValidationError(err)
-    else:
-        pass
-
-
 def validate_priv_grp(priv_grp: int = None):
     if priv_grp is None:
         raise ValueError("No privileged group found.")
@@ -154,19 +140,42 @@ def validate_priv_grp(priv_grp: int = None):
         raise TypeError("priv_grp must be an integer")
 
 
-def validate_notebook_requirements():
+def validate_supplemental_requirements():
+    """ Package validation specific to the supplemental tutorial notebook
+    """
+    reqs = ["fairlearn", "lightgbm"]
+    for r in reqs:
+        if find_spec(r) is None:
+            missing_reqs = (
+                f"{r} package not found. The following packages are"
+                + f"required to run this tutorial: {reqs}. \n"
+            )
+            raise ValidationError(missing_reqs)
+        else:
+            pass
+
+
+def validate_tutorial_requirements():
     """ Alerts the user if they're missing packages required to run extended
         tutorial and example notebooks
     """
-    if find_spec("fairlearn") is None:
-        err = (
-            "This notebook cannot be re-run witout Fairlearn, available "
-            + "via https://github.com/fairlearn/fairlearn. Please install "
-            + "Fairlearn to run this notebook."
-        )
-        raise ValidationError(err)
-    else:
-        pass
+    # Load current list of required tutorial packages
+    config = configparser.ConfigParser()
+    config.read("../setup.cfg")
+    reqs = config["options.extras_require"]["tutorials"]
+    reqs = reqs.lstrip("\n").rstrip("\n").split("\n")
+    for r in reqs:
+        if find_spec(r) is None:
+            missing_reqs = (
+                f"{r} package not found. The following packages are"
+                + f"required to run this tutorial: {reqs}. \n"
+                + " Run the following from the command line to "
+                + "automatically install all tutorial requirements:\n"
+                + "python3 -m pip install fairmlhealth[tutorials]"
+            )
+            raise ValidationError(missing_reqs)
+        else:
+            pass
 
 
 class ValidationError(Exception):

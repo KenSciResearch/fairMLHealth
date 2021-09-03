@@ -9,7 +9,6 @@ Upon recommendation from the AIF360 development team
 from .notebook_tester import validate_notebook, list_warnings
 from .__utils import is_test_environment
 import os
-import sys
 import warnings
 
 

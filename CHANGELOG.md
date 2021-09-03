@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file. Please do f
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
 
+## [1.0.0] - 2021-09-02
+### Version 1.0
+- Updated setup to use config (setup.cfg) to to align with pypi recommendations
+- Cleaned dependencies and package validation (dropped unused modules)
+- Updated tutorial validation as appropriate in line with the above changes
 
 ## [0.1.29] - 2021-08-05
 ### Tutorial Update

@@ -364,7 +364,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can change over time (for example, in concept drift), so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once, you can ensure that it continues to meet stakeholders' expectations.
 
-For more examples of fairness measurement using the FairMLHealth tool, see [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/tutorial_update/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb) and [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/tutorial_update/examples_and_tutorials/Example-ToolUsage_Regression.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](./docs/README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb) and [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](./docs/README.md).
 
 
 

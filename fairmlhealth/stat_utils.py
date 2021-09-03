@@ -7,7 +7,7 @@ import pandas as pd
 from scipy import stats
 from typing import Callable, Type
 from . import __preprocessing as prep, __validation as valid
-from .__validation import ArrayLike, IterableOfStrings, MatrixLike
+from .__validation import ArrayLike
 
 
 def binary_result_labels(y_true: ArrayLike, y_pred: ArrayLike):

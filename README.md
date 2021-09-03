@@ -1,5 +1,5 @@
 # fairMLHealth
-Tools and tutorials for evaluating bias in healthcare machine learning.
+Tools and tutorials for variation analysis in healthcare machine learning.
 
 ## New in Version 1.0.0!
 We reorganized the library to make things more intuitive and added some useful capabilities:
@@ -30,6 +30,10 @@ We reorganized the library to make things more intuitive and added some useful c
     - Quickstart notebooks that serve as skeletons for your model analysis
 
 ## Installation <a id="installation_instructions"></a>
+Installing with pip:
+
+    python -m pip install fairmlhealth
+
 Installing directly from GitHub:
 
     python -m pip install git+https://github.com/KenSciResearch/fairMLHealth
