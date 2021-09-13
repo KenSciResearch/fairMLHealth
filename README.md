@@ -8,11 +8,11 @@ We reorganized the library to make things more intuitive and added some useful c
 * Apply a single **compare** function to evaluate one or multiple models
 
 ## Tool Contents
-- ### [Documentation and References](docs/README.md)
-    - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
-    - [Our Publications](docs/publications/README.md)
-    - [Quick Reference of Measures](docs/resources/Measures_QuickReference.md)
-    - [References and Resources](docs/resources/References_and_Resources.md)
+- ### [Documentation and References](./docs/README.md)
+    - [Evaluation of Fairness](./docs/resources/Evaluating_Fairness.md)
+    - [Our Publications](./docs/publications/README.md)
+    - [Quick Reference of Measures](./docs/resources/Measures_QuickReference.md)
+    - [References and Resources](./docs/resources/References_and_Resources.md)
 
 - ### [Examples and Tutorials](examples_and_tutorials/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
@@ -49,7 +49,7 @@ Installing from a local copy of the repo:
      - Step 2: If step 1 does not resolve your issue, verify that all required packages are properly installed.
      - Step 3: For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
 
-If you are not able to resolve your issue through the troubleshooting tips above, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
+If you are not able to resolve your issue through the troubleshooting tips above, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](./docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](./docs/README.md).
 
 ## FairMLHealth Usage
 Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
@@ -348,9 +348,9 @@ Templates are available in the [templates folder](./templates):
 ## Connect with Us!
 This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and healthcare!
 
-- For problems with the source code or documentation, please submit inquiries using our [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) or [Feature Request Template](docs/code_contributions/FEATURE_REQUEST.md) through GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- For problems with the source code or documentation, please submit inquiries using our [Issue Template](./docs/code_contributions/ISSUE_TEMPLATE.md) or [Feature Request Template](./docs/code_contributions/FEATURE_REQUEST.md) through GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
 - Other comments, ideas, inquiries, suggestions, feedback and requests are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
-- See the [Contributing Guidelines](docs/code_contributions/CONTRIBUTING.md) for more information.
+- See the [Contributing Guidelines](./docs/code_contributions/CONTRIBUTING.md) for more information.
 
 ## Citations
 ### Repository
