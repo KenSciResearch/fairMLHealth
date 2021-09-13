@@ -186,10 +186,10 @@ The *Mean Prediction Difference* is the difference between the mean prediction o
 
 #### Relative Mean Absolute Error (MAE)
 The *MAE Ratio* is the ratio of the ratio of the MAE for the unprivileged group over the MAE of the privileged group.
-> <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert)">
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}_{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}_{privileged}\rvert)">
 
 The *MAE Difference* is the difference of the MAE for the unprivileged group and the MAE of the privileged group.
-> <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert))">
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}_{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}_{privileged}\rvert))">
 
 
 ## Comparing Group Fairness (Statistical) Measures <a id="comparing_group_measures"></a>
@@ -271,7 +271,7 @@ Similarity-based measures are not without their own drawbacks. The Consistency S
 |&nbsp; |Equal Odds Ratio| <img src="https://render.githubusercontent.com/render/math?math=min(\dfrac{FPR_{u}}{FPR_{p}},\dfrac{TPR_{u}}{TPR_{p}})"> |< 1 favors privileged group <br>  > 1 favors unprivileged group |
 |**Group Fairness Measures - Regression**| Mean Prediction Ratio| <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_ratio=\dfrac{\mu(\hat{y}_{u})}{\mu(\hat{y}_{p})}"> | < 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp;  | Mean Prediction Difference| <img src="https://render.githubusercontent.com/render/math?math=mean\_difference=\mu(\hat{y}_{u})-\mu(\hat{y}_{p})"> | (-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{{MAE}_{u}}{{MAE}_{p}}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
+|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{{MAE_u}}{{MAE_p}}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp;  | MAE Difference| <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference={MAE}_{u}-{MAE}_{p}"> | (-) favors privileged group <br> (+) favors unprivileged group |
 |**Individual Fairness Measures** |Consistency Score | <img src="https://render.githubusercontent.com/render/math?math=1-\frac{1}{n\cdot{N_{n_neighbors}}}*\sum_{i=1}^n\lvert\hat{y}_i-\sum_{j\in\mathcal{N}_{neighbors}(x_i)}\hat{y}_j\rvert"> | 1 is consistent <br> 0 is inconsistent |
 |&nbsp; |Generalized Entropy Index| <img src="../img/generalized_entropy_equation.png"> | - |
