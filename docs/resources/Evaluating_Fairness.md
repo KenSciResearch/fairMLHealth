@@ -74,6 +74,7 @@ There are six common metrics for determining whether a model is considered "fair
 
 
 ### Statistical Definitions of Group Fairness
+
 |**Metric** |**Criteria** |**Definition** |**Description** |
 |-- |-- |-- |-- |
 |Demographic Parity |Statistical Independence | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}G"> | Sensitive attributes (A) are statistically independent of the prediction result (R) |
