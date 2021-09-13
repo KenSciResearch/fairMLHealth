@@ -18,10 +18,10 @@ There are three common categories of metrics for determining whether a model is 
 | &nbsp; |**Unawareness** | A model is unaware if the protected attribute is not used. <br> <br> Harms Addressed: Allocative, Representational | Removal of a protected attribute may be ineffectual due to the presence of proxy features highly correlated with the protected attribute.| [Zemel *et al* (2013)](#zemel2013_ref), [Barocas and Selbst (2016)](#barocas2016_ref) |
 | | | | | |
 | Causal Reasoning |**Counterfactual Fairness** \*| Counterfactual fairness exists where counterfactual replacement of the protected attribute does not significantly alter predictive performance. This counterfactual change must be propogated to correlated variables. <br><br>Harms Addressed: Allocative, Representational | It may be intractable to develop a counterfactual model.  | [Russell *et al* (2017)](#russell2017_ref) |
-| | | | | |
+
 
 ### Statistical Definitions of Group Fairness
-|Metric | Criteria |Definition |Description |
+|**Metric** | **Criteria** |**Definition** |**Description** |
 |-- |-- |-- |-- |
 |Demographic Parity |Statistical Independence | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}G"> | Sensitive attributes (A) are statistically independent of the prediction result (R) |
 |Equalized Odds | Statistical Separation | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}A\rvert{Y}"> | Sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
@@ -31,7 +31,7 @@ From: [Verma & Rubin, 2018](#vermarubin)
 
 ## Fairness Measures
 
-|Name |Definition |About |Aliases |
+|**Name** |**Definition** |**About** |**Aliases** |
 |------|------|------|------|
 |**Demographic Parity** | <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}\lvert{G=u})=P(\hat{y}\lvert{G=p})"> |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
 |**Conditional Statistical Parity** |<img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{L=l,G=u})=P(\hat{y}=1\lvert{L=l,G=p})"> | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |

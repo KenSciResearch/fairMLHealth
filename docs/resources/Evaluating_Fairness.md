@@ -74,7 +74,7 @@ There are six common metrics for determining whether a model is considered "fair
 
 
 ### Statistical Definitions of Group Fairness
-|Metric | Criteria |Definition |Description |
+|**Metric** |**Criteria** |**Definition** |**Description** |
 |-- |-- |-- |-- |
 |Demographic Parity |Statistical Independence | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}G"> | Sensitive attributes (A) are statistically independent of the prediction result (R) |
 |Equalized Odds | Statistical Separation | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}A\rvert{Y}"> | Sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
@@ -84,7 +84,7 @@ From: [Verma & Rubin, 2018](#vermarubin)
 
 ## Fairness Measures
 
-|Name |Definition |About |Aliases |
+|**Name** |**Definition** |**About** |**Aliases** |
 |------|------|------|------|
 |**Demographic Parity** | <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}\lvert{G=u})=P(\hat{y}\lvert{G=p})"> |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
 |**Conditional Statistical Parity** |<img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{L=l,G=u})=P(\hat{y}=1\lvert{L=l,G=p})"> | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |
