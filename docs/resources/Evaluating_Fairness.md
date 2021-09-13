@@ -74,11 +74,11 @@ There are six common metrics for determining whether a model is considered "fair
 
 
 ### Statistical Definitions of Group Fairness
-|Metric |Statistical Criteria |Definition |Description |
-|------|------|------|------|
-|Demographic Parity|Statistical Independence |$R{\perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
-|Equalized Odds| Statistical Separation |$R{\perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
-|Predictive Parity |Statistical Sufficiency |$Y{\perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
+|Metric | Criteria |Definition |Description |
+|-- |-- |-- |-- |
+|Demographic Parity |Statistical Independence | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}G"> | Sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds | Statistical Separation | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}A\rvert{Y}"> | Sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Predictive Parity |Statistical Sufficiency | <img src="https://render.githubusercontent.com/render/math?math=Y{\perp}A\rvert{R}"> | Sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
 
 From: [Verma & Rubin, 2018](#vermarubin)
 
