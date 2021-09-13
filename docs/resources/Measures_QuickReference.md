@@ -74,8 +74,8 @@ From: [Verma & Rubin, 2018](#vermarubin)
 |&nbsp; |Equal Odds Ratio| <img src="https://render.githubusercontent.com/render/math?math=min(\dfrac{FPR_{u}}{FPR_{p}},\dfrac{TPR_{u}}{TPR_{p}})"> |< 1 favors privileged group <br>  > 1 favors unprivileged group |
 |**Group Fairness Measures - Regression**| Mean Prediction Ratio| <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_ratio=\dfrac{\mu(\hat{y}_{u})}{\mu(\hat{y}_{p})}"> | < 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp;  | Mean Prediction Difference| <img src="https://render.githubusercontent.com/render/math?math=mean\_difference=\mu(\hat{y}_{u})-\mu(\hat{y}_{p})"> | (-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{{MAE}_{u}}{{MAE}_{p}}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
-|&nbsp;  | MAE Difference| <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference={MAE}_{u}-{MAE}_{p}"> | (-) favors privileged group <br> (+) favors unprivileged group |
+|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{MAE_u}{MAE_p}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
+|&nbsp;  | MAE Difference| <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference=MAE_u-MAE_p"> | (-) favors privileged group <br> (+) favors unprivileged group |
 |**Individual Fairness Measures** |Consistency Score | <img src="https://render.githubusercontent.com/render/math?math=1-\frac{1}{n\cdot{N_{n_neighbors}}}*\sum_{i=1}^n\lvert\hat{y}_i-\sum_{j\in\mathcal{N}_{neighbors}(x_i)}\hat{y}_j\rvert"> | 1 is consistent <br> 0 is inconsistent |
 |&nbsp; |Generalized Entropy Index| <img src="../img/generalized_entropy_equation.png"> | - |
 |&nbsp; |Generalized Entropy Error| <img src="https://render.githubusercontent.com/render/math?math=GE(\hat{y}_i-y_i+1)"> | - |
