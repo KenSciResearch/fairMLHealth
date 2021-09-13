@@ -70,8 +70,7 @@ The following section defines common fairness measures that are used elsewhere. 
 
 ## Metrics of Fairness  <a id="metric_quickref"></a>
 
-There are six common metrics for determining whether a model is considered "fair": Equal Treatment ("**Unawareness**"), **Demographic Parity**, **Equalized Odds**, **Predictive Parity**, **Individual Fairness**, and **Counterfactual Fairness**.
-
+Three metric categories are commonly used for determining whether a model is considered "fair": (1) Group Fairness, which compares the statistical similarities of predictions relative to known and discrete protected groupings; (2) Similarity-Based Measures, which evaluate predictions without those discrete protected groups; and (3) Causal Reasoning measures, which evaluate fairness through the use of causal models.
 
 ### Statistical Definitions of Group Fairness
 
