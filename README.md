@@ -10,9 +10,9 @@ We reorganized the library to make things more intuitive and added some useful c
 ## Tool Contents
 - ### [Documentation and References](./docs/README.md)
     - [Evaluation of Fairness](./docs/resources/Evaluating_Fairness.md)
-    - [Our Publications](./docs/publications/README.md)
     - [Quick Reference of Measures](./docs/resources/Measures_QuickReference.md)
     - [References and Resources](./docs/resources/References_and_Resources.md)
+    - [Our Publications](./docs/publications/README.md)
 
 - ### [Examples and Tutorials](examples_and_tutorials/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
@@ -53,8 +53,8 @@ If you are not able to resolve your issue through the troubleshooting tips above
 
 ## FairMLHealth Usage
 Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
-* [Tool Usage for Binary Classification](./examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
-* [Tool Usage for Regression](./examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
+* [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
 Note that while the examples below use pandas, the library is designed to accept either pandas objects or numpy arrays.
 ### Example Setup
@@ -337,11 +337,13 @@ More information about these and other examples can be found in our [examples_an
 
 For a deep discussion of fairness evaluation, see [Evaluating Fairness](./docs/resources/Evaluating_Fairness.md) in our [documentation and resources](./docs/resources) section. In the same folder you'll find a [Measures QuickReference](./docs/resources/Measures_QuickReference.md), plus additional [References and Resources](./docs/resources/References_and_Resources.md)
 
-For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](./examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](./examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
+For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb) (nbviewer links), the notebooks for which are located in our [examples_and_tutorials](./examples_and_tutorials). These are best used with our [ICHI2021 FairnessInHealthcareML Slides.pdf](./docs/publications/ICHI2021-FairnessInHealthcareML-Slides.pdf), which can be found in the [Publications]((./docs/publications/) folder.
 
 Templates are available in the [templates folder](./templates):
 * [Binary Classification Assessment Template](./templates/Template-BinaryClassificationAssessment.ipynb)
 * [Regression Assessment Template](./templates/Template-RegressionAssessment.ipynb)
+
+
 
 
 
@@ -357,7 +359,7 @@ This is a work in progress. By making this information as accessible as possible
 Allen,  C.,  Ahmad,  M.A., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for fairness evaluation in healthcare machine learning._ https://github.com/KenSciResearch/fairMLHealth.
 ```
 @misc{fairMLHealth,
-    title={{fairMLHealth: Tools and tutorials for fairness evaluation in healthcare machine learning.}},
+    title={fairMLHealth: Tools and tutorials for fairness evaluation in healthcare machine learning.},
     author={Allen, C. and Ahmad, M.A. and Eckert, C. and Hu, J. and Kumar, V. and Teredesai, A.},
     year={2020},
     publisher = {GitHub},
@@ -366,15 +368,15 @@ Allen,  C.,  Ahmad,  M.A., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. 
 }
 ```
 
-### KDD Tutorial Presentation
-Ahmad, M.A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
+### KDD2020 Tutorial Presentation
+Ahmad, M.A., Patel, A., Eckert, C., Kumar, V., Allen, C. & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pdf) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
 
 See also: [Publications](./docs/publications)
 
 ```
-@incollection{APEKT_KDD2020,
+@incollection{FMLH_KDD2020,
     title = {Fairness in Machine Learning for Healthcare},
-    author = {Ahmad, M.A. and Eckert, C. and Kumar, V. and Patel, A. and Teredesai, A.},
+    author = {Ahmad, M.A. and Eckert, C. and Kumar, V. and Patel, A. and Allen, C. and Teredesai, A.},
     year = 2020,
     month = {August},
     booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining},
