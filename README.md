@@ -8,11 +8,11 @@ We reorganized the library to make things more intuitive and added some useful c
 * Apply a single **compare** function to evaluate one or multiple models
 
 ## Tool Contents
-- ### [Documentation and References](docs/README.md)
-    - [Evaluation of Fairness](docs/resources/Evaluating_Fairness.md)
-    - [Our Publications](docs/publications/README.md)
-    - [Quick Reference of Measures](docs/resources/Measures_QuickReference.md)
-    - [References and Resources](docs/resources/References_and_Resources.md)
+- ### [Documentation and References](./docs/README.md)
+    - [Evaluation of Fairness](./docs/resources/Evaluating_Fairness.md)
+    - [Quick Reference of Measures](./docs/resources/Measures_QuickReference.md)
+    - [References and Resources](./docs/resources/References_and_Resources.md)
+    - [Our Publications](./docs/publications/README.md)
 
 - ### [Examples and Tutorials](examples_and_tutorials/README.md)
     - Tutorials for measuring and analyzing fairness as it applies to machine learning
@@ -49,12 +49,12 @@ Installing from a local copy of the repo:
      - Step 2: If step 1 does not resolve your issue, verify that all required packages are properly installed.
      - Step 3: For some metrics, FairMLHealth relies on AIF360, which has a few known installation gotchas. If you are having trouble with your installation, first check [AIF360's Troubleshooting Tips](https://github.com/Trusted-AI/AIF360#troubleshooting).
 
-If you are not able to resolve your issue through the troubleshooting tips above, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](docs/README.md).
+If you are not able to resolve your issue through the troubleshooting tips above, please let us know through the [Discussion Board](https://github.com/KenSciResearch/fairMLHealth/discussions) or by submitting an issue using the [Issue Template](./docs/code_contributions/ISSUE_TEMPLATE.md) found in our [Documentation folder](./docs/README.md).
 
 ## FairMLHealth Usage
 Below are some quickstart examples of our most popular features. More information about these and other examples can be found in our [examples_and_tutorials](./examples_and_tutorials) folder! These specific examples are based on our ToolUsage notebooks, for which we've provided online access in Jupyter's nbviewer via the following links:
-* [Tool Usage for Binary Classification](./examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
-* [Tool Usage for Regression](./examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
+* [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb)
+* [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_Regression.ipynb)
 
 Note that while the examples below use pandas, the library is designed to accept either pandas objects or numpy arrays.
 ### Example Setup
@@ -337,7 +337,7 @@ More information about these and other examples can be found in our [examples_an
 
 For a deep discussion of fairness evaluation, see [Evaluating Fairness](./docs/resources/Evaluating_Fairness.md) in our [documentation and resources](./docs/resources) section. In the same folder you'll find a [Measures QuickReference](./docs/resources/Measures_QuickReference.md), plus additional [References and Resources](./docs/resources/References_and_Resources.md)
 
-For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](./examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](./examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb)(nbviewer links).
+For an active notebook demonstrating the fairness evaluation process, see the [Tutorial for Evaluating Fairness in Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Tutorial-EvaluatingFairnessInBinaryClassification.ipynb) and [Tutorial for Evaluating Fairness in Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Tutorial-EvaluatingFairnessInRegression.ipynb) (nbviewer links), the notebooks for which are located in our [examples_and_tutorials](./examples_and_tutorials). These are best used with our [ICHI2021 FairnessInHealthcareML Slides.pdf](./docs/publications/ICHI2021-FairnessInHealthcareML-Slides.pdf), which can be found in the [Publications]((./docs/publications/) folder.
 
 Templates are available in the [templates folder](./templates):
 * [Binary Classification Assessment Template](./templates/Template-BinaryClassificationAssessment.ipynb)
@@ -345,19 +345,21 @@ Templates are available in the [templates folder](./templates):
 
 
 
+
+
 ## Connect with Us!
 This is a work in progress. By making this information as accessible as possible, we hope to promote an industry based on equity and empathy. But building that industry takes time, and it takes the support of the community. Please connect with us so that we can support each other to advance machine learning and healthcare!
 
-- For problems with the source code or documentation, please submit inquiries using our [Issue Template](docs/code_contributions/ISSUE_TEMPLATE.md) or [Feature Request Template](docs/code_contributions/FEATURE_REQUEST.md) through GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
+- For problems with the source code or documentation, please submit inquiries using our [Issue Template](./docs/code_contributions/ISSUE_TEMPLATE.md) or [Feature Request Template](./docs/code_contributions/FEATURE_REQUEST.md) through GitHub's [Issue Tracker](https://github.com/KenSciResearch/fairMLHealth/issues).
 - Other comments, ideas, inquiries, suggestions, feedback and requests are welcome through the [Discussion Page](https://github.com/KenSciResearch/fairMLHealth/discussions).
-- See the [Contributing Guidelines](docs/code_contributions/CONTRIBUTING.md) for more information.
+- See the [Contributing Guidelines](./docs/code_contributions/CONTRIBUTING.md) for more information.
 
 ## Citations
 ### Repository
 Allen,  C.,  Ahmad,  M.A., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. (2020). _fairML-Health: Tools and tutorials for fairness evaluation in healthcare machine learning._ https://github.com/KenSciResearch/fairMLHealth.
 ```
 @misc{fairMLHealth,
-    title={{fairMLHealth: Tools and tutorials for fairness evaluation in healthcare machine learning.}},
+    title={fairMLHealth: Tools and tutorials for fairness evaluation in healthcare machine learning.},
     author={Allen, C. and Ahmad, M.A. and Eckert, C. and Hu, J. and Kumar, V. and Teredesai, A.},
     year={2020},
     publisher = {GitHub},
@@ -366,15 +368,15 @@ Allen,  C.,  Ahmad,  M.A., Eckert, C.,  Hu,  J.,   Kumar,  V. , & Teredesai, A. 
 }
 ```
 
-### KDD Tutorial Presentation
-Ahmad, M.A., Patel, A., Eckert, C., Kumar, V., & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pptx) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
+### KDD2020 Tutorial Presentation
+Ahmad, M.A., Patel, A., Eckert, C., Kumar, V., Allen, C. & Teredesai, A. (2020, August). [Fairness in Machine Learning for Healthcare.](./docs/publications/KDD2020-FairnessInHealthcareML-Slides.pdf) In _Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining_ (pp. 3529-3530).
 
 See also: [Publications](./docs/publications)
 
 ```
-@incollection{APEKT_KDD2020,
+@incollection{FMLH_KDD2020,
     title = {Fairness in Machine Learning for Healthcare},
-    author = {Ahmad, M.A. and Eckert, C. and Kumar, V. and Patel, A. and Teredesai, A.},
+    author = {Ahmad, M.A. and Eckert, C. and Kumar, V. and Patel, A. and Allen, C. and Teredesai, A.},
     year = 2020,
     month = {August},
     booktitle = {Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining},

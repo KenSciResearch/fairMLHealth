@@ -2,9 +2,9 @@
 by Christine Allen
 
 ## About
-This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](publications/KDD2020-FairnessInHealthcareML-Slides.pptx).
+This reference introduces concepts, methods, and libraries for measuring fairness in ML as it relates to problems in healthcare. This is a revamped version of the tutorial presented at the [KDD 2020 Tutorial on Fairness in Machine Learning for Healthcare](../publications/KDD2020-FairnessInHealthcareML-Slides.pdf).
 
-There are abundant other publications covering the theoretical basis for fairness metrics, with many online and academic resources covering the details of specific fairness measures (See [References (bottom)](#references) and [Additional Resources (bottom)](#additional_resources), or [Our Resources Page](../docs/resources/Measures_QuickReference.md)). Many of these excellent references fall short of discussing edge cases as well as the practical and philosophical considerations when evaluating real models for real customers. Here we attempt to bridge this gap.
+There are abundant other publications covering the theoretical basis for fairness metrics, with many online and academic resources covering the details of specific fairness measures (See [References (bottom)](#references) and [Additional Resources (bottom)](#additional_resources), or [Our Resources Page](../resources/Measures_QuickReference.md)). Many of these excellent references fall short of discussing edge cases as well as the practical and philosophical considerations when evaluating real models for real customers. Here we attempt to bridge this gap.
 
 
 ## Contents
@@ -70,28 +70,28 @@ The following section defines common fairness measures that are used elsewhere. 
 
 ## Metrics of Fairness  <a id="metric_quickref"></a>
 
-There are six common metrics for determining whether a model is considered "fair": Equal Treatment ("**Unawareness**"), **Demographic Parity**, **Equalized Odds**, **Predictive Parity**, **Individual Fairness**, and **Counterfactual Fairness**.
-
+Three metric categories are commonly used for determining whether a model is considered "fair": (1) Group Fairness, which compares the statistical similarities of predictions relative to known and discrete protected groupings; (2) Similarity-Based Measures, which evaluate predictions without those discrete protected groups; and (3) Causal Reasoning measures, which evaluate fairness through the use of causal models.
 
 ### Statistical Definitions of Group Fairness
-|Metric |Statistical Criteria |Definition |Description |
-|------|------|------|------|
-|Demographic Parity|Statistical Independence |$R{\perp}G$ |sensitive attributes (A) are statistically independent of the prediction result (R) |
-|Equalized Odds| Statistical Separation |$R{\perp}A\rvert{Y}$ |sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
-|Predictive Parity |Statistical Sufficiency |$Y{\perp}A\rvert{R}$ |sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R)
+
+|**Metric** |**Criteria** |**Definition** |**Description** |
+|-- |-- |-- |-- |
+|Demographic Parity |Statistical Independence | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}G"> | Sensitive attributes (A) are statistically independent of the prediction result (R) |
+|Equalized Odds | Statistical Separation | <img src="https://render.githubusercontent.com/render/math?math=R{\perp}A\rvert{Y}"> | Sensitive attributes (A) are statistically independent of the prediction result (R) given the ground truth (Y) |
+|Predictive Parity |Statistical Sufficiency | <img src="https://render.githubusercontent.com/render/math?math=Y{\perp}A\rvert{R}"> | Sensitive attributes (A) are statistically independent of the ground truth (Y) given the prediction (R) |
 
 From: [Verma & Rubin, 2018](#vermarubin)
 
 ## Fairness Measures
 
-|Name |Definition |About |Aliases |
+|**Name** |**Definition** |**About** |**Aliases** |
 |------|------|------|------|
 |**Demographic Parity** | <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}\lvert{G=u})=P(\hat{y}\lvert{G=p})"> |Predictions must be statistically independent from the sensitive attributes. Subjects in all groups should have equal probability of being assigned to the positive class. Note: may fail if the distribution of the ground truth justifiably differs among groups <br>Criteria: Statistical Independence |Statistical Parity, Equal Acceptance Rate, Benchmarking |
 |**Conditional Statistical Parity** |<img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{L=l,G=u})=P(\hat{y}=1\lvert{L=l,G=p})"> | Subjects in all groups should have equal probability of being assigned to the positive class conditional upon legitimate factors (L). <br>Criteria: Statistical Separation |&nbsp; |
-|**False positive error rate (FPR) balance** |<img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})"> |Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y =0,G=f}) <br>Criteria: Statistical Separation | Predictive Equality |
-|**False negative error rate (FNR) balance**| <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})"> | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: $P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})$. <br>Criteria: Statistical Separation | Equal Opportunity |
+|**False positive error rate (FPR) balance** |<img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{Y=0,G=u})=P(\hat{y}=1\lvert{Y=0,G=p})"> |Equal probabilities for subjects in the negative class to have positive predictions. <br> Mathematically equivalent to equal TNR: <br> <img src="https://render.githubusercontent.com/render/math?math=P(d=0\lvert{Y=0,G=m})=P(d=0\lvert{Y=0,G=f})">  <br>Criteria: Statistical Separation | Predictive Equality |
+|**False negative error rate (FNR) balance**| <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=0\lvert{Y=1,G=u})=P(\hat{y}=0\lvert{Y=1,G=p})"> | Equal probabilities for subjects in the positive class to have negative predictions. <br> Mathematically equivalent to equal TPR: <br> <img src="https://render.githubusercontent.com/render/math?math=P(d=1\lvert{Y=1,G=m})=P(d=1\lvert{Y=1,G=f})"> <br>Criteria: Statistical Separation | Equal Opportunity |
 |**Equalized Odds**| <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=1\lvert{Y=c,G=u})=P(\hat{y}=1\lvert{Y=c,G=p}),{c}\in{0,1}"> | Equal TPR and equal FPR. Mathematically equivalent to the conjunction of FPR balance and FNR balance <br>Criteria: Statistical Separation|  Disparate mistreatment, Conditional procedure accuracy equality |
-|**Predictive Parity**| <img src="https://render.githubusercontent.com/render/math?math=P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})"> | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR): $P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})$ <br>Criteria: Statistical Sufficiency |Outcome Test |
+|**Predictive Parity**| <img src="https://render.githubusercontent.com/render/math?math=P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p})"> | All groups have equal PPV (probability that a subject with a positive prediction actually belongs to the positive class. <br> Mathematically equivalent to equal False Discovery Rate (FDR):  <br> <img src="https://render.githubusercontent.com/render/math?math=P(Y=0\lvert{d=1,G=m})=P(Y=0\lvert{d=1,G=f})"> <br>Criteria: Statistical Sufficiency |Outcome Test |
 |**Conditional use accuracy equality**| <img src="https://render.githubusercontent.com/render/math?math=(P(Y=1\lvert{\hat{y}=1,G=u})=P(Y=1\lvert{\hat{y}=1,G=p}))"> <img src="https://render.githubusercontent.com/render/math?math=\wedge (P(Y=0\lvert{\hat{y}=0,G=u})=P(Y=0\lvert{\hat{y}=0,G=p}))"> | Criteria: Statistical Sufficiency | &nbsp; |
 |**Overall Accuracy Equity**| <img src="https://render.githubusercontent.com/render/math?math=P(\hat{y}=Y,G=m)=P(\hat{y}=Y,G=p)"> |Use when True Negatives are as desirable as True Positives |&nbsp; |
 |**Treatment Equality**| <img src="https://render.githubusercontent.com/render/math?math=FNu/FPu=FNp/FPp"> | Groups have equal ratios of False Negative Rates to False Positive Rates |&nbsp; |
@@ -173,9 +173,9 @@ The *Balanced Accuracy Difference (or Ratio)* compares the Balanced Accuracy bet
 
 ### <a name="regression_ranges"></a>Regression
 
-Currently available literature has significantly more information, more measures, and more examples for binary classification problems than for regression problems. This is likely for several reasons. For one, binary classification problems are popular. It is often easier to assign "good" verses "bad" outcomes, and thus to define fair predictions. In many cases, regression problems can be converted to binary classification problems by using some inherent threshold for decision making. For example, in a hypothetical scenario where palliative care is offered to patients for whom their pain score is predicted to be above the 30th percentile, there is a clear demarcation in the distribution of services. However, not all regression problems lead to outcomes with such clear boundaries. The human evaluation of such scores may depend upon other factors that may ambiguously alter a given threshold, factors whose evaluation could be beyond the scope of the regression problem. Furthermore, depending upon how scores are used, there may be multiple, if not overlapping, ranges for "good" verses "bad" regression predictions. Lastly, the normalization process for target distributions requires statistical judgement, which impedes the definition of a single metric or set of boundaries applicable to all regressions.
+Currently available literature has significantly more information, more measures, and more examples for binary classification problems than for regression problems. This is in part because binary classification problems are simple. It is often easier to assign "good" verses "bad" outcomes, and thus to define fair predictions. Moreover, in many cases, regression problems can either be normalized or otherwise converted to binary classification problems by using some inherent threshold. In this way their measures can be treated as extensions of classification measures. For example, in a hypothetical scenario where palliative care is offered to patients for whom their pain score is predicted to be above the 30th percentile, there is a clear demarcation in the distribution of services. However, not all regression problems lead to outcomes with clear boundaries. The evaluation of results may depend upon other factors beyond the scope of the regression problem. Furthermore, depending upon how scores are used, there may be multiple, if not overlapping, ranges for "good" verses "bad" regression predictions (as might be the case in multi-timepoint predictions). Lastly, in the case of unbounded regressions the normalization process may require statistical judgement that can complicate the definition of fair boundaries.
 
-For these reasons, only a few measures are included in the fairMLHealth tool. These were chosen for their likeness to well-known measures of fair classification. The "fair" range to be used for these metrics requires judgement on the part of the analyst. Default ranges in fairMLHealth have been set to [0.8, 1.2] for ratios, 10% of the total prediction range for *Mean Prediction Difference*, and 10% of the MAE range for *MAE Difference*.
+For these reasons, only a few measures are included in the fairMLHealth tool. These were chosen for their likeness to well-known measures of fair classification. The "fair" range to be used for these metrics requires judgement on the part of the analyst. Default ranges in fairMLHealth have been set to [0.8, 1.2] for ratios, 10% of the in-sample prediction range (maximum - minimum prediction) for *Mean Prediction Difference*, and 10% of the in-sample MAE range (maximum - minimum MAE) for *MAE Difference*.
 
 #### Relative Mean Prediction
 The *Mean Prediction Ratio* is the ratio of mean of predicted values for the unprivileged group over the mean of predicted values for privileged group..
@@ -186,10 +186,10 @@ The *Mean Prediction Difference* is the difference between the mean prediction o
 
 #### Relative Mean Absolute Error (MAE)
 The *MAE Ratio* is the ratio of the ratio of the MAE for the unprivileged group over the MAE of the privileged group.
-> <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert)">
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio = \mu(\lvert\hat{y}_{unprivileged} - {y}_{unprivileged}\rvert) / \mu(\lvert\hat{y}_{privileged} - {y}_{privileged}\rvert)">
 
 The *MAE Difference* is the difference of the MAE for the unprivileged group and the MAE of the privileged group.
-> <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}{privileged}\rvert))">
+> <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference = \mu(\lvert\hat{y}_{unprivileged} - {y}_{unprivileged}\rvert) - \mu(\lvert\hat{y}_{privileged} - {y}_{privileged}\rvert))">
 
 
 ## Comparing Group Fairness (Statistical) Measures <a id="comparing_group_measures"></a>
@@ -271,7 +271,7 @@ Similarity-based measures are not without their own drawbacks. The Consistency S
 |&nbsp; |Equal Odds Ratio| <img src="https://render.githubusercontent.com/render/math?math=min(\dfrac{FPR_{u}}{FPR_{p}},\dfrac{TPR_{u}}{TPR_{p}})"> |< 1 favors privileged group <br>  > 1 favors unprivileged group |
 |**Group Fairness Measures - Regression**| Mean Prediction Ratio| <img src="https://render.githubusercontent.com/render/math?math=mean\_prediction\_ratio=\dfrac{\mu(\hat{y}_{u})}{\mu(\hat{y}_{p})}"> | < 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp;  | Mean Prediction Difference| <img src="https://render.githubusercontent.com/render/math?math=mean\_difference=\mu(\hat{y}_{u})-\mu(\hat{y}_{p})"> | (-) favors privileged group <br> (+) favors unprivileged group |
-|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{{MAE}_{u}}{{MAE}_{p}}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
+|&nbsp;  | MAE Ratio|<img src="https://render.githubusercontent.com/render/math?math=MAE\_ratio=\dfrac{{MAE_u}}{{MAE_p}}" >| < 1 favors privileged group <br>  > 1 favors unprivileged group |
 |&nbsp;  | MAE Difference| <img src="https://render.githubusercontent.com/render/math?math=MAE\_difference={MAE}_{u}-{MAE}_{p}"> | (-) favors privileged group <br> (+) favors unprivileged group |
 |**Individual Fairness Measures** |Consistency Score | <img src="https://render.githubusercontent.com/render/math?math=1-\frac{1}{n\cdot{N_{n_neighbors}}}*\sum_{i=1}^n\lvert\hat{y}_i-\sum_{j\in\mathcal{N}_{neighbors}(x_i)}\hat{y}_j\rvert"> | 1 is consistent <br> 0 is inconsistent |
 |&nbsp; |Generalized Entropy Index| <img src="../img/generalized_entropy_equation.png"> | - |
@@ -326,7 +326,7 @@ In this section we will compare the results of multiple models using FairMLHealt
 
 The table shows that relative fairness or unfairness of our predictions differs across the available measures, while model performance remains similar. Looking at the second row for example, we can see that the three altered model predictions have reduced Disparate Impact Ratio relative to our baseline. However, surprisingly, the Fair GridSearch result has so dramatically shifted the results that the model is now *less* fair by that measure. While the baseline model has a 20% bias in favor of the *unprivileged* group, the fairness-aware model has nearly a 40% bias favoring the *privileged* group. Yet, using the Balanced Accuracy Difference as a second example, we can see that both the unaware model and the GridSearch model are less fair by this measure.
 
-These specific results represent one set of models on a toy example, so the results may differ for other problems. For example, the GridSearch algorithm available in Fairlearn has been shown to be effective on some datasets ([Agarwal *et al.* (2019)](#Agarwal2019)). And unawareness does not always reduce Disparate Impact; in fact it can increase it, as we showed in the [KDD 2020 Tutorial](publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb) which compared fairness relative to gender using this same general setup. This goes to say that the field has not yet found a panacea which can correct all fairness issues for every model, so it's important to test different approaches. Also remember to consider the effects of biased data collection processes or biased application of model results before deciding whether to make changes to the model or the input data.
+These specific results represent one set of models on a toy example, so the results may differ for other problems. For example, the GridSearch algorithm available in Fairlearn has been shown to be effective on some datasets ([Agarwal *et al.* (2019)](#Agarwal2019)). And unawareness does not always reduce Disparate Impact; in fact it can increase it, as we showed in the [KDD 2020 Tutorial](../publications/KDD2020-FairnessInHealthcareML-TutorialNotebook.ipynb) which compared fairness relative to gender using this same general setup. This goes to say that the field has not yet found a panacea which can correct all fairness issues for every model, so it's important to test different approaches. Also remember to consider the effects of biased data collection processes or biased application of model results before deciding whether to make changes to the model or the input data.
 
 
 ## Fairness-Aware ML Algorithms <a id="mitigation"></a>
@@ -364,7 +364,7 @@ While this specific solution may not always be available, there will likely alwa
 
 Just as data and model performance can change over time (for example, in concept drift), so too can prediction fairness. We recommend integrating fairness evaluation with your modeling pipeline as a form of continuous process improvement. By regularly evaluating multiple measures of fairness at once, you can ensure that it continues to meet stakeholders' expectations.
 
-For more examples of fairness measurement using the FairMLHealth tool, see [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb) and [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/integration/examples_and_tutorials/Example-ToolUsage_Regression.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](./docs/README.md).
+For more examples of fairness measurement using the FairMLHealth tool, see [Tool Usage for Binary Classification](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_BinaryClassification.ipynb) and [Tool Usage for Regression](https://nbviewer.jupyter.org/github/KenSciResearch/fairMLHealth/blob/master/examples_and_tutorials/Example-ToolUsage_Regression.ipynb) in our examples_and_tutorials section. There are also a number of additional references at the bottom of this page, as well as in our [Documentation Folder](./docs/README.md).
 
 
 
