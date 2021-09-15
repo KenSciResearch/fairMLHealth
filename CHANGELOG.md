@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
-## [1.0.2] - 2021-09-02
+## [1.0.2] - 2021-09-13
 ### Pages Hotfix
 - Corrections to some math formatting in documentation that could not be resolved by GitHub pages
 
