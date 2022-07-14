@@ -17,6 +17,7 @@ __all__ = [
     "f1_score",
     "negative_predictive_value",
     "roc_auc_score",
+    "positive_predictive_value",
     "precision",
     "pr_auc_score",
     "precision",
@@ -149,6 +150,18 @@ def negative_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
     """
     rprt = binary_prediction_results(y_true, y_pred)
     res = ratio(rprt["TN"], rprt["TN"] + rprt["FN"])
+    return res
+
+
+def positive_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
+    """ Returns the positive predictive value for the prediction: TN/(TN+FN)
+    Args:
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
+        objects holding the ground truth and predictions (respectively),
+        on which validation has already been run.
+    """
+    rprt = binary_prediction_results(y_true, y_pred)
+    res = ratio(rprt["TP"], rprt["TP"] + rprt["FP"])
     return res
 
 

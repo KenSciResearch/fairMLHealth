@@ -11,7 +11,9 @@ import logging
 from numbers import Number
 import numpy as np
 import pandas as pd
+import statistics as pystats
 from typing import Callable, Dict, Tuple, Union
+
 
 from sklearn.metrics import (
     mean_absolute_error,
@@ -146,7 +148,7 @@ def data(
     Returns:
         pandas Data Frame
     """
-    # This is a wrapper function to force keyword arguments enable cohort iteration
+    # This wrapper function forces keyword arguments to be configured for cohort iteration
     return __analyze_data(
         X=X,
         Y=Y,
@@ -419,6 +421,8 @@ def __analyze_data(
             res[f"Mean {col}"] = x[col].mean()
             res[f"Median {col}"] = x[col].median()
             res[f"Std. Dev. {col}"] = x[col].std()
+            res[f"Min {col}"] = x[col].min()
+            res[f"Max {col}"] = x[col].max()
         else:
             # Force addition of second column to ensure proper formatting
             # as pandas series
@@ -455,7 +459,7 @@ def __analyze_data(
         feat_subset = [f for f in strat_feats if f != t]
         if not any(feat_subset):
             continue
-        res_t = __apply_featureGroups(feat_subset, X_df, __data_dict, t)
+        res_t = iterate_seriesfunc(feat_subset, X_df, __data_dict, t)
         # convert id columns to strings to work around bug in pd.concat
         for m in ix_cols:
             res_t[m] = res_t[m].astype(str)
@@ -494,16 +498,18 @@ def __analyze_data(
 
 
 @format_errwarn
-def __apply_featureGroups(
-    features: IterableOfStrings, df: pd.DataFrame, func: Callable, *args
+def iterate_seriesfunc(
+    features: IterableOfStrings, df: pd.DataFrame, func: Callable, *args,
 ):
-    """ Iteratively applies a function across groups of each stratified feature,
-    collecting errors and warnings to be displayed succinctly after processing
+    """ Iteratively applies a pandas.Series-compatible function across groups of
+    each stratified feature, collecting errors and warnings to be displayed
+    succinctly after processing
 
     Args:
         features (list of strings): columns of df to be iteratively measured
         df (pd.DataFrame): data to be measured
-        func (function): a function accepting *args and returning a dictionary
+        func (function): a function accepting a pandas.Series, with optional args
+            and kwargs. It must return a dictionary.
 
     Returns:
         pandas DataFrame: set of results for each feature-value
@@ -536,19 +542,20 @@ def __apply_featureGroups(
 
 
 @format_errwarn
-def __apply_biasGroups(
+def iterate_arrayfunc(
     features: IterableOfStrings, df: pd.DataFrame, func: Callable, yt: str, yh: str
 ):
-    """ Iteratively applies a function across groups of each stratified feature,
-        collecting errors and warnings to be displayed succinctly after processing.
+    """ Iteratively creats subsets to binary (in-group, out-group) of each value
+    in the list of features to apply the function, collecting errors and warnings
+    to be displayed succinctly after processing.
 
     Args:
-        features (list of strings): columns of df to be iteratively measured
+        features (list of strings): names of columns of df to be iteratively measured
         df (pd.DataFrame): data to be measured
-        func (function): a function accepting two array arguments for comparison
-            (selected from df as yt and yh), as well as a pa_name (str) and
-            priv_grp (int) which will be set by __apply_biasGroups. This function
-            must return a dictionary.
+        func (function): A function accepting at least two array arguments for
+            comparison (subset to arrays from df using the "yt" and "yh" columns), in addition
+            to the "pa_name" (str) and "priv_grp" (int) arguments that will be
+            set by iterate_arrayfunc. It must return a dictionary.
         yt (string): name of column found in df containing target values
         yh (string): name of column found in df containing predicted values
 
@@ -578,8 +585,8 @@ def __apply_biasGroups(
                 subset = df.loc[df[pa_name].notnull(), [pa_name, yt, yh]].set_index(
                     pa_name
                 )
+
                 try:
-                    #
                     grp_res = func(subset[yt], subset[yh], pa_name, priv_grp=1)
                 except BaseException as e:
                     errs[f] = e
@@ -642,7 +649,7 @@ def __classification_bias(
     valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
 
     #
-    results = __apply_biasGroups(
+    results = iterate_arrayfunc(
         strat_feats, df, __fair_classification_measures, _y, _yh
     )
     rprt = __format_table(results)
@@ -797,27 +804,52 @@ def __fair_classification_measures(
     def predmean(_, y_pred, *args):
         return np.mean(y_pred.values)
 
+    def overlap(Y, priv_group=1):
+        """
+        """
+        A = Y[Y.index == priv_group]
+        B = Y[Y.index != priv_group]
+        if len(A) < 2 or len(B) < 2:
+            return np.nan
+        else:
+            dists = pd.concat(
+                [A.value_counts(), B.value_counts()], join="outer", axis=1
+            ).fillna(0)
+            dists["P0"] = dists[0] / dists[0].sum()
+            dists["P1"] = dists[1] / dists[1].sum()
+            dists["ovl"] = dists[["P0", "P1"]].min(axis=1)
+            return dists["ovl"].sum()
+
     #
     measures = {}
-    measures["Selection Ratio"] = aif.ratio(
-        predmean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
-    )
-    measures["PPV Ratio"] = fcmtrc.ppv_ratio(y_true, y_pred, pa_name, priv_grp)
-    measures["TPR Ratio"] = fcmtrc.tpr_ratio(y_true, y_pred, pa_name, priv_grp)
-    measures["FPR Ratio"] = fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    err = y_pred - y_true
+    err = err.loc[err != 0]
+    measures["Error Overlap Coefficient"] = overlap(err, priv_group=priv_grp)
+
     #
-    measures["Selection Diff"] = aif.difference(
+    measures["Statistical Parity Ratio"] = aif.ratio(
         predmean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
-    measures["PPV Diff"] = fcmtrc.ppv_diff(y_true, y_pred, pa_name, priv_grp)
-    measures["TPR Diff"] = fcmtrc.tpr_diff(y_true, y_pred, pa_name, priv_grp)
-    measures["FPR Diff"] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
+    measures["FPR Ratio"] = fcmtrc.fpr_ratio(y_true, y_pred, pa_name, priv_grp)
+    measures["FNR Ratio"] = fcmtrc.fnr_ratio(y_true, y_pred, pa_name, priv_grp)
+    measures["FDR Ratio"] = fcmtrc.fdr_ratio(y_true, y_pred, pa_name, priv_grp)
+    measures["FOR Ratio"] = fcmtrc.for_ratio(y_true, y_pred, pa_name, priv_grp)
+    #
+    measures["Statistical Parity Diff"] = aif.difference(
+        predmean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["FPR Ratio"] = fcmtrc.fpr_diff(y_true, y_pred, pa_name, priv_grp)
+    measures["FNR Ratio"] = fcmtrc.fnr_ratio(y_true, y_pred, pa_name, priv_grp)
+    measures["FDR Ratio"] = fcmtrc.fdr_ratio(y_true, y_pred, pa_name, priv_grp)
+    measures["FOR Ratio"] = fcmtrc.for_ratio(y_true, y_pred, pa_name, priv_grp)
+
     measures["Balanced Accuracy Difference"] = aif.difference(
         balanced_accuracy_score, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
     measures["Balanced Accuracy Ratio"] = aif.ratio(
         balanced_accuracy_score, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
+
     return measures
 
 
@@ -827,28 +859,120 @@ def __fair_regression_measures(
     """ Returns dict of regression-specific fairness measures
     """
 
+    def err(y_true, y_pred, *args):
+        return (y_pred - y_true).values
+
+    def meanerr(y_true, y_pred, *args):
+        return np.mean(err(y_true, y_pred))
+
+    def mne(y_true, y_pred, *args):
+        e = err(y_true, y_pred)
+        return np.mean(e[e < 0])
+
+    def mpe(y_true, y_pred, *args):
+        e = err(y_true, y_pred)
+        return np.mean(e[e > 0])
+
+    def overlap(y, priv_group, *args):
+        priv_idx = y.index == priv_group
+        uprv = y[~priv_idx]
+        priv = y[priv_idx]
+        return pystats.NormalDist.from_samples(uprv).overlap(
+            pystats.NormalDist.from_samples(priv)
+        )
+
     def predmean(_, y_pred, *args):
         return np.mean(y_pred.values)
 
-    def meanerr(y_true, y_pred, *args):
-        return np.mean((y_pred - y_true).values)
+    def errstd(_, y_pred, *args):
+        e = err(y_true, y_pred)
+        return np.std(e)
+
+    def n_errstd(_, y_pred, *args):
+        e = err(y_true, y_pred)
+        return np.std(e[e < 0])
+
+    def p_errstd(_, y_pred, *args):
+        e = err(y_true, y_pred)
+        return np.std(e[e > 0])
+
+    def truemean(y_true, _, *args):
+        return np.mean(y_true.values)
 
     #
     measures = {}
+
+    #
+    measures["Error Overlap Coefficient"] = overlap((y_pred - y_true), priv_grp)
+
     # Ratios
+    measures["Mean True Ratio"] = aif.ratio(
+        truemean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
     measures["Mean Prediction Ratio"] = aif.ratio(
         predmean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Error Ratio"] = aif.ratio(
+        meanerr, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Positive Error Ratio"] = aif.ratio(
+        mpe, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Negative Error Ratio"] = aif.ratio(
+        mne, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
     measures["MAE Ratio"] = aif.ratio(
         mean_absolute_error, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
+    measures["MSE Ratio"] = aif.ratio(
+        mean_squared_error, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Error STDV Ratio"] = aif.ratio(
+        errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Positive Error STDV Ratio"] = aif.ratio(
+        n_errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Negative Error STDV Ratio"] = aif.ratio(
+        p_errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
     # Differences
+    measures["Mean True Difference"] = aif.difference(
+        truemean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
     measures["Mean Prediction Difference"] = aif.difference(
         predmean, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
+    measures["Mean Error Difference"] = aif.difference(
+        meanerr, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Positive Error Difference"] = aif.difference(
+        mpe, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Negative Error Difference"] = aif.difference(
+        mne, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Mean Negative Error Difference"] = np.abs(
+        measures["Mean Negative Error Difference"]
+    )
+
     measures["MAE Difference"] = aif.difference(
         mean_absolute_error, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
+    measures["MSE Difference"] = aif.difference(
+        mean_squared_error, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Error STDV Difference"] = aif.difference(
+        errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Positive Error STDV Difference"] = aif.difference(
+        p_errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+    measures["Negative Error STDV Difference"] = aif.difference(
+        n_errstd, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
     return measures
 
 
@@ -991,7 +1115,7 @@ def __strat_class_performance(
     valid.__validate_binVal(y_pred, name="y_pred", fuzzy=True)
 
     #
-    results = __apply_featureGroups(
+    results = iterate_seriesfunc(
         strat_feats, df, __classification_performance, _y, _yh, _yp
     )
     if add_overview:
@@ -1050,7 +1174,7 @@ def __strat_reg_performance(
         raise ValidationError("Cannot measure with undefined targets")
     valid.limit_alert(strat_feats, item_name="features")
     #
-    results = __apply_featureGroups(strat_feats, df, __regression_performance, _y, _yh)
+    results = iterate_seriesfunc(strat_feats, df, __regression_performance, _y, _yh)
     if add_overview:
         overview = {"Feature Name": "ALL FEATURES", "Feature Value": "ALL VALUES"}
         o_dict = __regression_performance(df, _y, _yh)
@@ -1090,6 +1214,7 @@ def __regression_bias(
     if y_true is None or y_pred is None:
         msg = "Cannot assess fairness without both y_true and y_pred"
         raise ValueError(msg)
+
     #
     df = stratified_preprocess(X, y_true, y_pred, features=features)
     _y, _yh, _yp = y_cols(df)["priv_names"].values()
@@ -1098,8 +1223,9 @@ def __regression_bias(
     if any(y is None for y in [_y, _yh]):
         raise ValidationError("Cannot measure with undefined targets")
     valid.limit_alert(strat_feats, item_name="features", limit=200)
+
     #
-    results = __apply_biasGroups(strat_feats, df, __fair_regression_measures, _y, _yh)
+    results = iterate_arrayfunc(strat_feats, df, __fair_regression_measures, _y, _yh)
     rprt = __format_table(results)
     return rprt
 
@@ -1137,8 +1263,10 @@ def __regression_summary(
         X, prtc_attr, y_true, y_pred, priv_grp=priv_grp
     )
     pa_name = prtc_attr.columns.tolist()[0]
+
     #
     grp_vals = __fair_regression_measures(y_true, y_pred, pa_name, priv_grp=priv_grp)
+
     #
     dt_vals = __value_prevalence(prtc_attr, priv_grp)
     if not kwargs.pop("skip_if", False):

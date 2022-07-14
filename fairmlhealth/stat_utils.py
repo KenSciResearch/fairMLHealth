@@ -174,5 +174,12 @@ def kruskal_pval(
         n = min_sample
     else:
         n = n_sample
-    pval = stats.kruskal(smpl(a, n), smpl(b, n))[1]
-    return pval
+    # Ensure that samples
+    a_s = smpl(a, n)
+    b_s = smpl(b, n)
+    try:
+        pval = stats.kruskal(a_s, b_s)[1]
+        return pval
+    except:
+        return np.nan
+

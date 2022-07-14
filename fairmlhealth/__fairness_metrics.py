@@ -16,7 +16,17 @@ from .performance_metrics import (
     true_negative_rate,
     false_negative_rate,
     precision,
+    positive_predictive_value,
+    negative_predictive_value,
 )
+
+
+def __false_discovery_rate(y_true: pd.Series, y_pred: pd.Series):
+    return 1 - positive_predictive_value(y_true, y_pred)
+
+
+def __false_omission_rate(y_true: pd.Series, y_pred: pd.Series):
+    return 1 - negative_predictive_value(y_true, y_pred)
 
 
 def __manage_undefined_ratios(func: Callable):
@@ -134,6 +144,42 @@ def fnr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int 
     )
 
 
+def fdr_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Discovery Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
+    return ratio(
+        __false_discovery_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
+
+def for_ratio(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Omission Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
+    return ratio(
+        __false_omission_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
+
 def ppv_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
     """ Returns the between-group difference of Positive Predictive Values
 
@@ -219,6 +265,42 @@ def fnr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int =
     """
     return difference(
         false_negative_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
+
+def fdr_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Discovery Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
+    return difference(
+        __false_discovery_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
+    )
+
+
+def for_diff(y_true: pd.Series, y_pred: pd.Series, pa_name: str, priv_grp: int = 1):
+    """ Returns the between-group difference of False Omission Rates
+
+    Args:
+        y_true (pd.Series): true target values
+        y_pred (pd.Series): predicted target values
+        prtc_attr (str): name of the protected attribute
+        priv_grp (int, optional):  . Defaults to 1.
+
+    Returns:
+        Number
+
+    """
+    return difference(
+        __false_omission_rate, y_true, y_pred, prot_attr=pa_name, priv_group=priv_grp
     )
 
 
