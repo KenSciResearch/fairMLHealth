@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. Please do f
 
 _“Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.”_ - Rumi
 
+## [1.0.3] - 2022-11-10
+
+### Usability Updates
+
+- stat_utils.kruskal_pval now returns null if sample contains single value
+- Added positive_predictive_value wrapper to performance metrics
+
 ## [1.0.2] - 2021-11-10
 
 ### Documentation Update
