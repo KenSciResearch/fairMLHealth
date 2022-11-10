@@ -17,6 +17,7 @@ __all__ = [
     "f1_score",
     "negative_predictive_value",
     "roc_auc_score",
+    "positive_predictive_value",
     "precision",
     "pr_auc_score",
     "precision",
@@ -152,19 +153,14 @@ def negative_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
     return res
 
 
-def roc_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
-    """ Returns the Receiver Operating Characteristic Area Under the Curve
-    value for the prediction
+def positive_predictive_value(y_true: ArrayLike, y_pred: ArrayLike):
+    """ Returns the positive predictive value for the prediction: TN/(TN+FN)
     Args:
         y_true, y_pred (numpy-compatible, ArrayLike): binary valued
         objects holding the ground truth and predictions (respectively),
         on which validation has already been run.
     """
-    try:
-        res = sk_metric.roc_auc_score(y_true, y_pred)
-    except ValueError:
-        res = 0
-    return check_result(res, "ROC AUC Score")
+    return precision(y_true, y_pred)
 
 
 def pr_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
@@ -181,6 +177,21 @@ def pr_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
     except ValueError:
         res = np.nan
     return check_result(res, "PR AUC Score")
+
+
+def roc_auc_score(y_true: ArrayLike, y_pred: ArrayLike):
+    """ Returns the Receiver Operating Characteristic Area Under the Curve
+    value for the prediction
+    Args:
+        y_true, y_pred (numpy-compatible, ArrayLike): binary valued
+        objects holding the ground truth and predictions (respectively),
+        on which validation has already been run.
+    """
+    try:
+        res = sk_metric.roc_auc_score(y_true, y_pred)
+    except ValueError:
+        res = 0
+    return check_result(res, "ROC AUC Score")
 
 
 def r_squared(y_true: ArrayLike, y_pred: ArrayLike):
