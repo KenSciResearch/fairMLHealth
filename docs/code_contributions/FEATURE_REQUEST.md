@@ -1,12 +1,15 @@
 # Feature Request Template
 
-## Checklist
-Before submitting your request, please verify that the following are true.
+Please use this format as a guideline for submitting your feature request as an issue through our GitHub [Issues Board](https://github.com/KenSciResearch/fairMLHealth/issues).
 
-- [ ] I am running the latest version
-- [ ] I checked the documentation and troubleshooting resources and did not find this feature
-- [ ] I have read the [Contributing](https://github.com/KenSciResearch/docs/code_contributions/CONTRIBUTING.md) guidelines
-- [ ] I verified that this request has not already been filed by checking the [Issues Board](https://github.com/KenSciResearch/fairMLHealth/issues)
+## Checklist
+
+Before submitting your feature request to the [Issues Board](https://github.com/KenSciResearch/fairMLHealth/issues), please verify that the following are true.
+
+- [ ] I am running the latest version.
+- [ ] I checked the documentation and troubleshooting resources and did not find this feature.
+- [ ] I have read the [Contributing Guidelines](https://github.com/KenSciResearch/docs/code_contributions/CONTRIBUTING.md).
+- [ ] I verified that this request has not already been filed by checking the [Issues Board](https://github.com/KenSciResearch/fairMLHealth/issues).
 
 ## Current Behavior
 
@@ -14,5 +17,4 @@ Before submitting your request, please verify that the following are true.
 
 ## Desired Behavior
 
-[Describe what you would like the tool to do. Be sepecifi, including the modules and function names (if possible) with which the user will interact.]
-
+[Describe what you would like the tool to do. Be sepecific, including the modules and function names (if possible) with which the user will interact.]
